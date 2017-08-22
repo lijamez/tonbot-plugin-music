@@ -9,11 +9,11 @@ import net.tonbot.common.ActivityDescriptor;
 import net.tonbot.common.BotUtils;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 
-public class PauseActivity implements Activity {
+class PauseActivity implements Activity {
 	
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
 			.route(ImmutableList.of("music", "pause"))
-			.description("Pauses/unpauses the player.")
+			.description("Pauses the player.")
 			.build();
 
 	private final DiscordAudioPlayerManager discordAudioPlayerManager;
@@ -33,12 +33,13 @@ public class PauseActivity implements Activity {
 
 	@Override
 	public void enact(MessageReceivedEvent event, String args) {
-		boolean isPaused = discordAudioPlayerManager.togglePause(event.getChannel());
 		
-		if (isPaused) {
-			botUtils.sendMessage(event.getChannel(), "Paused.");
-		} else {
-			botUtils.sendMessage(event.getChannel(), "Unpaused.");
+		Long defaultChannelId = discordAudioPlayerManager.getDefaultChannelId(event.getGuild()).orElse(null);
+		if (defaultChannelId == null || defaultChannelId != event.getChannel().getLongID()) {
+			return;
 		}
+
+		discordAudioPlayerManager.setPauseState(event.getGuild(), true);
+		botUtils.sendMessage(event.getChannel(), "Paused.");
 	}
 }

@@ -40,8 +40,16 @@ class MusicModule extends AbstractModule {
 			DismissActivity dismissActivity,
 			PlayActivity playActivity,
 			StopActivity stopActivity,
-			PauseActivity pauseActivity) {
-		return ImmutableSet.of(beckonActivity, dismissActivity, playActivity, stopActivity, pauseActivity);
+			PauseActivity pauseActivity,
+			ListActivity listActivity,
+			ModeActivity modeActivity) {
+		return ImmutableSet.of(beckonActivity, dismissActivity, playActivity, stopActivity, pauseActivity, listActivity, modeActivity);
+	}
+	
+	@Provides
+	@Singleton
+	Set<Object> eventListeners(BandwidthSaver bandwidthSaver) {
+		return ImmutableSet.of(bandwidthSaver);
 	}
 	
 	@Provides

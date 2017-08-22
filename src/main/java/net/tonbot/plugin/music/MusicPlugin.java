@@ -14,7 +14,7 @@ import net.tonbot.common.TonbotPluginArgs;
 public class MusicPlugin extends TonbotPlugin {
 
 	private final Injector injector;
-	
+
 	public MusicPlugin(TonbotPluginArgs pluginArgs) {
 		super(pluginArgs);
 		this.injector = Guice.createInjector(new MusicModule(pluginArgs.getPrefix(), pluginArgs.getBotUtils()));
@@ -29,10 +29,16 @@ public class MusicPlugin extends TonbotPlugin {
 	public String getFriendlyName() {
 		return "Music Player";
 	}
-	
+
 	@Override
 	public Set<Activity> getActivities() {
 		return injector.getInstance(Key.get(new TypeLiteral<Set<Activity>>() {
+		}));
+	}
+
+	@Override
+	public Set<Object> getRawEventListeners() {
+		return injector.getInstance(Key.get(new TypeLiteral<Set<Object>>() {
 		}));
 	}
 

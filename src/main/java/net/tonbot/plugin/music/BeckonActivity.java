@@ -1,25 +1,30 @@
 package net.tonbot.plugin.music;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 
 import net.tonbot.common.Activity;
 import net.tonbot.common.ActivityDescriptor;
 import net.tonbot.common.TonbotBusinessException;
+import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.IVoiceChannel;
 
-public class BeckonActivity implements Activity {
+class BeckonActivity implements Activity {
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
 			.route(ImmutableList.of("music", "beckon"))
-			.description("Makes me join a voice channel.")
+			.description(
+					"Makes me join the voice channel that you're in. The text channel that this command is sent in will be used from then on for music-related activities.")
 			.build();
 
+	private final DiscordAudioPlayerManager discordAudioPlayerManager;
 
 	@Inject
-	public BeckonActivity() {
-
+	public BeckonActivity(DiscordAudioPlayerManager discordAudioPlayerManager) {
+		this.discordAudioPlayerManager = Preconditions.checkNotNull(discordAudioPlayerManager,
+				"discordAudioPlayerManager must be non-null.");
 	}
 
 	@Override
@@ -29,13 +34,22 @@ public class BeckonActivity implements Activity {
 
 	@Override
 	public void enact(MessageReceivedEvent event, String args) {
-		IVoiceChannel voiceChannel = event.getAuthor().getVoiceStateForGuild(event.getGuild()).getChannel();
-		
-		// TODO: Maybe the user can also specify a voice channel in the args.
-		if (voiceChannel == null) {
+		IVoiceChannel userVoiceChannel = event.getAuthor().getVoiceStateForGuild(event.getGuild()).getChannel();
+
+		if (userVoiceChannel == null) {
 			throw new TonbotBusinessException("You need to be in a voice channel first.");
 		}
-		
-		voiceChannel.join();
+
+		IDiscordClient client = event.getClient();
+
+		// Bot should hop onto the user's voice channel if the bot is in no voice
+		// channel or if it's in a different voice channel than the user.
+		IVoiceChannel botVoiceChannel = client.getOurUser().getVoiceStateForGuild(event.getGuild()).getChannel();
+		if (botVoiceChannel == null || botVoiceChannel.getLongID() != userVoiceChannel.getLongID()) {
+			userVoiceChannel.join();
+
+			discordAudioPlayerManager.destroyFor(event.getGuild());
+			discordAudioPlayerManager.initFor(event.getGuild(), event.getChannel());
+		}
 	}
 }
