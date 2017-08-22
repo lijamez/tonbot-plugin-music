@@ -102,7 +102,7 @@ class AudioSession extends AudioEventAdapter {
 
 		playlist.put(newTrack);
 
-		botUtils.sendMessage(channel, "Queued track: **" + audioTrack.getIdentifier() + "** by **"
+		botUtils.sendMessage(channel, "Queued track: **" + audioTrack.getInfo().title + "** by **"
 				+ user.getNicknameForGuild(channel.getGuild()) + "**");
 	}
 

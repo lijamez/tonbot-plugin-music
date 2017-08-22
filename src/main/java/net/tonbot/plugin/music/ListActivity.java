@@ -2,12 +2,14 @@ package net.tonbot.plugin.music;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
 import net.tonbot.common.Activity;
 import net.tonbot.common.ActivityDescriptor;
@@ -52,15 +54,28 @@ class ListActivity implements Activity {
 		if (sessionStatus == null) {
 			return;
 		}
-		
+
 		List<Track> upcomingTracks = sessionStatus.getUpcomingTracks();
 
 		EmbedBuilder embedBuilder = new EmbedBuilder();
-		
+
 		// Now Playing
 		Track nowPlaying = sessionStatus.getNowPlaying().orElse(null);
-		embedBuilder.appendField("Now Playing:", nowPlaying != null ? nowPlaying.getAudioTrack().getIdentifier() : "Nothing.", false);
-		
+		String nowPlayingStr;
+		if (nowPlaying == null) {
+			nowPlayingStr = "Nothing.";
+		} else {
+			AudioTrack currentAudioTrack = nowPlaying.getAudioTrack();
+			StringBuffer sb = new StringBuffer();
+			sb.append(currentAudioTrack.getInfo().title)
+					.append(" ``[").append(friendlyTime(currentAudioTrack.getPosition())).append("/")
+					.append(friendlyTime(currentAudioTrack.getDuration())).append("]``");
+
+			nowPlayingStr = sb.toString();
+		}
+
+		embedBuilder.appendField("Now playing:", nowPlayingStr, false);
+
 		// Upcoming tracks
 		StringBuffer sb = new StringBuffer();
 
@@ -74,19 +89,38 @@ class ListActivity implements Activity {
 
 				String trackString = new StringBuffer()
 						.append("``[").append(i).append("]`` **")
-						.append(track.getAudioTrack().getIdentifier())
-						.append("** added by **").append(addedByUser.getNicknameForGuild(event.getGuild())).append("**")
+						.append(track.getAudioTrack().getInfo().title)
+						.append("** ``[").append(friendlyTime(track.getAudioTrack().getDuration()))
+						.append("]`` added by **").append(addedByUser.getNicknameForGuild(event.getGuild()))
+						.append("**")
 						.toString();
 				trackStrings.add(trackString);
 			}
-			
+
 			sb.append(StringUtils.join(trackStrings, "\n"));
 		}
-		
+
 		embedBuilder.appendField("Next up:", sb.toString(), false);
-		
+
 		embedBuilder.appendField("Play mode:", sessionStatus.getPlayMode().toString(), false);
-		
+
 		botUtils.sendEmbed(event.getChannel(), embedBuilder.build());
+	}
+
+	private String friendlyTime(long millis) {
+		if (TimeUnit.MILLISECONDS.toHours(millis) > 0) {
+			return String.format("%02d:%02d:%02d",
+					TimeUnit.MILLISECONDS.toHours(millis),
+					TimeUnit.MILLISECONDS.toMinutes(millis)
+							- TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis)),
+					TimeUnit.MILLISECONDS.toSeconds(millis)
+							- TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
+		} else {
+			return String.format("%02d:%02d",
+					TimeUnit.MILLISECONDS.toMinutes(millis)
+							- TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis)),
+					TimeUnit.MILLISECONDS.toSeconds(millis)
+							- TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
+		}
 	}
 }
