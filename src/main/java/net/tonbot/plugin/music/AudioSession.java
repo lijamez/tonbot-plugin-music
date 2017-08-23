@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.lang3.StringUtils;
@@ -284,10 +285,13 @@ class AudioSession extends AudioEventAdapter {
 	 * Skips the currently playing track and moves onto the next one. If there is no
 	 * next track, then the player is stopped. If there is no current track, then
 	 * no-op.
+	 * 
+	 * @return The skipped track.
 	 */
-	public void skip() {
-		if (audioPlayer.getPlayingTrack() == null) {
-			return;
+	public Optional<AudioTrack> skip() {
+		AudioTrack skipTrack = audioPlayer.getPlayingTrack();
+		if (skipTrack == null) {
+			return Optional.empty();
 		}
 
 		try {
@@ -296,6 +300,8 @@ class AudioSession extends AudioEventAdapter {
 		} catch (NoSuchElementException e) {
 			this.stop();
 		}
+
+		return Optional.of(skipTrack);
 	}
 
 	/**

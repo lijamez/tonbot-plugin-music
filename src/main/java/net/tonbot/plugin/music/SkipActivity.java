@@ -1,5 +1,7 @@
 package net.tonbot.plugin.music;
 
+import java.util.Optional;
+
 import org.apache.commons.lang3.StringUtils;
 
 import com.google.common.base.Preconditions;
@@ -15,9 +17,9 @@ class SkipActivity extends AudioSessionActivity {
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
 			.route(ImmutableList.of("music", "skip"))
-			.parameters(ImmutableList.of("track number"))
+			.parameters(ImmutableList.of("track numbers"))
 			.description(
-					"Skips the song with a given track number. If no track number is provided, then the currently playing song is skipped.")
+					"Skips the song with a given track number(s). If no track numbers are provided, then the currently playing song is skipped.")
 			.build();
 
 	private final BotUtils botUtils;
@@ -38,7 +40,10 @@ class SkipActivity extends AudioSessionActivity {
 
 		if (StringUtils.isBlank(args)) {
 			// Skip the current track.
-			audioSession.skip();
+			Optional<AudioTrack> optSkippedTrack = audioSession.skip();
+			optSkippedTrack.ifPresent(skippedTrack -> {
+				botUtils.sendMessage(event.getChannel(), "Skipped **" + skippedTrack.getInfo().title + "**");
+			});
 		} else {
 			// Skip the specified track.
 			try {
