@@ -1,5 +1,6 @@
 package net.tonbot.plugin.music;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -8,6 +9,8 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 abstract class Playlist implements Iterator<AudioTrack> {
 
 	abstract void put(AudioTrack track);
+
+	abstract void putAll(Collection<AudioTrack> tracks);
 
 	/**
 	 * Gets an immutable view of the list of upcoming tracks.

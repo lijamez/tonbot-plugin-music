@@ -56,6 +56,13 @@ class ShuffledPlaylist extends Playlist {
 	}
 
 	@Override
+	void putAll(Collection<AudioTrack> inputTracks) {
+		Preconditions.checkNotNull(inputTracks, "inputTracks must be non-null.");
+
+		inputTracks.forEach(track -> put(track));
+	}
+
+	@Override
 	List<AudioTrack> getView() {
 		return ImmutableList.copyOf(tracks.stream()
 				.collect(Collectors.toList()));
@@ -65,5 +72,4 @@ class ShuffledPlaylist extends Playlist {
 	void remove(AudioTrack track) {
 		tracks.remove(track);
 	}
-
 }

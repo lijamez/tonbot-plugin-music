@@ -44,5 +44,7 @@ class DismissActivity implements Activity {
 
 		voiceChannel.leave();
 		botUtils.sendMessage(event.getChannel(), "Bye. :wave:");
+
+		// Session cleanup will happen when the VoiceDisconnectedEvent is fired.
 	}
 }

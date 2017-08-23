@@ -3,9 +3,11 @@ package net.tonbot.plugin.music;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutionException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -140,8 +142,32 @@ class AudioSession extends AudioEventAdapter {
 				}
 
 				@Override
-				public void playlistLoaded(AudioPlaylist playlist) {
-					// TODO
+				public void playlistLoaded(AudioPlaylist loadedPlaylist) {
+					List<AudioTrack> tracks = loadedPlaylist.getTracks();
+					if (tracks.isEmpty()) {
+						botUtils.sendMessage(channel, "There were no songs in that playlist. :thinking:");
+					} else {
+						tracks.forEach(track -> {
+							ExtraTrackInfo extraTrackInfo = ExtraTrackInfo.builder()
+									.addedByUserId(user.getLongID())
+									.addTimestamp(System.currentTimeMillis())
+									.build();
+							track.setUserData(extraTrackInfo);
+						});
+
+						playlist.putAll(tracks);
+
+						StringBuffer sb = new StringBuffer();
+						sb.append("Added ").append(tracks.size()).append(" tracks from playlist");
+
+						if (!StringUtils.isBlank(loadedPlaylist.getName())) {
+							sb.append(" **").append(loadedPlaylist.getName()).append("**");
+						}
+
+						sb.append(".");
+
+						botUtils.sendMessage(channel, sb.toString());
+					}
 				}
 
 				@Override

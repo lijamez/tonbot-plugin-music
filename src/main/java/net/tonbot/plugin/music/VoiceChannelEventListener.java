@@ -5,6 +5,7 @@ import com.google.inject.Inject;
 
 import net.tonbot.common.BotUtils;
 import sx.blah.discord.api.events.EventSubscriber;
+import sx.blah.discord.handle.impl.events.guild.voice.VoiceDisconnectedEvent;
 import sx.blah.discord.handle.impl.events.guild.voice.user.UserVoiceChannelJoinEvent;
 import sx.blah.discord.handle.impl.events.guild.voice.user.UserVoiceChannelLeaveEvent;
 import sx.blah.discord.handle.obj.IChannel;
@@ -37,16 +38,18 @@ class VoiceChannelEventListener {
 
 	@EventSubscriber
 	public void onUserVoiceChannelLeave(UserVoiceChannelLeaveEvent event) {
-		long ourUserId = event.getClient().getOurUser().getLongID();
-		if (event.getUser().getLongID() == ourUserId) {
-			try {
-				discordAudioPlayerManager.destroyFor(event.getGuild());
-			} catch (NoSessionException e) {
-			}
-		} else {
-			autoPauseAndResume(event.getVoiceChannel());
-		}
+		// Note: If our bot user leaves a VC, this event will not be fired. A
+		// VoiceDisconnectedEvent will fire instead.
+		autoPauseAndResume(event.getVoiceChannel());
+	}
 
+	@EventSubscriber
+	public void onVoiceDisconnected(VoiceDisconnectedEvent event) {
+		try {
+			discordAudioPlayerManager.destroyFor(event.getGuild());
+		} catch (NoSessionException e) {
+
+		}
 	}
 
 	private void autoPauseAndResume(IVoiceChannel vc) {
