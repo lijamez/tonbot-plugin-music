@@ -4,25 +4,22 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 
-import net.tonbot.common.Activity;
 import net.tonbot.common.ActivityDescriptor;
 import net.tonbot.common.BotUtils;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 
-class StopActivity implements Activity {
+class StopActivity extends AudioSessionActivity {
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
 			.route(ImmutableList.of("music", "stop"))
-			.description("Stops the player.")
+			.description("Stops playing the current track.")
 			.build();
 
-	private final DiscordAudioPlayerManager discordAudioPlayerManager;
 	private final BotUtils botUtils;
 
 	@Inject
 	public StopActivity(DiscordAudioPlayerManager discordAudioPlayerManager, BotUtils botUtils) {
-		this.discordAudioPlayerManager = Preconditions.checkNotNull(discordAudioPlayerManager,
-				"discordAudioPlayerManager must be non-null.");
+		super(discordAudioPlayerManager);
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
 	}
 
@@ -32,14 +29,8 @@ class StopActivity implements Activity {
 	}
 
 	@Override
-	public void enact(MessageReceivedEvent event, String args) {
-		
-		Long defaultChannelId = discordAudioPlayerManager.getDefaultChannelId(event.getGuild()).orElse(null);
-		if (defaultChannelId == null || defaultChannelId != event.getChannel().getLongID()) {
-			return;
-		}
-		
-		discordAudioPlayerManager.stop(event.getGuild());
+	protected void enactWithSession(MessageReceivedEvent event, String args, AudioSession audioSession) {
+		audioSession.stop();
 		botUtils.sendMessage(event.getChannel(), "Stopped.");
 	}
 }

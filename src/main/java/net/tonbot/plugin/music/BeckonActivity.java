@@ -48,7 +48,12 @@ class BeckonActivity implements Activity {
 		if (botVoiceChannel == null || botVoiceChannel.getLongID() != userVoiceChannel.getLongID()) {
 			userVoiceChannel.join();
 
-			discordAudioPlayerManager.destroyFor(event.getGuild());
+			try {
+				discordAudioPlayerManager.destroyFor(event.getGuild());
+			} catch (NoSessionException e) {
+				// This is fine.
+			}
+
 			discordAudioPlayerManager.initFor(event.getGuild(), event.getChannel());
 		}
 	}

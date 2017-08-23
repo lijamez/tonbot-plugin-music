@@ -2,7 +2,6 @@ package net.tonbot.plugin.music;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -11,27 +10,24 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
-import net.tonbot.common.Activity;
 import net.tonbot.common.ActivityDescriptor;
 import net.tonbot.common.BotUtils;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.IUser;
 import sx.blah.discord.util.EmbedBuilder;
 
-class ListActivity implements Activity {
+class ListActivity extends AudioSessionActivity {
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
 			.route(ImmutableList.of("music", "list"))
 			.description("Displays the upcoming tracks.")
 			.build();
 
-	private final DiscordAudioPlayerManager discordAudioPlayerManager;
 	private final BotUtils botUtils;
 
 	@Inject
 	public ListActivity(DiscordAudioPlayerManager discordAudioPlayerManager, BotUtils botUtils) {
-		this.discordAudioPlayerManager = Preconditions.checkNotNull(discordAudioPlayerManager,
-				"discordAudioPlayerManager must be non-null.");
+		super(discordAudioPlayerManager);
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
 
 	}
@@ -42,39 +38,41 @@ class ListActivity implements Activity {
 	}
 
 	@Override
-	public void enact(MessageReceivedEvent event, String args) {
+	protected void enactWithSession(MessageReceivedEvent event, String args, AudioSession audioSession) {
+		AudioSessionStatus sessionStatus = audioSession.getStatus();
 
-		Long defaultChannelId = discordAudioPlayerManager.getDefaultChannelId(event.getGuild()).orElse(null);
-		if (defaultChannelId == null || defaultChannelId != event.getChannel().getLongID()) {
-			return;
-		}
-
-		AudioSessionStatus sessionStatus = discordAudioPlayerManager.getSessionStatus(event.getGuild()).orElse(null);
-
-		if (sessionStatus == null) {
-			return;
-		}
-
-		List<Track> upcomingTracks = sessionStatus.getUpcomingTracks();
+		List<AudioTrack> upcomingTracks = sessionStatus.getUpcomingTracks();
 
 		EmbedBuilder embedBuilder = new EmbedBuilder();
 
 		// Now Playing
-		Track nowPlaying = sessionStatus.getNowPlaying().orElse(null);
-		String nowPlayingStr;
-		if (nowPlaying == null) {
-			nowPlayingStr = "Nothing.";
+
+		AudioTrack nowPlaying = sessionStatus.getNowPlaying().orElse(null);
+
+		if (nowPlaying != null) {
+			String title = nowPlaying.getInfo().title;
+			if (!StringUtils.isBlank(title)) {
+				embedBuilder.withTitle(title);
+			}
+
+			String authorName = nowPlaying.getInfo().author;
+			if (!StringUtils.isBlank(authorName)) {
+				embedBuilder.withAuthorName(authorName);
+			}
+
+			String trackUrl = nowPlaying.getInfo().uri;
+			if (!StringUtils.isBlank(trackUrl)) {
+				embedBuilder.withUrl(trackUrl);
+			}
+
+			StringBuffer timeSb = new StringBuffer();
+			timeSb.append(" ``[").append(TimeFormatter.toFriendlyString(nowPlaying.getPosition())).append("/")
+					.append(TimeFormatter.toFriendlyString(nowPlaying.getDuration())).append("]``");
+			embedBuilder.withDescription(timeSb.toString());
+
 		} else {
-			AudioTrack currentAudioTrack = nowPlaying.getAudioTrack();
-			StringBuffer sb = new StringBuffer();
-			sb.append(currentAudioTrack.getInfo().title)
-					.append(" ``[").append(friendlyTime(currentAudioTrack.getPosition())).append("/")
-					.append(friendlyTime(currentAudioTrack.getDuration())).append("]``");
-
-			nowPlayingStr = sb.toString();
+			embedBuilder.withDescription("Not playing anything.");
 		}
-
-		embedBuilder.appendField("Now playing:", nowPlayingStr, false);
 
 		// Upcoming tracks
 		StringBuffer sb = new StringBuffer();
@@ -84,13 +82,14 @@ class ListActivity implements Activity {
 		} else {
 			List<String> trackStrings = new ArrayList<>();
 			for (int i = 0; i < upcomingTracks.size(); i++) {
-				Track track = upcomingTracks.get(i);
-				IUser addedByUser = event.getClient().getUserByID(track.getAddedByUserId());
+				AudioTrack track = upcomingTracks.get(i);
+				ExtraTrackInfo extraTrackInfo = track.getUserData(ExtraTrackInfo.class);
+				IUser addedByUser = event.getClient().getUserByID(extraTrackInfo.getAddedByUserId());
 
 				String trackString = new StringBuffer()
 						.append("``[").append(i).append("]`` **")
-						.append(track.getAudioTrack().getInfo().title)
-						.append("** ``[").append(friendlyTime(track.getAudioTrack().getDuration()))
+						.append(track.getInfo().title)
+						.append("** ``[").append(TimeFormatter.toFriendlyString(track.getDuration()))
 						.append("]`` added by **").append(addedByUser.getNicknameForGuild(event.getGuild()))
 						.append("**")
 						.toString();
@@ -101,26 +100,9 @@ class ListActivity implements Activity {
 		}
 
 		embedBuilder.appendField("Next up:", sb.toString(), false);
-
+		// TODO: Pagination
 		embedBuilder.appendField("Play mode:", sessionStatus.getPlayMode().toString(), false);
 
 		botUtils.sendEmbed(event.getChannel(), embedBuilder.build());
-	}
-
-	private String friendlyTime(long millis) {
-		if (TimeUnit.MILLISECONDS.toHours(millis) > 0) {
-			return String.format("%02d:%02d:%02d",
-					TimeUnit.MILLISECONDS.toHours(millis),
-					TimeUnit.MILLISECONDS.toMinutes(millis)
-							- TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis)),
-					TimeUnit.MILLISECONDS.toSeconds(millis)
-							- TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
-		} else {
-			return String.format("%02d:%02d",
-					TimeUnit.MILLISECONDS.toMinutes(millis)
-							- TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis)),
-					TimeUnit.MILLISECONDS.toSeconds(millis)
-							- TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
-		}
 	}
 }

@@ -20,19 +20,19 @@ class MusicModule extends AbstractModule {
 
 	private final String prefix;
 	private final BotUtils botUtils;
-	
+
 	public MusicModule(String prefix, BotUtils botUtils) {
 		this.prefix = Preconditions.checkNotNull(prefix, "prefix must be non-null.");
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
 	}
-	
+
 	@Override
 	protected void configure() {
 		bind(String.class).annotatedWith(Prefix.class).toInstance(prefix);
 		bind(BotUtils.class).toInstance(botUtils);
 		bind(DiscordAudioPlayerManager.class).in(Scopes.SINGLETON);
 	}
-	
+
 	@Provides
 	@Singleton
 	Set<Activity> activities(
@@ -42,25 +42,27 @@ class MusicModule extends AbstractModule {
 			StopActivity stopActivity,
 			PauseActivity pauseActivity,
 			ListActivity listActivity,
-			ModeActivity modeActivity) {
-		return ImmutableSet.of(beckonActivity, dismissActivity, playActivity, stopActivity, pauseActivity, listActivity, modeActivity);
+			ModeActivity modeActivity,
+			SkipActivity skipActivity) {
+		return ImmutableSet.of(beckonActivity, dismissActivity, playActivity, stopActivity, pauseActivity, listActivity,
+				modeActivity, skipActivity);
 	}
-	
+
 	@Provides
 	@Singleton
-	Set<Object> eventListeners(BandwidthSaver bandwidthSaver) {
-		return ImmutableSet.of(bandwidthSaver);
+	Set<Object> eventListeners(VoiceChannelEventListener vcEventListener) {
+		return ImmutableSet.of(vcEventListener);
 	}
-	
+
 	@Provides
 	@Singleton
 	AudioPlayerManager audioPlayerManager() {
 		AudioPlayerManager apm = new DefaultAudioPlayerManager();
 		apm.enableGcMonitoring();
-		
+
 		// Registers remote source handlers such as Youtube, SoundCloud, Bandcamp, etc.
 		AudioSourceManagers.registerRemoteSources(apm);
-		
+
 		return apm;
 	}
 }

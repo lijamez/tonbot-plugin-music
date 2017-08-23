@@ -3,15 +3,18 @@ package net.tonbot.plugin.music;
 import java.util.Iterator;
 import java.util.List;
 
-abstract class Playlist implements Iterator<Track> {
+import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
-	abstract void put(Track track);
-	
+abstract class Playlist implements Iterator<AudioTrack> {
+
+	abstract void put(AudioTrack track);
+
 	/**
 	 * Gets an immutable view of the list of upcoming tracks.
+	 * 
 	 * @return An immutable list of the upcoming tracks.
 	 */
-	abstract List<Track> getView();
-	
-	abstract void remove(Track track);
+	abstract List<AudioTrack> getView();
+
+	abstract void remove(AudioTrack track);
 }

@@ -10,21 +10,24 @@ import java.util.stream.Collectors;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
 class ShuffledPlaylist extends Playlist {
 
-	public LinkedList<Track> tracks;
+	public LinkedList<AudioTrack> tracks;
 
 	/**
 	 * Creates a playlist of the given tracks. Track ordering will be randomized.
-	 * @param tracks A collection of {@link Track}s. Non-null. 
+	 * 
+	 * @param tracks
+	 *            A collection of {@link ExtraTrackInfo}s. Non-null.
 	 */
-	public ShuffledPlaylist(Collection<Track> tracks) {
+	public ShuffledPlaylist(Collection<AudioTrack> tracks) {
 		Preconditions.checkNotNull(tracks, "tracks must be non-null.");
-		
-		List<Track> randomizedTracklist = Arrays.asList(tracks.toArray(new Track[0]));
+
+		List<AudioTrack> randomizedTracklist = Arrays.asList(tracks.toArray(new AudioTrack[0]));
 		Collections.shuffle(randomizedTracklist);
-		
+
 		this.tracks = new LinkedList<>(randomizedTracklist);
 	}
 
@@ -34,30 +37,32 @@ class ShuffledPlaylist extends Playlist {
 	}
 
 	@Override
-	public Track next() {
+	public AudioTrack next() {
 		return tracks.removeFirst();
 	}
 
 	/**
 	 * Adds a track to a random position in the list.
-	 * @param The {@link Track} to be added. Non-null.
+	 * 
+	 * @param The
+	 *            {@link ExtraTrackInfo} to be added. Non-null.
 	 */
 	@Override
-	void put(Track track) {
+	void put(AudioTrack track) {
 		Preconditions.checkNotNull(track, "track must be non-null.");
-		
+
 		int index = ThreadLocalRandom.current().nextInt(0, tracks.size() + 1);
 		tracks.add(index, track);
 	}
 
 	@Override
-	List<Track> getView() {
+	List<AudioTrack> getView() {
 		return ImmutableList.copyOf(tracks.stream()
 				.collect(Collectors.toList()));
 	}
 
 	@Override
-	void remove(Track track) {
+	void remove(AudioTrack track) {
 		tracks.remove(track);
 	}
 

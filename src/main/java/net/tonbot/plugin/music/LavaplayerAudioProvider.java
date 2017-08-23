@@ -10,11 +10,11 @@ import sx.blah.discord.handle.audio.IAudioProvider;
 class LavaplayerAudioProvider implements IAudioProvider {
 
 	private final AudioPlayer audioPlayer;
-	
+
 	public LavaplayerAudioProvider(AudioPlayer audioPlayer) {
 		this.audioPlayer = Preconditions.checkNotNull(audioPlayer, "audioPlayer must be non-null.");
 	}
-	
+
 	private AudioFrame lastFrame = null;
 
 	@Override

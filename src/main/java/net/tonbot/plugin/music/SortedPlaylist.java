@@ -7,16 +7,20 @@ import java.util.TreeSet;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
 class SortedPlaylist extends Playlist {
 
-	private final TreeSet<Track> tracks;
+	private final TreeSet<AudioTrack> tracks;
 
 	/**
-	 * Creates a playlist of the given tracks. The order will be determined by the comparator.
-	 * @param tracks A collection of {@link Track}s. Non-null. 
+	 * Creates a playlist of the given tracks. The order will be determined by the
+	 * comparator.
+	 * 
+	 * @param tracks
+	 *            A collection of {@link ExtraTrackInfo}s. Non-null.
 	 */
-	public SortedPlaylist(Collection<Track> tracks, Comparator<Track> comparator) {
+	public SortedPlaylist(Collection<AudioTrack> tracks, Comparator<AudioTrack> comparator) {
 		Preconditions.checkNotNull(tracks, "tracks must be non-null.");
 		this.tracks = new TreeSet<>(comparator);
 		this.tracks.addAll(tracks);
@@ -28,24 +32,23 @@ class SortedPlaylist extends Playlist {
 	}
 
 	@Override
-	public Track next() {
+	public AudioTrack next() {
 		return tracks.pollFirst();
 	}
 
 	@Override
-	void put(Track track) {
+	void put(AudioTrack track) {
 		Preconditions.checkNotNull(track, "track must be non-null.");
 		tracks.add(track);
-		System.out.println(tracks);
 	}
 
 	@Override
-	List<Track> getView() {
+	List<AudioTrack> getView() {
 		return ImmutableList.copyOf(tracks);
 	}
 
 	@Override
-	void remove(Track track) {
+	void remove(AudioTrack track) {
 		tracks.remove(track);
 	}
 

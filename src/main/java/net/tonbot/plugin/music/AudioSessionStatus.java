@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
 import lombok.Builder;
 import lombok.Data;
@@ -12,21 +13,21 @@ import lombok.Data;
 @Data
 class AudioSessionStatus {
 
-	private final Track nowPlaying;
-	private final List<Track> upcomingTracks;
+	private final AudioTrack nowPlaying;
+	private final List<AudioTrack> upcomingTracks;
 	private final PlayMode playMode;
-	
+
 	@Builder
-	private AudioSessionStatus(Track nowPlaying, List<Track> upcomingTracks, PlayMode playMode) {
+	private AudioSessionStatus(AudioTrack nowPlaying, List<AudioTrack> upcomingTracks, PlayMode playMode) {
 		this.nowPlaying = nowPlaying;
-		
+
 		Preconditions.checkNotNull(upcomingTracks, "upcomingTracks must be non-null.");
 		this.upcomingTracks = ImmutableList.copyOf(upcomingTracks);
-		
+
 		this.playMode = Preconditions.checkNotNull(playMode, "playMode must be non-null.");
 	}
-	
-	public Optional<Track> getNowPlaying() {
+
+	public Optional<AudioTrack> getNowPlaying() {
 		return Optional.ofNullable(nowPlaying);
 	}
 }
