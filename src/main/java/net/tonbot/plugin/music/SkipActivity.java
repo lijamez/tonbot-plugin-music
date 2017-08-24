@@ -29,7 +29,7 @@ class SkipActivity extends AudioSessionActivity {
 			.route(ImmutableList.of("music", "skip"))
 			.parameters(ImmutableList.of("track numbers"))
 			.description(
-					"Skips the song with given track number(s). If no track numbers are provided, then the currently playing song is skipped.")
+					"Skips tracks with track number(s). If no track numbers are provided, then the current track is skipped.")
 			.build();
 
 	private static final Pattern RANGE_PATTERN = Pattern.compile("^([0-9]+)-([0-9]+)$");

@@ -17,7 +17,8 @@ public class MusicPlugin extends TonbotPlugin {
 
 	public MusicPlugin(TonbotPluginArgs pluginArgs) {
 		super(pluginArgs);
-		this.injector = Guice.createInjector(new MusicModule(pluginArgs.getPrefix(), pluginArgs.getBotUtils()));
+		this.injector = Guice.createInjector(
+				new MusicModule(pluginArgs.getDiscordClient(), pluginArgs.getPrefix(), pluginArgs.getBotUtils()));
 	}
 
 	@Override

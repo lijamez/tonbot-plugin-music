@@ -133,7 +133,7 @@ class ListActivity extends AudioSessionActivity {
 		StringBuffer sb = new StringBuffer();
 
 		if (upcomingTracks.isEmpty()) {
-			sb.append("No tracks.");
+			sb.append("-- Empty --");
 		} else {
 			List<String> trackStrings = new ArrayList<>();
 			for (int i = page * TRACKS_PER_PAGE; i < Math.min(upcomingTracks.size(),
@@ -156,7 +156,7 @@ class ListActivity extends AudioSessionActivity {
 
 			int totalPagesCount = (upcomingTracks.isEmpty() ? 0 : (upcomingTracks.size() - 1) / TRACKS_PER_PAGE) + 1;
 
-			if (totalPagesCount > 0) {
+			if (totalPagesCount > 1) {
 				sb.append("\n\nPage **").append(page + 1).append("** of **").append(totalPagesCount)
 						.append("**. Total tracks: **").append(upcomingTracks.size()).append("**");
 			}

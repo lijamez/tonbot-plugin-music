@@ -15,7 +15,7 @@ class ModeActivity extends AudioSessionActivity {
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
 			.route(ImmutableList.of("music", "mode"))
 			.parameters(ImmutableList.of("mode"))
-			.description("Sets the play mode. Available modes: " + Arrays.asList(PlayMode.values()))
+			.description("Sets the play mode to one of: " + Arrays.asList(PlayMode.values()))
 			.build();
 
 	private final BotUtils botUtils;

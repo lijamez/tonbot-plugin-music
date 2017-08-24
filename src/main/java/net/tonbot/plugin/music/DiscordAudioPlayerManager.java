@@ -8,22 +8,32 @@ import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
+import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeSearchProvider;
 
 import lombok.Data;
 import lombok.NonNull;
 import net.tonbot.common.BotUtils;
+import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IGuild;
 
 class DiscordAudioPlayerManager {
 
+	private final IDiscordClient discordClient;
 	private final AudioPlayerManager apm;
+	private final YoutubeSearchProvider ytSearchProvider;
 	private final BotUtils botUtils;
 	private final ConcurrentHashMap<Long, LockableAudioSession> audioSessions;
 
 	@Inject
-	public DiscordAudioPlayerManager(AudioPlayerManager apm, BotUtils botUtils) {
+	public DiscordAudioPlayerManager(
+			IDiscordClient discordClient,
+			AudioPlayerManager apm,
+			YoutubeSearchProvider ytSearchProvider,
+			BotUtils botUtils) {
+		this.discordClient = Preconditions.checkNotNull(discordClient, "discordClient must be non-null.");
 		this.apm = Preconditions.checkNotNull(apm, "apm must be non-null.");
+		this.ytSearchProvider = Preconditions.checkNotNull(ytSearchProvider, "ytSearchProvider must be non-null.");
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
 		this.audioSessions = new ConcurrentHashMap<>();
 	}
@@ -94,7 +104,8 @@ class DiscordAudioPlayerManager {
 			AudioPlayer audioPlayer = apm.createPlayer();
 			guild.getAudioManager().setAudioProvider(new LavaplayerAudioProvider(audioPlayer));
 
-			AudioSession audioSession = new AudioSession(apm, audioPlayer, defaultChannel.getLongID(), botUtils);
+			AudioSession audioSession = new AudioSession(
+					discordClient, apm, audioPlayer, ytSearchProvider, defaultChannel.getLongID(), botUtils);
 			audioPlayer.addListener(audioSession);
 
 			return new LockableAudioSession(new ReentrantLock(), audioSession);

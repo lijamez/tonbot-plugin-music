@@ -3,7 +3,9 @@ package net.tonbot.plugin.music;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -17,13 +19,17 @@ import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter;
+import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeSearchProvider;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
+import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
+import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
 
 import lombok.Getter;
 import net.tonbot.common.BotUtils;
+import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IGuild;
 import sx.blah.discord.handle.obj.IUser;
@@ -32,8 +38,11 @@ class AudioSession extends AudioEventAdapter {
 
 	private static final Logger LOG = LoggerFactory.getLogger(AudioSession.class);
 
+	private final IDiscordClient discordClient;
 	private final AudioPlayerManager audioPlayerManager;
 	private final AudioPlayer audioPlayer;
+	private final YoutubeSearchProvider ytSearchProvider;
+	private final Map<Long, AudioPlaylist> searchResults;
 
 	@Getter
 	private final long defaultChannelId;
@@ -44,13 +53,18 @@ class AudioSession extends AudioEventAdapter {
 	private PlayMode playMode;
 
 	public AudioSession(
+			IDiscordClient discordClient,
 			AudioPlayerManager audioPlayerManager,
 			AudioPlayer audioPlayer,
+			YoutubeSearchProvider ytSearchProvider,
 			long defaultChannelId,
 			BotUtils botUtils) {
+		this.discordClient = Preconditions.checkNotNull(discordClient, "discordClient must be non-null.");
 		this.audioPlayerManager = Preconditions.checkNotNull(audioPlayerManager,
 				"audioPlayerManager must be non-null.");
 		this.audioPlayer = Preconditions.checkNotNull(audioPlayer, "audioPlayer must be non-null.");
+		this.ytSearchProvider = Preconditions.checkNotNull(ytSearchProvider, "ytSearchProvider must be non-null.");
+		this.searchResults = new HashMap<>();
 		this.defaultChannelId = defaultChannelId;
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
 		this.playlist = PlaylistSelector.sortedByAddTimestamp(new ArrayList<>());
@@ -75,10 +89,7 @@ class AudioSession extends AudioEventAdapter {
 	@Override
 	public void onTrackEnd(AudioPlayer player, AudioTrack audioTrack, AudioTrackEndReason endReason) {
 		if (endReason.mayStartNext) {
-			if (playlist.hasNext()) {
-				AudioTrack track = playlist.next();
-				playTrack(track);
-			}
+			playNext();
 		}
 
 		// endReason == FINISHED: A track finished or died by an exception (mayStartNext
@@ -96,12 +107,17 @@ class AudioSession extends AudioEventAdapter {
 	public void onTrackException(AudioPlayer player, AudioTrack track, FriendlyException exception) {
 		// An already playing track threw an exception (track end event will still be
 		// received separately)
+		IChannel channel = discordClient.getChannelByID(defaultChannelId);
+		botUtils.sendMessage(channel, "Failed to play track: " + exception.getMessage());
 	}
 
 	@Override
 	public void onTrackStuck(AudioPlayer player, AudioTrack track, long thresholdMs) {
 		// Audio track has been unable to provide us any audio, might want to just start
 		// a new track
+		IChannel channel = discordClient.getChannelByID(defaultChannelId);
+		botUtils.sendMessage(channel, "Track is stuck. Moving right along...");
+		playNext();
 	}
 
 	/**
@@ -130,13 +146,7 @@ class AudioSession extends AudioEventAdapter {
 
 				@Override
 				public void trackLoaded(AudioTrack audioTrack) {
-					ExtraTrackInfo extraTrackInfo = ExtraTrackInfo.builder()
-							.addedByUserId(user.getLongID())
-							.addTimestamp(System.currentTimeMillis())
-							.build();
-					audioTrack.setUserData(extraTrackInfo);
-
-					playlist.put(audioTrack);
+					enqueue(audioTrack, user);
 
 					botUtils.sendMessage(channel, "Queued track: **" + audioTrack.getInfo().title + "** by **"
 							+ user.getNicknameForGuild(channel.getGuild()) + "**");
@@ -173,7 +183,31 @@ class AudioSession extends AudioEventAdapter {
 
 				@Override
 				public void noMatches() {
-					botUtils.sendMessage(channel, "I can't play that. :shrug:");
+					// Instead of simply failing. We should try to look it up on Youtube.
+					AudioItem audioItem = ytSearchProvider.loadSearchResult(identifier);
+					if (audioItem == AudioReference.NO_TRACK) {
+						botUtils.sendMessage(channel, "I couldn't find anything. :shrug:");
+					} else if (audioItem instanceof AudioPlaylist) {
+						// So we found some results. Show them to the user and then let them pick.
+						AudioPlaylist queryResults = (AudioPlaylist) audioItem;
+						searchResults.put(user.getLongID(), queryResults);
+
+						StringBuffer sb = new StringBuffer();
+						sb.append("Search Results:\n\n");
+
+						for (int i = 0; i < queryResults.getTracks().size(); i++) {
+							AudioTrack track = queryResults.getTracks().get(i);
+							sb.append("``[").append(i + 1)
+									.append("]`` **").append(track.getInfo().title)
+									.append("** (").append(TimeFormatter.toFriendlyString(track.getInfo().length))
+									.append(")\n");
+						}
+
+						botUtils.sendMessage(channel, sb.toString());
+					} else if (audioItem instanceof AudioTrack) {
+						// Found an exact match. Queue it.
+						trackLoaded((AudioTrack) audioItem);
+					}
 				}
 
 				@Override
@@ -185,6 +219,27 @@ class AudioSession extends AudioEventAdapter {
 		} catch (InterruptedException | ExecutionException e) {
 			LOG.error("Failed to load a track.", e);
 		}
+	}
+
+	/**
+	 * Enqueues a given track.
+	 * 
+	 * @param track
+	 *            {@link AudioTrack}. Non-null.
+	 * @param user
+	 *            The {@link IUser} that enqueued the track. Non-null.
+	 */
+	public void enqueue(AudioTrack track, IUser user) {
+		Preconditions.checkNotNull(track, "track must be non-null.");
+		Preconditions.checkNotNull(user, "user must be non-null.");
+
+		AudioTrack clonedTrack = track.makeClone();
+		clonedTrack.setUserData(ExtraTrackInfo.builder()
+				.addedByUserId(user.getLongID())
+				.addTimestamp(System.currentTimeMillis())
+				.build());
+
+		playlist.put(clonedTrack);
 	}
 
 	/**
@@ -208,6 +263,13 @@ class AudioSession extends AudioEventAdapter {
 			if (nextTrack != null) {
 				audioPlayer.startTrack(nextTrack, true);
 			}
+		}
+	}
+
+	private void playNext() {
+		if (playlist.hasNext()) {
+			AudioTrack track = playlist.next();
+			audioPlayer.playTrack(track);
 		}
 	}
 
@@ -277,10 +339,6 @@ class AudioSession extends AudioEventAdapter {
 		this.playMode = mode;
 	}
 
-	private void playTrack(AudioTrack track) {
-		audioPlayer.playTrack(track);
-	}
-
 	/**
 	 * Skips the currently playing track and moves onto the next one. If there is no
 	 * next track, then the player is stopped. If there is no current track, then
@@ -296,7 +354,7 @@ class AudioSession extends AudioEventAdapter {
 
 		try {
 			AudioTrack nextTrack = playlist.next();
-			this.playTrack(nextTrack);
+			audioPlayer.playTrack(nextTrack);
 		} catch (NoSuchElementException e) {
 			this.stop();
 		}
@@ -317,6 +375,18 @@ class AudioSession extends AudioEventAdapter {
 		AudioTrack trackToSkip = this.playlist.getView().get(i);
 		this.playlist.remove(trackToSkip);
 		return trackToSkip;
+	}
+
+	public Optional<AudioPlaylist> getSearchResults(IUser user) {
+		Preconditions.checkNotNull(user, "user must be non-null.");
+
+		return Optional.ofNullable(searchResults.get(user.getLongID()));
+	}
+
+	public void clearSearchResult(IUser user) {
+		Preconditions.checkNotNull(user, "user must be non-null.");
+
+		searchResults.remove(user.getLongID());
 	}
 
 	private static class PlaylistSelector {

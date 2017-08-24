@@ -10,24 +10,35 @@ import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
-import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
+import com.sedmelluq.discord.lavaplayer.source.bandcamp.BandcampAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.beam.BeamAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.http.HttpAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.soundcloud.SoundCloudAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeSearchProvider;
 
 import net.tonbot.common.Activity;
 import net.tonbot.common.BotUtils;
 import net.tonbot.common.Prefix;
+import sx.blah.discord.api.IDiscordClient;
 
 class MusicModule extends AbstractModule {
 
+	private final IDiscordClient discordClient;
 	private final String prefix;
 	private final BotUtils botUtils;
 
-	public MusicModule(String prefix, BotUtils botUtils) {
+	public MusicModule(IDiscordClient discordClient, String prefix, BotUtils botUtils) {
+		this.discordClient = Preconditions.checkNotNull(discordClient, "discordClient must be non-null.");
 		this.prefix = Preconditions.checkNotNull(prefix, "prefix must be non-null.");
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
 	}
 
 	@Override
 	protected void configure() {
+		bind(IDiscordClient.class).toInstance(discordClient);
 		bind(String.class).annotatedWith(Prefix.class).toInstance(prefix);
 		bind(BotUtils.class).toInstance(botUtils);
 		bind(DiscordAudioPlayerManager.class).in(Scopes.SINGLETON);
@@ -56,13 +67,32 @@ class MusicModule extends AbstractModule {
 
 	@Provides
 	@Singleton
-	AudioPlayerManager audioPlayerManager() {
+	AudioPlayerManager audioPlayerManager(YoutubeAudioSourceManager yasm) {
 		AudioPlayerManager apm = new DefaultAudioPlayerManager();
 		apm.enableGcMonitoring();
 
-		// Registers remote source handlers such as Youtube, SoundCloud, Bandcamp, etc.
-		AudioSourceManagers.registerRemoteSources(apm);
+		// Register remote source handlers such as Youtube, SoundCloud, Bandcamp, etc.
+		// AudioSourceManagers.registerRemoteSources(apm);
+		apm.registerSourceManager(yasm);
+		apm.registerSourceManager(new SoundCloudAudioSourceManager());
+		apm.registerSourceManager(new BandcampAudioSourceManager());
+		apm.registerSourceManager(new VimeoAudioSourceManager());
+		apm.registerSourceManager(new TwitchStreamAudioSourceManager());
+		apm.registerSourceManager(new BeamAudioSourceManager());
+		apm.registerSourceManager(new HttpAudioSourceManager());
 
 		return apm;
+	}
+
+	@Provides
+	@Singleton
+	YoutubeAudioSourceManager youtubeAudioSourceManager() {
+		return new YoutubeAudioSourceManager(false);
+	}
+
+	@Provides
+	@Singleton
+	YoutubeSearchProvider youtubeSearchProvider(YoutubeAudioSourceManager yasm) {
+		return new YoutubeSearchProvider(yasm);
 	}
 }
