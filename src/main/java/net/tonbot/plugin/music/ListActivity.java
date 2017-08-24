@@ -73,7 +73,9 @@ class ListActivity extends AudioSessionActivity {
 
 		appendUpNext(requestedPage, embedBuilder, sessionStatus, client, guild);
 
-		embedBuilder.appendField("Play mode:", sessionStatus.getPlayMode().toString(), false);
+		if (requestedPage == 0) {
+			embedBuilder.appendField("Play mode:", sessionStatus.getPlayMode().toString(), false);
+		}
 
 		botUtils.sendEmbed(event.getChannel(), embedBuilder.build());
 	}
@@ -141,10 +143,10 @@ class ListActivity extends AudioSessionActivity {
 				IUser addedByUser = client.getUserByID(extraTrackInfo.getAddedByUserId());
 
 				String trackString = new StringBuffer()
-						.append("``[").append(i).append("]`` **")
+						.append("``[").append(i + 1).append("]`` **")
 						.append(track.getInfo().title)
-						.append("** ``[").append(TimeFormatter.toFriendlyString(track.getDuration()))
-						.append("]`` added by **").append(addedByUser.getNicknameForGuild(guild))
+						.append("** (").append(TimeFormatter.toFriendlyString(track.getDuration()))
+						.append(") added by **").append(addedByUser.getNicknameForGuild(guild))
 						.append("**")
 						.toString();
 				trackStrings.add(trackString);
@@ -155,7 +157,8 @@ class ListActivity extends AudioSessionActivity {
 			int totalPagesCount = (upcomingTracks.isEmpty() ? 0 : (upcomingTracks.size() - 1) / TRACKS_PER_PAGE) + 1;
 
 			if (totalPagesCount > 0) {
-				sb.append("\n\nPage **").append(page + 1).append("** of **").append(totalPagesCount).append("**.");
+				sb.append("\n\nPage **").append(page + 1).append("** of **").append(totalPagesCount)
+						.append("**. Total tracks: **").append(upcomingTracks.size()).append("**");
 			}
 		}
 
