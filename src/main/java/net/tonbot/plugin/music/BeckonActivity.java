@@ -16,7 +16,7 @@ class BeckonActivity implements Activity {
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
 			.route(ImmutableList.of("music", "beckon"))
 			.description(
-					"Makes me join the voice channel that you're in. The text channel that this command is sent in will be used from then on for music-related activities.")
+					"Makes me join your voice channel. The channel that this command is sent in will be used for music commands.")
 			.build();
 
 	private final DiscordAudioPlayerManager discordAudioPlayerManager;

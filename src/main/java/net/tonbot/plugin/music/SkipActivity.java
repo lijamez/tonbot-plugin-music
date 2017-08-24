@@ -37,6 +37,7 @@ class SkipActivity extends AudioSessionActivity {
 
 	@Override
 	protected void enactWithSession(MessageReceivedEvent event, String args, AudioSession audioSession) {
+		// TODO: Add support for skipping ranges.
 
 		if (StringUtils.isBlank(args)) {
 			// Skip the current track.
