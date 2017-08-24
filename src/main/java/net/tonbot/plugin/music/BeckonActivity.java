@@ -13,9 +13,6 @@ import sx.blah.discord.handle.obj.IVoiceChannel;
 
 class BeckonActivity implements Activity {
 
-	private static final long DEBUG_VC_ID = 338132831131795457L;
-	private static final boolean DEBUG = true;
-
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
 			.route(ImmutableList.of("music", "beckon"))
 			.description(
@@ -38,8 +35,7 @@ class BeckonActivity implements Activity {
 	@Override
 	public void enact(MessageReceivedEvent event, String args) {
 
-		IVoiceChannel userVoiceChannel = DEBUG ? event.getClient().getVoiceChannelByID(DEBUG_VC_ID)
-				: event.getAuthor().getVoiceStateForGuild(event.getGuild()).getChannel();
+		IVoiceChannel userVoiceChannel = event.getAuthor().getVoiceStateForGuild(event.getGuild()).getChannel();
 
 		if (userVoiceChannel == null) {
 			throw new TonbotBusinessException("You need to be in a voice channel first.");
