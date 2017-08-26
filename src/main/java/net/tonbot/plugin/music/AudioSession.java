@@ -31,6 +31,7 @@ import net.tonbot.common.BotUtils;
 import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IGuild;
+import sx.blah.discord.handle.obj.IMessage;
 import sx.blah.discord.handle.obj.IUser;
 
 class AudioSession extends AudioEventAdapter {
@@ -41,7 +42,7 @@ class AudioSession extends AudioEventAdapter {
 	private final AudioPlayerManager audioPlayerManager;
 	private final AudioPlayer audioPlayer;
 	private final YoutubeSearchProvider ytSearchProvider;
-	private final Map<Long, AudioPlaylist> searchResults;
+	private final Map<Long, SearchResults> searchResultsByUserId;
 
 	@Getter
 	private final long defaultChannelId;
@@ -64,7 +65,7 @@ class AudioSession extends AudioEventAdapter {
 				"audioPlayerManager must be non-null.");
 		this.audioPlayer = Preconditions.checkNotNull(audioPlayer, "audioPlayer must be non-null.");
 		this.ytSearchProvider = Preconditions.checkNotNull(ytSearchProvider, "ytSearchProvider must be non-null.");
-		this.searchResults = new HashMap<>();
+		this.searchResultsByUserId = new HashMap<>();
 		this.defaultChannelId = defaultChannelId;
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
 		this.trackManager = TrackManagers.sortedByAddTimestamp(new ArrayList<>());
@@ -205,7 +206,6 @@ class AudioSession extends AudioEventAdapter {
 					} else if (audioItem instanceof AudioPlaylist) {
 						// So we found some results. Show them to the user and then let them pick.
 						AudioPlaylist queryResults = (AudioPlaylist) audioItem;
-						searchResults.put(user.getLongID(), queryResults);
 
 						StringBuffer sb = new StringBuffer();
 						sb.append("Search Results:\n\n");
@@ -218,7 +218,11 @@ class AudioSession extends AudioEventAdapter {
 									.append(")\n");
 						}
 
-						botUtils.sendMessage(channel, sb.toString());
+						IMessage messageWithSearchResults = botUtils.sendMessageSync(channel, sb.toString());
+
+						SearchResults searchResults = new SearchResults(queryResults, messageWithSearchResults);
+
+						searchResultsByUserId.put(user.getLongID(), searchResults);
 					} else if (audioItem instanceof AudioTrack) {
 						// Found an exact match. Queue it.
 						trackLoaded((AudioTrack) audioItem);
@@ -399,16 +403,16 @@ class AudioSession extends AudioEventAdapter {
 		return trackToSkip;
 	}
 
-	public Optional<AudioPlaylist> getSearchResults(IUser user) {
+	public Optional<SearchResults> getSearchResults(IUser user) {
 		Preconditions.checkNotNull(user, "user must be non-null.");
 
-		return Optional.ofNullable(searchResults.get(user.getLongID()));
+		return Optional.ofNullable(searchResultsByUserId.get(user.getLongID()));
 	}
 
 	public void clearSearchResult(IUser user) {
 		Preconditions.checkNotNull(user, "user must be non-null.");
 
-		searchResults.remove(user.getLongID());
+		searchResultsByUserId.remove(user.getLongID());
 	}
 
 	private AudioTrack clone(AudioTrack originalAudioTrack) {
