@@ -237,7 +237,7 @@ class AudioSession extends AudioEventAdapter {
 	}
 
 	/**
-	 * Enqueues a given track.
+	 * Enqueues a given track, while appending extra track info.
 	 * 
 	 * @param track
 	 *            {@link AudioTrack}. Non-null.
@@ -248,7 +248,13 @@ class AudioSession extends AudioEventAdapter {
 		Preconditions.checkNotNull(track, "track must be non-null.");
 		Preconditions.checkNotNull(user, "user must be non-null.");
 
-		trackManager.put(clone(track));
+		AudioTrack clonedTrack = track.makeClone();
+		clonedTrack.setUserData(ExtraTrackInfo.builder()
+				.addedByUserId(user.getLongID())
+				.addTimestamp(System.currentTimeMillis())
+				.build());
+
+		trackManager.put(clonedTrack);
 	}
 
 	/**

@@ -55,9 +55,10 @@ class MusicModule extends AbstractModule {
 			ListActivity listActivity,
 			ModeActivity modeActivity,
 			SkipActivity skipActivity,
-			RepeatActivity repeatActivity) {
+			RepeatActivity repeatActivity,
+			NowPlayingActivity npActivity) {
 		return ImmutableSet.of(beckonActivity, dismissActivity, playActivity, stopActivity, pauseActivity, listActivity,
-				modeActivity, skipActivity, repeatActivity);
+				modeActivity, skipActivity, repeatActivity, npActivity);
 	}
 
 	@Provides

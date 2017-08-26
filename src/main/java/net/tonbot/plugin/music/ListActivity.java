@@ -73,10 +73,6 @@ class ListActivity extends AudioSessionActivity {
 
 		appendUpNext(requestedPage, embedBuilder, sessionStatus, client, guild);
 
-		if (requestedPage == 0) {
-			appendPlaybackModifiers(embedBuilder, sessionStatus);
-		}
-
 		botUtils.sendEmbed(event.getChannel(), embedBuilder.build());
 	}
 
@@ -163,29 +159,5 @@ class ListActivity extends AudioSessionActivity {
 		}
 
 		embedBuilder.appendField("Next up:", sb.toString(), false);
-	}
-
-	private void appendPlaybackModifiers(
-			EmbedBuilder embedBuilder,
-			AudioSessionStatus sessionStatus) {
-
-		StringBuffer sb = new StringBuffer();
-
-		// Play Mode
-		PlayMode playMode = sessionStatus.getPlayMode();
-		if (playMode != PlayMode.STANDARD) {
-			sb.append(playMode.getEmote().orElse(playMode.getFriendlyName()));
-		}
-
-		// Loop Mode
-		RepeatMode loopMode = sessionStatus.getLoopMode();
-		if (loopMode != RepeatMode.OFF) {
-			sb.append(loopMode.getEmote().orElse(loopMode.name()));
-		}
-
-		String playbackModifiers = sb.toString();
-		if (!StringUtils.isBlank(playbackModifiers)) {
-			embedBuilder.appendField("Playback modifiers:", sb.toString(), false);
-		}
 	}
 }
