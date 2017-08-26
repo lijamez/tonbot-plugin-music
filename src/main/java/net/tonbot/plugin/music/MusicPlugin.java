@@ -1,7 +1,11 @@
 package net.tonbot.plugin.music;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Set;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Preconditions;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -17,13 +21,28 @@ public class MusicPlugin extends TonbotPlugin {
 
 	public MusicPlugin(TonbotPluginArgs pluginArgs) {
 		super(pluginArgs);
-		this.injector = Guice.createInjector(
-				new MusicModule(pluginArgs.getDiscordClient(), pluginArgs.getPrefix(), pluginArgs.getBotUtils()));
+
+		File configFile = pluginArgs.getConfigFile().orElse(null);
+		Preconditions.checkNotNull(configFile, "configFile must be non-null.");
+
+		ObjectMapper objectMapper = new ObjectMapper();
+
+		try {
+			MusicPluginConfig config = objectMapper.readValue(configFile, MusicPluginConfig.class);
+			this.injector = Guice.createInjector(
+					new MusicModule(
+							pluginArgs.getDiscordClient(),
+							pluginArgs.getPrefix(),
+							pluginArgs.getBotUtils(),
+							config.getYouTubeApiKey()));
+		} catch (IOException e) {
+			throw new RuntimeException("Could not read configuration file.", e);
+		}
 	}
 
 	@Override
 	public String getActionDescription() {
-		return "Play Music (Experimental)";
+		return "Play Music";
 	}
 
 	@Override

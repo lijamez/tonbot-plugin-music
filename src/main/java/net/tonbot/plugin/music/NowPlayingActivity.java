@@ -1,5 +1,7 @@
 package net.tonbot.plugin.music;
 
+import java.util.Map;
+
 import org.apache.commons.lang3.StringUtils;
 
 import com.google.common.base.Preconditions;
@@ -22,11 +24,16 @@ class NowPlayingActivity extends AudioSessionActivity {
 			.description("Shows what's playing.")
 			.build();
 
+	private final Map<String, EmbedAppender> embedAppenders;
 	private final BotUtils botUtils;
 
 	@Inject
-	public NowPlayingActivity(DiscordAudioPlayerManager discordAudioPlayerManager, BotUtils botUtils) {
+	public NowPlayingActivity(
+			DiscordAudioPlayerManager discordAudioPlayerManager,
+			Map<String, EmbedAppender> embedAppenders,
+			BotUtils botUtils) {
 		super(discordAudioPlayerManager);
+		this.embedAppenders = Preconditions.checkNotNull(embedAppenders, "embedAppenders must be non-null.");
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
 	}
 
@@ -57,23 +64,14 @@ class NowPlayingActivity extends AudioSessionActivity {
 				eb.withUrl(info.uri);
 			}
 
-			// Youtube Specific
-			if (StringUtils.equals(npTrack.getSourceManager().getSourceName(), "youtube")) {
-				eb.withThumbnail("https://img.youtube.com/vi/" + npTrack.getIdentifier() + "/hqdefault.jpg");
-			}
-
 			// Track State
-			String state = audioSession.isPaused() ? ":pause_button:" : ":arrow_forward:";
-			eb.appendDescription(state + " ");
+			eb.appendField("Time", renderPlaybackStatus(audioSession, npTrack), false);
 
-			String progressBar = renderProgressBar(npTrack);
-			String positionTime = TimeFormatter.toFriendlyString(npTrack.getPosition());
-			String remainingTime = "-" + TimeFormatter.toFriendlyString(npTrack.getDuration() - npTrack.getPosition());
-
-			eb.appendDescription(positionTime + " " + progressBar + " " + remainingTime + " ");
-
-			String playbackModifiers = renderPlaybackModifiers(status);
-			eb.appendDescription(playbackModifiers + "\n");
+			// Additional Embed Appenders
+			EmbedAppender embedAppender = embedAppenders.get(npTrack.getSourceManager().getSourceName());
+			if (embedAppender != null) {
+				embedAppender.appendDetails(npTrack, eb);
+			}
 
 			botUtils.sendEmbed(event.getChannel(), eb.build());
 		} else {
@@ -103,6 +101,23 @@ class NowPlayingActivity extends AudioSessionActivity {
 		}
 
 		sb.append("]``");
+
+		return sb.toString();
+	}
+
+	private String renderPlaybackStatus(AudioSession audioSession, AudioTrack npTrack) {
+		StringBuffer sb = new StringBuffer();
+		String state = audioSession.isPaused() ? ":pause_button:" : ":arrow_forward:";
+		sb.append(state + " ");
+
+		String progressBar = renderProgressBar(npTrack);
+		String positionTime = TimeFormatter.toFriendlyString(npTrack.getPosition());
+		String remainingTime = "-" + TimeFormatter.toFriendlyString(npTrack.getDuration() - npTrack.getPosition());
+
+		sb.append(positionTime + " " + progressBar + " " + remainingTime + " ");
+
+		String playbackModifiers = renderPlaybackModifiers(audioSession.getStatus());
+		sb.append(playbackModifiers + "\n");
 
 		return sb.toString();
 	}

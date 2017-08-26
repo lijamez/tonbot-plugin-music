@@ -30,7 +30,7 @@ dependencies {
     implementation group: 'com.github.lijamez', name: 'tonbot-common', version: 'master-SNAPSHOT'
 
 	implementation group: 'com.sedmelluq', name: 'lavaplayer', version: '1.2.42'
-	
+	implementation group: 'com.google.apis', name: 'google-api-services-youtube', version: 'v3-rev183-1.22.0'
 	implementation group: 'com.google.inject', name: 'guice', version: '4.1.0'
 	implementation group: 'com.google.guava', name: 'guava', version: '23.0'
 	implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'

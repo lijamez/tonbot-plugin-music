@@ -1,8 +1,10 @@
 package net.tonbot.plugin.music;
 
+import java.util.Map;
 import java.util.Set;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -29,11 +31,13 @@ class MusicModule extends AbstractModule {
 	private final IDiscordClient discordClient;
 	private final String prefix;
 	private final BotUtils botUtils;
+	private final String youTubeApiKey;
 
-	public MusicModule(IDiscordClient discordClient, String prefix, BotUtils botUtils) {
+	public MusicModule(IDiscordClient discordClient, String prefix, BotUtils botUtils, String youTubeApiKey) {
 		this.discordClient = Preconditions.checkNotNull(discordClient, "discordClient must be non-null.");
 		this.prefix = Preconditions.checkNotNull(prefix, "prefix must be non-null.");
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
+		this.youTubeApiKey = Preconditions.checkNotNull(youTubeApiKey, "youtubeApiKey must be non-null.");
 	}
 
 	@Override
@@ -42,6 +46,7 @@ class MusicModule extends AbstractModule {
 		bind(String.class).annotatedWith(Prefix.class).toInstance(prefix);
 		bind(BotUtils.class).toInstance(botUtils);
 		bind(DiscordAudioPlayerManager.class).in(Scopes.SINGLETON);
+		bind(String.class).annotatedWith(YouTubeApiKey.class).toInstance(youTubeApiKey);
 	}
 
 	@Provides
@@ -96,5 +101,13 @@ class MusicModule extends AbstractModule {
 	@Singleton
 	YoutubeSearchProvider youtubeSearchProvider(YoutubeAudioSourceManager yasm) {
 		return new YoutubeSearchProvider(yasm);
+	}
+
+	@Provides
+	@Singleton
+	Map<String, EmbedAppender> embedAppenders(YouTubeVideoEmbedAppender ytEmbedAppender) {
+		return new ImmutableMap.Builder<String, EmbedAppender>()
+				.put("youtube", ytEmbedAppender)
+				.build();
 	}
 }
