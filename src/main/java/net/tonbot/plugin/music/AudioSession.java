@@ -6,7 +6,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
@@ -49,7 +48,7 @@ class AudioSession extends AudioEventAdapter {
 
 	private final BotUtils botUtils;
 
-	private Playlist playlist;
+	private TrackManager trackManager;
 	private PlayMode playMode;
 
 	public AudioSession(
@@ -67,7 +66,7 @@ class AudioSession extends AudioEventAdapter {
 		this.searchResults = new HashMap<>();
 		this.defaultChannelId = defaultChannelId;
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
-		this.playlist = PlaylistSelector.sortedByAddTimestamp(new ArrayList<>());
+		this.trackManager = TrackManagers.sortedByAddTimestamp(new ArrayList<>());
 		this.playMode = PlayMode.STANDARD;
 	}
 
@@ -166,7 +165,7 @@ class AudioSession extends AudioEventAdapter {
 							track.setUserData(extraTrackInfo);
 						});
 
-						playlist.putAll(tracks);
+						trackManager.putAll(tracks);
 
 						StringBuffer sb = new StringBuffer();
 						sb.append("Added ").append(tracks.size()).append(" tracks from playlist");
@@ -239,7 +238,7 @@ class AudioSession extends AudioEventAdapter {
 				.addTimestamp(System.currentTimeMillis())
 				.build());
 
-		playlist.put(clonedTrack);
+		trackManager.put(clonedTrack);
 	}
 
 	/**
@@ -253,24 +252,12 @@ class AudioSession extends AudioEventAdapter {
 		}
 
 		if (audioPlayer.getPlayingTrack() == null) {
-			AudioTrack nextTrack;
-			try {
-				nextTrack = playlist.next();
-			} catch (NoSuchElementException e) {
-				nextTrack = null;
-			}
-
-			if (nextTrack != null) {
-				audioPlayer.startTrack(nextTrack, true);
-			}
+			playNext();
 		}
 	}
 
 	private void playNext() {
-		if (playlist.hasNext()) {
-			AudioTrack track = playlist.next();
-			audioPlayer.playTrack(track);
-		}
+		trackManager.next().ifPresent(nextTrack -> audioPlayer.playTrack(nextTrack));
 	}
 
 	/**
@@ -281,7 +268,7 @@ class AudioSession extends AudioEventAdapter {
 	public AudioSessionStatus getStatus() {
 		return AudioSessionStatus.builder()
 				.nowPlaying(audioPlayer.getPlayingTrack())
-				.upcomingTracks(playlist.getView())
+				.upcomingTracks(trackManager.getView())
 				.playMode(playMode)
 				.build();
 	}
@@ -329,9 +316,9 @@ class AudioSession extends AudioEventAdapter {
 		Preconditions.checkNotNull(mode, "mode must be non-null.");
 
 		if (mode == PlayMode.STANDARD) {
-			this.playlist = PlaylistSelector.sortedByAddTimestamp(this.playlist.getView());
+			this.trackManager = TrackManagers.sortedByAddTimestamp(this.trackManager.getView());
 		} else if (mode == PlayMode.SHUFFLED) {
-			this.playlist = PlaylistSelector.shuffled(this.playlist.getView());
+			this.trackManager = TrackManagers.shuffled(this.trackManager.getView());
 		} else {
 			throw new IllegalArgumentException("Unknown PlayMode " + mode);
 		}
@@ -352,10 +339,10 @@ class AudioSession extends AudioEventAdapter {
 			return Optional.empty();
 		}
 
-		try {
-			AudioTrack nextTrack = playlist.next();
-			audioPlayer.playTrack(nextTrack);
-		} catch (NoSuchElementException e) {
+		Optional<AudioTrack> nextTrack = trackManager.next();
+		if (nextTrack.isPresent()) {
+			audioPlayer.playTrack(nextTrack.get());
+		} else {
 			this.stop();
 		}
 
@@ -372,8 +359,8 @@ class AudioSession extends AudioEventAdapter {
 	 *             if the provided index is not within playlist bounds.
 	 */
 	public AudioTrack skip(int i) {
-		AudioTrack trackToSkip = this.playlist.getView().get(i);
-		this.playlist.remove(trackToSkip);
+		AudioTrack trackToSkip = this.trackManager.getView().get(i);
+		this.trackManager.remove(trackToSkip);
 		return trackToSkip;
 	}
 
@@ -389,10 +376,10 @@ class AudioSession extends AudioEventAdapter {
 		searchResults.remove(user.getLongID());
 	}
 
-	private static class PlaylistSelector {
+	private static class TrackManagers {
 
-		public static SortedPlaylist sortedByAddTimestamp(Collection<AudioTrack> tracks) {
-			return new SortedPlaylist(tracks, new Comparator<AudioTrack>() {
+		public static SortingTrackManager sortedByAddTimestamp(Collection<AudioTrack> tracks) {
+			return new SortingTrackManager(tracks, new Comparator<AudioTrack>() {
 
 				@Override
 				public int compare(AudioTrack t1, AudioTrack t2) {
@@ -411,8 +398,8 @@ class AudioSession extends AudioEventAdapter {
 			});
 		}
 
-		public static ShuffledPlaylist shuffled(Collection<AudioTrack> tracks) {
-			return new ShuffledPlaylist(tracks);
+		public static ShufflingTrackManager shuffled(Collection<AudioTrack> tracks) {
+			return new ShufflingTrackManager(tracks);
 		}
 	}
 }
