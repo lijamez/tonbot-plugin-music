@@ -79,11 +79,10 @@ class VoiceChannelEventListener {
 			if (otherUsersCount == 1) {
 				// Someone just joined.
 				audioSession.setPaused(false);
-				botUtils.sendMessage(defaultChannel, "Unpaused due to user join.");
 			} else if (otherUsersCount == 0) {
 				// Everyone left.
 				audioSession.setPaused(true);
-				botUtils.sendMessage(defaultChannel, "Paused due to everyone leaving.");
+				botUtils.sendMessage(defaultChannel, "Paused because everyone left the voice channel.");
 			}
 		} finally {
 			discordAudioPlayerManager.checkin(guild);

@@ -164,7 +164,7 @@ class AudioSession extends AudioEventAdapter {
 				public void trackLoaded(AudioTrack audioTrack) {
 					enqueue(audioTrack, user);
 
-					botUtils.sendMessage(channel, "Queued track: **" + audioTrack.getInfo().title + "** by **"
+					botUtils.sendMessage(channel, "**" + audioTrack.getInfo().title + "** was queued by **"
 							+ user.getNicknameForGuild(channel.getGuild()) + "**");
 				}
 
@@ -208,7 +208,7 @@ class AudioSession extends AudioEventAdapter {
 						AudioPlaylist queryResults = (AudioPlaylist) audioItem;
 
 						StringBuffer sb = new StringBuffer();
-						sb.append("Search Results:\n\n");
+						sb.append("**Search Results:**\n");
 
 						for (int i = 0; i < queryResults.getTracks().size(); i++) {
 							AudioTrack track = queryResults.getTracks().get(i);
