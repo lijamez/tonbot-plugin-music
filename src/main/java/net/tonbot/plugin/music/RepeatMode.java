@@ -2,14 +2,26 @@ package net.tonbot.plugin.music;
 
 import java.util.Optional;
 
-enum PlayMode {
+enum RepeatMode {
+	/**
+	 * Repeating is disabled.
+	 */
+	OFF(null, "Off"),
 
-	STANDARD(null, "Standard"), SHUFFLE(":twisted_rightwards_arrows:", "Shuffle");
+	/**
+	 * Loop the whole playlist.
+	 */
+	ALL(":repeat:", "All"),
+
+	/**
+	 * Look a single track.
+	 */
+	ONE(":repeat_one:", "One");
 
 	private final String emote;
 	private final String friendlyName;
 
-	private PlayMode(String emote, String friendlyName) {
+	private RepeatMode(String emote, String friendlyName) {
 		this.emote = emote;
 		this.friendlyName = friendlyName;
 	}

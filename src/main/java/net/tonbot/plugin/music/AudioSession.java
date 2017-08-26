@@ -50,6 +50,7 @@ class AudioSession extends AudioEventAdapter {
 
 	private TrackManager trackManager;
 	private PlayMode playMode;
+	private RepeatMode repeatMode;
 
 	public AudioSession(
 			IDiscordClient discordClient,
@@ -68,6 +69,7 @@ class AudioSession extends AudioEventAdapter {
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
 		this.trackManager = TrackManagers.sortedByAddTimestamp(new ArrayList<>());
 		this.playMode = PlayMode.STANDARD;
+		this.repeatMode = RepeatMode.OFF;
 	}
 
 	@Override
@@ -88,7 +90,19 @@ class AudioSession extends AudioEventAdapter {
 	@Override
 	public void onTrackEnd(AudioPlayer player, AudioTrack audioTrack, AudioTrackEndReason endReason) {
 		if (endReason.mayStartNext) {
-			playNext();
+
+			if (repeatMode == RepeatMode.ONE) {
+				// Play it again.
+				player.playTrack(clone(audioTrack));
+			} else {
+
+				if (repeatMode == RepeatMode.ALL) {
+					// Enqueue the track again.
+					trackManager.put(clone(audioTrack));
+				}
+
+				playNext();
+			}
 		}
 
 		// endReason == FINISHED: A track finished or died by an exception (mayStartNext
@@ -113,10 +127,12 @@ class AudioSession extends AudioEventAdapter {
 	@Override
 	public void onTrackStuck(AudioPlayer player, AudioTrack track, long thresholdMs) {
 		// Audio track has been unable to provide us any audio, might want to just start
-		// a new track
+		// a new track.
+
 		IChannel channel = discordClient.getChannelByID(defaultChannelId);
 		botUtils.sendMessage(channel, "Track is stuck. Moving right along...");
-		playNext();
+
+		skip();
 	}
 
 	/**
@@ -232,13 +248,7 @@ class AudioSession extends AudioEventAdapter {
 		Preconditions.checkNotNull(track, "track must be non-null.");
 		Preconditions.checkNotNull(user, "user must be non-null.");
 
-		AudioTrack clonedTrack = track.makeClone();
-		clonedTrack.setUserData(ExtraTrackInfo.builder()
-				.addedByUserId(user.getLongID())
-				.addTimestamp(System.currentTimeMillis())
-				.build());
-
-		trackManager.put(clonedTrack);
+		trackManager.put(clone(track));
 	}
 
 	/**
@@ -270,6 +280,7 @@ class AudioSession extends AudioEventAdapter {
 				.nowPlaying(audioPlayer.getPlayingTrack())
 				.upcomingTracks(trackManager.getView())
 				.playMode(playMode)
+				.loopMode(repeatMode)
 				.build();
 	}
 
@@ -312,18 +323,30 @@ class AudioSession extends AudioEventAdapter {
 	 * @param mode
 	 *            {@link PlayMode}. Non-null.
 	 */
-	public void setMode(PlayMode mode) {
+	public void setPlayMode(PlayMode mode) {
 		Preconditions.checkNotNull(mode, "mode must be non-null.");
 
 		if (mode == PlayMode.STANDARD) {
 			this.trackManager = TrackManagers.sortedByAddTimestamp(this.trackManager.getView());
-		} else if (mode == PlayMode.SHUFFLED) {
+		} else if (mode == PlayMode.SHUFFLE) {
 			this.trackManager = TrackManagers.shuffled(this.trackManager.getView());
 		} else {
 			throw new IllegalArgumentException("Unknown PlayMode " + mode);
 		}
 
 		this.playMode = mode;
+	}
+
+	/**
+	 * Sets the {@link RepeatMode}.
+	 * 
+	 * @param value
+	 *            The {@link RepeatMode}. Non-null.
+	 */
+	public void setLoopingMode(RepeatMode mode) {
+		Preconditions.checkNotNull(mode, "mode must be non-null.");
+
+		this.repeatMode = mode;
 	}
 
 	/**
@@ -341,6 +364,12 @@ class AudioSession extends AudioEventAdapter {
 
 		Optional<AudioTrack> nextTrack = trackManager.next();
 		if (nextTrack.isPresent()) {
+
+			if (repeatMode == RepeatMode.ALL) {
+				// Enqueue the skipped track again.
+				trackManager.put(clone(skipTrack));
+			}
+
 			audioPlayer.playTrack(nextTrack.get());
 		} else {
 			this.stop();
@@ -374,6 +403,18 @@ class AudioSession extends AudioEventAdapter {
 		Preconditions.checkNotNull(user, "user must be non-null.");
 
 		searchResults.remove(user.getLongID());
+	}
+
+	private AudioTrack clone(AudioTrack originalAudioTrack) {
+		AudioTrack clonedAudioTrack = originalAudioTrack.makeClone();
+		ExtraTrackInfo originalExtraTrackInfo = originalAudioTrack.getUserData(ExtraTrackInfo.class);
+
+		clonedAudioTrack.setUserData(ExtraTrackInfo.builder()
+				.addedByUserId(originalExtraTrackInfo.getAddedByUserId())
+				.addTimestamp(System.currentTimeMillis())
+				.build());
+
+		return clonedAudioTrack;
 	}
 
 	private static class TrackManagers {

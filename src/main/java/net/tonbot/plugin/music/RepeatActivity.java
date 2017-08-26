@@ -15,22 +15,23 @@ import net.tonbot.common.BotUtils;
 import net.tonbot.common.TonbotBusinessException;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 
-class ModeActivity extends AudioSessionActivity {
+public class RepeatActivity extends AudioSessionActivity {
 
-	private static final List<String> FRIENDLY_MODE_NAMES = Arrays.asList(PlayMode.values()).stream()
-			.map(pm -> pm.getFriendlyName())
+	private static final List<String> FRIENDLY_REPEAT_MODES = Arrays.asList(RepeatMode.values())
+			.stream()
+			.map(m -> m.getFriendlyName())
 			.collect(Collectors.toList());
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
-			.route(ImmutableList.of("music", "mode"))
+			.route(ImmutableList.of("music", "repeat"))
 			.parameters(ImmutableList.of("mode"))
-			.description("Sets the play mode to one of: " + FRIENDLY_MODE_NAMES)
+			.description("Sets the repeat mode to one of: " + FRIENDLY_REPEAT_MODES)
 			.build();
 
 	private final BotUtils botUtils;
 
 	@Inject
-	public ModeActivity(DiscordAudioPlayerManager discordAudioPlayerManager, BotUtils botUtils) {
+	public RepeatActivity(DiscordAudioPlayerManager discordAudioPlayerManager, BotUtils botUtils) {
 		super(discordAudioPlayerManager);
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
 	}
@@ -42,24 +43,24 @@ class ModeActivity extends AudioSessionActivity {
 
 	@Override
 	protected void enactWithSession(MessageReceivedEvent event, String args, AudioSession audioSession) {
-		PlayMode targetPlayMode;
+		RepeatMode targetRepeatMode;
 		if (StringUtils.isBlank(args)) {
 			// Scroll through the various modes.
-			PlayMode currentMode = audioSession.getStatus().getPlayMode();
+			RepeatMode currentMode = audioSession.getStatus().getLoopMode();
 			int currentModeOrdinal = currentMode.ordinal();
 			int nextModeOrdinal = (currentModeOrdinal + 1) % RepeatMode.values().length;
-			targetPlayMode = PlayMode.values()[nextModeOrdinal];
+			targetRepeatMode = RepeatMode.values()[nextModeOrdinal];
 		} else {
 			// Find the desired repeat mode or else fail.
-			targetPlayMode = Arrays.asList(PlayMode.values()).stream()
+			targetRepeatMode = Arrays.asList(RepeatMode.values()).stream()
 					.filter(repeatMode -> StringUtils.equalsIgnoreCase(repeatMode.getFriendlyName(), args.trim()))
 					.findFirst()
 					.orElseThrow(() -> new TonbotBusinessException(
-							"Invalid play mode. You can enter one of: ``" + FRIENDLY_MODE_NAMES + "``"));
+							"Invalid repeat mode. You can enter one of: ``" + FRIENDLY_REPEAT_MODES + "``"));
 		}
 
-		audioSession.setPlayMode(targetPlayMode);
-		botUtils.sendMessage(event.getChannel(), "Play mode has been changed to: "
-				+ targetPlayMode.getEmote().orElse("") + "``" + targetPlayMode.getFriendlyName() + "``");
+		audioSession.setLoopingMode(targetRepeatMode);
+		botUtils.sendMessage(event.getChannel(), "Repeat mode has been changed to: "
+				+ targetRepeatMode.getEmote().orElse("") + "``" + targetRepeatMode.getFriendlyName() + "``");
 	}
 }

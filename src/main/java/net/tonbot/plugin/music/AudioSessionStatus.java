@@ -16,15 +16,21 @@ class AudioSessionStatus {
 	private final AudioTrack nowPlaying;
 	private final List<AudioTrack> upcomingTracks;
 	private final PlayMode playMode;
+	private final RepeatMode loopMode;
 
 	@Builder
-	private AudioSessionStatus(AudioTrack nowPlaying, List<AudioTrack> upcomingTracks, PlayMode playMode) {
+	private AudioSessionStatus(
+			AudioTrack nowPlaying,
+			List<AudioTrack> upcomingTracks,
+			PlayMode playMode,
+			RepeatMode loopMode) {
 		this.nowPlaying = nowPlaying;
 
 		Preconditions.checkNotNull(upcomingTracks, "upcomingTracks must be non-null.");
 		this.upcomingTracks = ImmutableList.copyOf(upcomingTracks);
 
 		this.playMode = Preconditions.checkNotNull(playMode, "playMode must be non-null.");
+		this.loopMode = Preconditions.checkNotNull(loopMode, "loopMode must be non-null.");
 	}
 
 	public Optional<AudioTrack> getNowPlaying() {
