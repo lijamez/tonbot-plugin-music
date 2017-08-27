@@ -24,7 +24,7 @@ import sx.blah.discord.util.EmbedBuilder;
 class YouTubeVideoEmbedAppender implements EmbedAppender {
 
 	private static final int MAX_DESCRIPTION_LENGTH = 800;
-	private static final String TRUNCATION_INDICATOR = "...";
+	private static final String TRUNCATION_INDICATOR = "…";
 	private static final String YOUTUBE_CHANNEL_URL_BASE = "http://www.youtube.com/channel/";
 
 	private final String ytApiKey;
