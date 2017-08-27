@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -20,6 +22,10 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import sx.blah.discord.util.EmbedBuilder;
 
 class YouTubeVideoEmbedAppender implements EmbedAppender {
+
+	private static final int MAX_DESCRIPTION_LENGTH = 800;
+	private static final String TRUNCATION_INDICATOR = "...";
+	private static final String YOUTUBE_CHANNEL_URL_BASE = "http://www.youtube.com/channel/";
 
 	private final String ytApiKey;
 	private final YouTube yt;
@@ -51,7 +57,15 @@ class YouTubeVideoEmbedAppender implements EmbedAppender {
 		String channelThumbnail = channel.getSnippet().getThumbnails().getDefault().getUrl();
 
 		embedBuilder.withThumbnail(videoThumbnailUrl);
+
 		embedBuilder.withAuthorIcon(channelThumbnail);
+		embedBuilder.withAuthorUrl(YOUTUBE_CHANNEL_URL_BASE + channel.getId());
+
+		if (description.length() > MAX_DESCRIPTION_LENGTH) {
+			description = StringUtils.truncate(description, MAX_DESCRIPTION_LENGTH - TRUNCATION_INDICATOR.length())
+					+ TRUNCATION_INDICATOR;
+		}
+
 		embedBuilder.appendField("Description", description, false);
 	}
 
