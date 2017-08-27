@@ -154,8 +154,15 @@ class ListActivity extends AudioSessionActivity {
 
 			if (totalPagesCount > 1) {
 				sb.append("\n\nPage **").append(page + 1).append("** of **").append(totalPagesCount)
-						.append("**. Total tracks: **").append(upcomingTracks.size()).append("**");
+						.append("**.");
 			}
+
+			long totalDuration = upcomingTracks.stream()
+					.map(track -> track.getDuration())
+					.reduce(0L, (i, j) -> i + j);
+
+			sb.append("\n\nThe queue contains **").append(upcomingTracks.size()).append("** tracks and is **")
+					.append(TimeFormatter.toFriendlyString(totalDuration)).append("** long.");
 		}
 
 		embedBuilder.appendField("Next up:", sb.toString(), false);
