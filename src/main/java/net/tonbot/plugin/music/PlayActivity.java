@@ -16,6 +16,7 @@ import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.IGuild;
 import sx.blah.discord.handle.obj.IMessage;
+import sx.blah.discord.handle.obj.IMessage.Attachment;
 import sx.blah.discord.handle.obj.IUser;
 import sx.blah.discord.util.RequestBuilder;
 
@@ -84,7 +85,14 @@ class PlayActivity extends AudioSessionActivity {
 
 		// 2) The user might have entered a link to a track.
 		if (!StringUtils.isBlank(args)) {
-			audioSession.enqueue(args, guild, user);
+			audioSession.enqueue(args, user);
+			event.getMessage().delete();
+		} else if (!event.getMessage().getAttachments().isEmpty()) {
+			// 3) Maybe the user attached a file.
+			Attachment attachment = event.getMessage().getAttachments().get(0);
+
+			audioSession.enqueue(attachment.getUrl(), user);
+
 			event.getMessage().delete();
 		}
 

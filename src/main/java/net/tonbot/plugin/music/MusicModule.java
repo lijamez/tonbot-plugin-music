@@ -74,7 +74,9 @@ class MusicModule extends AbstractModule {
 
 	@Provides
 	@Singleton
-	AudioPlayerManager audioPlayerManager(YoutubeAudioSourceManager yasm) {
+	AudioPlayerManager audioPlayerManager(
+			YoutubeAudioSourceManager yasm,
+			ITunesPlaylistSourceManager itunesPlaylistSourceManager) {
 		AudioPlayerManager apm = new DefaultAudioPlayerManager();
 		apm.enableGcMonitoring();
 
@@ -86,6 +88,7 @@ class MusicModule extends AbstractModule {
 		apm.registerSourceManager(new VimeoAudioSourceManager());
 		apm.registerSourceManager(new TwitchStreamAudioSourceManager());
 		apm.registerSourceManager(new BeamAudioSourceManager());
+		apm.registerSourceManager(itunesPlaylistSourceManager);
 		apm.registerSourceManager(new HttpAudioSourceManager());
 
 		return apm;

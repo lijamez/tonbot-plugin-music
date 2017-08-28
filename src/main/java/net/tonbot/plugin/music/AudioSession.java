@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -28,11 +29,16 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
 
 import lombok.Getter;
 import net.tonbot.common.BotUtils;
+import net.tonbot.common.TonbotBusinessException;
+import net.tonbot.common.TonbotTechnicalFault;
 import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.handle.obj.IChannel;
-import sx.blah.discord.handle.obj.IGuild;
 import sx.blah.discord.handle.obj.IMessage;
 import sx.blah.discord.handle.obj.IUser;
+import sx.blah.discord.util.DiscordException;
+import sx.blah.discord.util.MissingPermissionsException;
+import sx.blah.discord.util.RateLimitException;
+import sx.blah.discord.util.RequestBuffer;
 
 class AudioSession extends AudioEventAdapter {
 
@@ -143,19 +149,20 @@ class AudioSession extends AudioEventAdapter {
 	 * 
 	 * @param identifier
 	 *            An identifier for the track. Non-null.
-	 * @param channel
-	 *            {@link IChannel}. Non-null.
 	 * @param user
 	 *            The {@link IUser} that queued the track. Non-null.
 	 * @throws IllegalStateException
 	 *             If there is no session.
 	 */
-	public void enqueue(String identifier, IGuild guild, IUser user) {
+	public void enqueue(String identifier, IUser user) {
 		Preconditions.checkNotNull(identifier, "identifier must be non-null.");
-		Preconditions.checkNotNull(guild, "guild must be non-null.");
 		Preconditions.checkNotNull(user, "user must be non-null.");
 
-		IChannel channel = guild.getClient().getChannelByID(defaultChannelId);
+		IChannel channel = discordClient.getChannelByID(defaultChannelId);
+
+		Future<IMessage> ackMessageFuture = RequestBuffer.request(() -> {
+			return channel.sendMessage("Finding tracks for ``" + identifier + "``...");
+		});
 
 		try {
 			audioPlayerManager.loadItem(identifier, new AudioLoadResultHandler() {
@@ -231,12 +238,29 @@ class AudioSession extends AudioEventAdapter {
 
 				@Override
 				public void loadFailed(FriendlyException exception) {
-					botUtils.sendMessage(channel, "I couldn't load it.\n" + exception.getMessage());
+					StringBuffer sb = new StringBuffer();
+					sb.append(exception.getMessage());
+					Throwable cause = exception.getCause();
+					if (cause != null && cause instanceof TonbotBusinessException) {
+						sb.append("\n");
+						sb.append(cause.getMessage());
+					}
+					botUtils.sendMessage(channel, sb.toString());
 				}
 
 			}).get();
 		} catch (InterruptedException | ExecutionException e) {
-			LOG.error("Failed to load a track.", e);
+			throw new TonbotTechnicalFault("Failed to load track(s).", e);
+		} finally {
+			try {
+				IMessage ackMessage = ackMessageFuture.get();
+				ackMessage.delete();
+			} catch (InterruptedException | ExecutionException | DiscordException | RateLimitException
+					| MissingPermissionsException e) {
+				// NBD if the ack message failed to send or if the ack message couldn't be
+				// deleted.
+			}
+
 		}
 	}
 
