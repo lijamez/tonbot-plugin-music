@@ -1,6 +1,6 @@
 package net.tonbot.plugin.music;
 
-import java.util.Map;
+import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -24,13 +24,13 @@ class NowPlayingActivity extends AudioSessionActivity {
 			.description("Shows what's playing.")
 			.build();
 
-	private final Map<String, EmbedAppender> embedAppenders;
+	private final List<EmbedAppender> embedAppenders;
 	private final BotUtils botUtils;
 
 	@Inject
 	public NowPlayingActivity(
 			DiscordAudioPlayerManager discordAudioPlayerManager,
-			Map<String, EmbedAppender> embedAppenders,
+			List<EmbedAppender> embedAppenders,
 			BotUtils botUtils) {
 		super(discordAudioPlayerManager);
 		this.embedAppenders = Preconditions.checkNotNull(embedAppenders, "embedAppenders must be non-null.");
@@ -68,9 +68,12 @@ class NowPlayingActivity extends AudioSessionActivity {
 			eb.appendField("Time", renderPlaybackStatus(audioSession, npTrack), false);
 
 			// Additional Embed Appenders
-			EmbedAppender embedAppender = embedAppenders.get(npTrack.getSourceManager().getSourceName());
-			if (embedAppender != null) {
-				embedAppender.appendDetails(npTrack, eb);
+			for (EmbedAppender ea : embedAppenders) {
+				Class<? extends AudioTrack> type = ea.getAppendableType();
+				if (type.isAssignableFrom(npTrack.getClass())) {
+					ea.appendDetails(npTrack, eb);
+					break;
+				}
 			}
 
 			botUtils.sendEmbed(event.getChannel(), eb.build());

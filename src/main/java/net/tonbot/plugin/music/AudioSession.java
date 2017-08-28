@@ -11,8 +11,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
@@ -41,8 +39,6 @@ import sx.blah.discord.util.RateLimitException;
 import sx.blah.discord.util.RequestBuffer;
 
 class AudioSession extends AudioEventAdapter {
-
-	private static final Logger LOG = LoggerFactory.getLogger(AudioSession.class);
 
 	private final IDiscordClient discordClient;
 	private final AudioPlayerManager audioPlayerManager;
@@ -128,7 +124,8 @@ class AudioSession extends AudioEventAdapter {
 		// An already playing track threw an exception (track end event will still be
 		// received separately)
 		IChannel channel = discordClient.getChannelByID(defaultChannelId);
-		botUtils.sendMessage(channel, "Failed to play track: " + exception.getMessage());
+		botUtils.sendMessage(channel,
+				"Failed to play **" + track.getInfo().title + "**: " + formatFriendlyException(exception));
 	}
 
 	@Override
@@ -137,7 +134,7 @@ class AudioSession extends AudioEventAdapter {
 		// a new track.
 
 		IChannel channel = discordClient.getChannelByID(defaultChannelId);
-		botUtils.sendMessage(channel, "Track is stuck. Moving right along...");
+		botUtils.sendMessage(channel, "Track **" + track.getInfo().title + "** is stuck. Moving right along...");
 
 		skip();
 	}
@@ -238,14 +235,7 @@ class AudioSession extends AudioEventAdapter {
 
 				@Override
 				public void loadFailed(FriendlyException exception) {
-					StringBuffer sb = new StringBuffer();
-					sb.append(exception.getMessage());
-					Throwable cause = exception.getCause();
-					if (cause != null && cause instanceof TonbotBusinessException) {
-						sb.append("\n");
-						sb.append(cause.getMessage());
-					}
-					botUtils.sendMessage(channel, sb.toString());
+					botUtils.sendMessage(channel, formatFriendlyException(exception));
 				}
 
 			}).get();
@@ -449,6 +439,15 @@ class AudioSession extends AudioEventAdapter {
 				.build());
 
 		return clonedAudioTrack;
+	}
+
+	private String formatFriendlyException(FriendlyException friendlyException) {
+		Throwable cause = friendlyException.getCause();
+		if (cause != null && cause instanceof TonbotBusinessException) {
+			return cause.getMessage();
+		} else {
+			return friendlyException.getMessage();
+		}
 	}
 
 	private static class TrackManagers {

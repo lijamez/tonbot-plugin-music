@@ -1,10 +1,10 @@
 package net.tonbot.plugin.music;
 
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -108,9 +108,7 @@ class MusicModule extends AbstractModule {
 
 	@Provides
 	@Singleton
-	Map<String, EmbedAppender> embedAppenders(YouTubeVideoEmbedAppender ytEmbedAppender) {
-		return new ImmutableMap.Builder<String, EmbedAppender>()
-				.put("youtube", ytEmbedAppender)
-				.build();
+	List<EmbedAppender> embedAppenders(YouTubeVideoEmbedAppender ytEmbedAppender) {
+		return ImmutableList.of(ytEmbedAppender);
 	}
 }
