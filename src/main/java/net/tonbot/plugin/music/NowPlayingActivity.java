@@ -87,6 +87,9 @@ class NowPlayingActivity extends AudioSessionActivity {
 		long duration = track.getDuration();
 		long position = track.getPosition();
 
+		// Guarantees that position <= duration for rendering purposes.
+		position = position > duration ? duration : position;
+
 		// Subtracted by 2 because to take the square brackets into account.
 		int totalSpaces = PROGRESS_BAR_WIDTH - 2;
 		int numDots = (int) (totalSpaces * ((double) position / duration));
