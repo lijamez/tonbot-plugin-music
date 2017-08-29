@@ -12,6 +12,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
 import net.tonbot.common.ActivityDescriptor;
 import net.tonbot.common.BotUtils;
+import net.tonbot.common.Prefix;
 import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.IMessage;
@@ -21,29 +22,53 @@ import sx.blah.discord.util.RequestBuilder;
 
 class PlayActivity extends AudioSessionActivity {
 
-	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
-			.route(ImmutableList.of("music", "play"))
-			.parameters(ImmutableList.of("link to song"))
-			.description(
-					"Plays the song provided by the link. If no song link is provided, then it unpauses the player.")
-			.build();
-
+	private final ActivityDescriptor activityDescriptor; 
 	private final IDiscordClient discordClient;
 	private final BotUtils botUtils;
 
 	@Inject
 	public PlayActivity(
+			@Prefix String prefix,
 			IDiscordClient discordClient,
 			DiscordAudioPlayerManager discordAudioPlayerManager,
 			BotUtils botUtils) {
 		super(discordAudioPlayerManager);
 		this.discordClient = Preconditions.checkNotNull(discordClient, "discordClient must be non-null.");
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
+		this.activityDescriptor = ActivityDescriptor.builder()
+				.route(ImmutableList.of("music", "play"))
+				.parameters(ImmutableList.of("link to song"))
+				.description(
+						"Plays the song provided by the link. If no song link is provided, then it unpauses the player.")
+				.usageDescription("**Playing track(s) via direct link to a track or playlist:**\n"
+						+ "```" + prefix + " music play https://www.youtube.com/watch?v=dQw4w9WgXcQ```\n"
+						+ "The following services are supported:\n"
+						+ "- YouTube\n"
+						+ "- SoundCloud\n"
+						+ "- Bandcamp\n"
+						+ "- Vimeo\n"
+						+ "- Twitch\n"
+						+ "- Beam.pro\n"
+						+ "- iTunes Playlist (in Unicode Text format)\n"
+						+ "- HTTP Audio File\n"
+						+ "\n"
+						+ "**Playing a track via searching YouTube:**\n"
+						+ "```" + prefix + " music play the sound of silence```\n"
+						+ "You'll get a list of search results. Say ``" + prefix + " music play #`` to play that result.\n"
+						+ "\n"
+						+ "**Playing track(s) by iTunes playlist upload:**\n"
+						+ "Send your iTunes playlist export as an attachment with the message ``" + prefix + " music play``. For best results, make sure your tracks' title and artist metadata fields are correct.\n"
+						+ "To export an iTunes playlist, click on a playlist, then go to File > Library > Export Playlist. In the save dialog, make sure the format is **Unicode Text**.\n"
+						+ "\n"
+						+ "**Resuming playback:**\n"
+						+ "```" + prefix + " music play```\n"
+						+ "Saying the command without any arguments or attachments will unpause playback.")
+				.build();
 	}
 
 	@Override
 	public ActivityDescriptor getDescriptor() {
-		return ACTIVITY_DESCRIPTOR;
+		return activityDescriptor;
 	}
 
 	@Override
