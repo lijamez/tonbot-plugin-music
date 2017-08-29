@@ -23,14 +23,12 @@ class SortingTrackManager implements TrackManager {
 	/**
 	 * Sorts the tracks using a given comparator.
 	 * 
-	 * @param tracks
-	 *            A collection of {@link AudioTrack}s. Non-null.
 	 * @param comparator
 	 *            The comparator which will be used to sort the {@link AudioTrack}s.
 	 *            Non-null.
 	 */
-	public SortingTrackManager(Collection<AudioTrack> tracks, Comparator<AudioTrack> comparator) {
-		Preconditions.checkNotNull(tracks, "tracks must be non-null.");
+	public SortingTrackManager(Comparator<AudioTrack> comparator) {
+		Preconditions.checkNotNull(comparator, "comparator must be non-null.");
 		this.tracks = new LinkedList<>();
 		this.tracks.addAll(tracks);
 		this.comparator = Preconditions.checkNotNull(comparator, "comparator must be non-null.");

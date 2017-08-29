@@ -72,10 +72,8 @@ class AudioSession extends AudioEventAdapter {
 		this.searchResultsByUserId = new HashMap<>();
 		this.defaultChannelId = defaultChannelId;
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
-		// TODO: For testing only
-		this.trackManager = TrackManagers.roundRobin(new ArrayList<>());
-		this.playMode = PlayMode.ROUND_ROBIN;
 		this.repeatMode = RepeatMode.OFF;
+		setPlayMode(PlayMode.STANDARD);
 	}
 
 	@Override
@@ -355,13 +353,20 @@ class AudioSession extends AudioEventAdapter {
 	public void setPlayMode(PlayMode mode) {
 		Preconditions.checkNotNull(mode, "mode must be non-null.");
 
+		List<AudioTrack> audioTracks;
+		if (this.trackManager == null) {
+			audioTracks = new ArrayList<>();
+		} else {
+			audioTracks = this.trackManager.getView();
+		}
+
 		if (mode == PlayMode.STANDARD) {
-			this.trackManager = TrackManagers.sortedByAddTimestamp(this.trackManager.getView());
+			this.trackManager = TrackManagers.sortedByAddTimestamp(audioTracks);
 		} else if (mode == PlayMode.SHUFFLE) {
-			this.trackManager = TrackManagers.shuffled(this.trackManager.getView());
+			this.trackManager = TrackManagers.shuffled(audioTracks);
 		} else if (mode == PlayMode.ROUND_ROBIN) {
 			// TODO: Switching mode away from Round robin will only grab a subset of tracks.
-			this.trackManager = TrackManagers.roundRobin(this.trackManager.getView());
+			this.trackManager = TrackManagers.roundRobin(audioTracks);
 		} else {
 			throw new IllegalArgumentException("Unknown PlayMode " + mode);
 		}
@@ -471,7 +476,7 @@ class AudioSession extends AudioEventAdapter {
 	private static class TrackManagers {
 
 		public static SortingTrackManager sortedByAddTimestamp(Collection<AudioTrack> tracks) {
-			return new SortingTrackManager(tracks, new Comparator<AudioTrack>() {
+			SortingTrackManager trackManager = new SortingTrackManager(new Comparator<AudioTrack>() {
 
 				@Override
 				public int compare(AudioTrack t1, AudioTrack t2) {
@@ -486,12 +491,16 @@ class AudioSession extends AudioEventAdapter {
 
 					return 0;
 				}
-
 			});
+			trackManager.putAll(tracks);
+
+			return trackManager;
 		}
 
 		public static ShufflingTrackManager shuffled(Collection<AudioTrack> tracks) {
-			return new ShufflingTrackManager(tracks);
+			ShufflingTrackManager trackManager = new ShufflingTrackManager();
+			trackManager.putAll(tracks);
+			return trackManager;
 		}
 
 		public static RoundRobinTrackManager roundRobin(Collection<AudioTrack> tracks) {

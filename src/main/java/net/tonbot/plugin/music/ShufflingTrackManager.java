@@ -1,8 +1,6 @@
 package net.tonbot.plugin.music;
 
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -27,13 +25,8 @@ class ShufflingTrackManager implements TrackManager {
 	 * @param tracks
 	 *            A collection of {@link AudioTrack}s. Non-null.
 	 */
-	public ShufflingTrackManager(Collection<AudioTrack> tracks) {
-		Preconditions.checkNotNull(tracks, "tracks must be non-null.");
-
-		List<AudioTrack> randomizedTracklist = Arrays.asList(tracks.toArray(new AudioTrack[0]));
-		Collections.shuffle(randomizedTracklist);
-
-		this.tracks = new LinkedList<>(randomizedTracklist);
+	public ShufflingTrackManager() {
+		this.tracks = new LinkedList<>();
 		this.lock = new ReentrantReadWriteLock();
 	}
 
