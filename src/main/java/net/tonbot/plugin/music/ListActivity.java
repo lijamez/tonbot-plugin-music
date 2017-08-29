@@ -2,6 +2,7 @@ package net.tonbot.plugin.music;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -102,8 +103,10 @@ class ListActivity extends AudioSessionActivity {
 			StringBuffer descSb = new StringBuffer();
 
 			StringBuffer timeSb = new StringBuffer();
-			timeSb.append("``[").append(TimeFormatter.toFriendlyString(nowPlaying.getPosition())).append("/")
-					.append(TimeFormatter.toFriendlyString(nowPlaying.getDuration())).append("]``");
+			timeSb.append("``[").append(TimeFormatter.toFriendlyString(nowPlaying.getPosition(), TimeUnit.MILLISECONDS))
+					.append("/")
+					.append(TimeFormatter.toFriendlyString(nowPlaying.getDuration(), TimeUnit.MILLISECONDS))
+					.append("]``");
 			descSb.append(timeSb);
 
 			ExtraTrackInfo extraTrackInfo = nowPlaying.getUserData(ExtraTrackInfo.class);
@@ -141,7 +144,8 @@ class ListActivity extends AudioSessionActivity {
 				String trackString = new StringBuffer()
 						.append("``[").append(i + 1).append("]`` **")
 						.append(track.getInfo().title)
-						.append("** (").append(TimeFormatter.toFriendlyString(track.getDuration()))
+						.append("** (")
+						.append(TimeFormatter.toFriendlyString(track.getDuration(), TimeUnit.MILLISECONDS))
 						.append(") added by **").append(addedByUser.getNicknameForGuild(guild))
 						.append("**")
 						.toString();
@@ -162,7 +166,7 @@ class ListActivity extends AudioSessionActivity {
 					.reduce(0L, (i, j) -> i + j);
 
 			sb.append("\n\nThe queue contains **").append(upcomingTracks.size()).append("** tracks and is **")
-					.append(TimeFormatter.toFriendlyString(totalDuration)).append("** long.");
+					.append(TimeFormatter.toFriendlyString(totalDuration, TimeUnit.MILLISECONDS)).append("** long.");
 		}
 
 		embedBuilder.appendField("Next up:", sb.toString(), false);

@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -203,7 +204,7 @@ class AudioSession extends AudioEventAdapter {
 
 				@Override
 				public void noMatches() {
-					// Instead of simply failing. We should try to look it up on Youtube.
+					// Instead of simply failing. We should try to look it up on YouTube.
 					AudioItem audioItem = ytSearchProvider.loadSearchResult(identifier);
 					if (audioItem == AudioReference.NO_TRACK) {
 						botUtils.sendMessage(channel, "I couldn't find anything. :shrug:");
@@ -218,7 +219,9 @@ class AudioSession extends AudioEventAdapter {
 							AudioTrack track = queryResults.getTracks().get(i);
 							sb.append("``[").append(i + 1)
 									.append("]`` **").append(track.getInfo().title)
-									.append("** (").append(TimeFormatter.toFriendlyString(track.getInfo().length))
+									.append("** (")
+									.append(TimeFormatter.toFriendlyString(track.getInfo().length,
+											TimeUnit.MILLISECONDS))
 									.append(")\n");
 						}
 

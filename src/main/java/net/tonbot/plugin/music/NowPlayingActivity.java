@@ -1,6 +1,7 @@
 package net.tonbot.plugin.music;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -117,8 +118,9 @@ class NowPlayingActivity extends AudioSessionActivity {
 		sb.append(state + " ");
 
 		String progressBar = renderProgressBar(npTrack);
-		String positionTime = TimeFormatter.toFriendlyString(npTrack.getPosition());
-		String remainingTime = "-" + TimeFormatter.toFriendlyString(npTrack.getDuration() - npTrack.getPosition());
+		String positionTime = TimeFormatter.toFriendlyString(npTrack.getPosition(), TimeUnit.MILLISECONDS);
+		String remainingTime = "-"
+				+ TimeFormatter.toFriendlyString(npTrack.getDuration() - npTrack.getPosition(), TimeUnit.MILLISECONDS);
 
 		sb.append(positionTime + " " + progressBar + " " + remainingTime + " ");
 
