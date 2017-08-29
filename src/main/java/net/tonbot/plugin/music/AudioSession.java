@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -71,8 +72,9 @@ class AudioSession extends AudioEventAdapter {
 		this.searchResultsByUserId = new HashMap<>();
 		this.defaultChannelId = defaultChannelId;
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
-		this.trackManager = TrackManagers.sortedByAddTimestamp(new ArrayList<>());
-		this.playMode = PlayMode.STANDARD;
+		// TODO: For testing only
+		this.trackManager = TrackManagers.roundRobin(new ArrayList<>());
+		this.playMode = PlayMode.ROUND_ROBIN;
 		this.repeatMode = RepeatMode.OFF;
 	}
 
@@ -357,6 +359,9 @@ class AudioSession extends AudioEventAdapter {
 			this.trackManager = TrackManagers.sortedByAddTimestamp(this.trackManager.getView());
 		} else if (mode == PlayMode.SHUFFLE) {
 			this.trackManager = TrackManagers.shuffled(this.trackManager.getView());
+		} else if (mode == PlayMode.ROUND_ROBIN) {
+			// TODO: Switching mode away from Round robin will only grab a subset of tracks.
+			this.trackManager = TrackManagers.roundRobin(this.trackManager.getView());
 		} else {
 			throw new IllegalArgumentException("Unknown PlayMode " + mode);
 		}
@@ -420,6 +425,16 @@ class AudioSession extends AudioEventAdapter {
 		return trackToSkip;
 	}
 
+	public void skipAll(List<Integer> indices) {
+		Preconditions.checkNotNull(indices, "indices must be non-null.");
+
+		List<AudioTrack> tracksToRemove = indices.stream()
+				.map(i -> this.trackManager.getView().get(i))
+				.collect(Collectors.toList());
+
+		this.trackManager.removeAll(tracksToRemove);
+	}
+
 	public Optional<SearchResults> getSearchResults(IUser user) {
 		Preconditions.checkNotNull(user, "user must be non-null.");
 
@@ -477,6 +492,12 @@ class AudioSession extends AudioEventAdapter {
 
 		public static ShufflingTrackManager shuffled(Collection<AudioTrack> tracks) {
 			return new ShufflingTrackManager(tracks);
+		}
+
+		public static RoundRobinTrackManager roundRobin(Collection<AudioTrack> tracks) {
+			RoundRobinTrackManager trackManager = new RoundRobinTrackManager();
+			trackManager.putAll(tracks);
+			return trackManager;
 		}
 	}
 }

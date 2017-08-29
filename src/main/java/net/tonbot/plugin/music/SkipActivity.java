@@ -75,9 +75,7 @@ class SkipActivity extends AudioSessionActivity {
 				AudioTrack skippedTrack = audioSession.skip(skipIndexes.get(0));
 				botUtils.sendMessage(event.getChannel(), "Skipped **" + skippedTrack.getInfo().title + "**");
 			} else {
-				skipIndexes.forEach(skipIndex -> {
-					audioSession.skip(skipIndex);
-				});
+				audioSession.skipAll(skipIndexes);
 
 				botUtils.sendMessage(event.getChannel(), "Skipped **" + skipIndexes.size() + "** tracks.");
 			}

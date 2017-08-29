@@ -4,7 +4,9 @@ import java.util.Optional;
 
 enum PlayMode {
 
-	STANDARD(":arrow_right:", "Standard"), SHUFFLE(":twisted_rightwards_arrows:", "Shuffle");
+	STANDARD(":arrow_right:", "Standard"),
+	SHUFFLE(":twisted_rightwards_arrows:", "Shuffle"),
+	ROUND_ROBIN(":arrows_clockwise:", "Round Robin");
 
 	private final String emote;
 	private final String friendlyName;

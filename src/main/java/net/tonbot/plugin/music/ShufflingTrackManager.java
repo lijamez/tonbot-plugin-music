@@ -94,9 +94,23 @@ class ShufflingTrackManager implements TrackManager {
 
 	@Override
 	public void remove(AudioTrack track) {
+		Preconditions.checkNotNull(track, "track must be non-null.");
+
 		lock.writeLock().lock();
 		try {
 			tracks.remove(track);
+		} finally {
+			lock.writeLock().unlock();
+		}
+	}
+
+	@Override
+	public void removeAll(Collection<AudioTrack> tracks) {
+		Preconditions.checkNotNull(tracks, "tracks must be non-null.");
+
+		lock.writeLock().lock();
+		try {
+			tracks.removeAll(tracks);
 		} finally {
 			lock.writeLock().unlock();
 		}

@@ -6,16 +6,16 @@ import com.google.inject.Inject;
 import net.tonbot.common.ActivityDescriptor;
 import net.tonbot.common.BotUtils;
 
-class ShuffleActivity extends BinaryModeChangingActivity {
+class RoundRobinActivity extends BinaryModeChangingActivity {
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
-			.route(ImmutableList.of("music", "shuffle"))
+			.route(ImmutableList.of("music", "roundrobin"))
 			.parameters(ImmutableList.of("on/off"))
-			.description("Toggles shuffle mode.")
+			.description("Toggles round robin mode.")
 			.build();
 
 	@Inject
-	public ShuffleActivity(DiscordAudioPlayerManager discordAudioPlayerManager, BotUtils botUtils) {
+	public RoundRobinActivity(DiscordAudioPlayerManager discordAudioPlayerManager, BotUtils botUtils) {
 		super(discordAudioPlayerManager, botUtils);
 	}
 
@@ -26,6 +26,6 @@ class ShuffleActivity extends BinaryModeChangingActivity {
 
 	@Override
 	protected PlayMode onMode() {
-		return PlayMode.SHUFFLE;
+		return PlayMode.ROUND_ROBIN;
 	}
 }

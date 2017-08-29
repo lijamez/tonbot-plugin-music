@@ -97,4 +97,17 @@ class SortingTrackManager implements TrackManager {
 			lock.writeLock().unlock();
 		}
 	}
+
+	@Override
+	public void removeAll(Collection<AudioTrack> tracksToRemove) {
+		Preconditions.checkNotNull(tracksToRemove, "tracksToRemove must be non-null.");
+
+		lock.writeLock().lock();
+		try {
+			tracks.removeAll(tracksToRemove);
+			Collections.sort(tracks, comparator);
+		} finally {
+			lock.writeLock().unlock();
+		}
+	}
 }

@@ -24,6 +24,8 @@ interface TrackManager {
 
 	void remove(AudioTrack track);
 
+	void removeAll(Collection<AudioTrack> tracks);
+
 	/**
 	 * Gets the next track, if any. The returned track will be removed.
 	 * 
