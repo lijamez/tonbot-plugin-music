@@ -12,6 +12,10 @@ class RoundRobinActivity extends BinaryModeChangingActivity {
 			.route(ImmutableList.of("music", "roundrobin"))
 			.parameters(ImmutableList.of("on/off"))
 			.description("Toggles round robin mode.")
+			.usageDescription(
+					"Round robin is a mode where I will loop through all users who submited tracks "
+							+ "and then play one track from their list, guaranteeing that each user gets their "
+							+ "fair share of plays.")
 			.build();
 
 	@Inject

@@ -22,7 +22,7 @@ import sx.blah.discord.util.RequestBuilder;
 
 class PlayActivity extends AudioSessionActivity {
 
-	private final ActivityDescriptor activityDescriptor; 
+	private final ActivityDescriptor activityDescriptor;
 	private final IDiscordClient discordClient;
 	private final BotUtils botUtils;
 
@@ -54,10 +54,12 @@ class PlayActivity extends AudioSessionActivity {
 						+ "\n"
 						+ "**Playing a track via searching YouTube:**\n"
 						+ "```" + prefix + " music play the sound of silence```\n"
-						+ "You'll get a list of search results. Say ``" + prefix + " music play #`` to play that result.\n"
+						+ "You'll get a list of search results. Say ``" + prefix
+						+ " music play N`` (where N is the result number) to play it.\n"
 						+ "\n"
 						+ "**Playing track(s) by iTunes playlist upload:**\n"
-						+ "Send your iTunes playlist export as an attachment with the message ``" + prefix + " music play``. For best results, make sure your tracks' title and artist metadata fields are correct.\n"
+						+ "Send your iTunes playlist export as an attachment with the message ``" + prefix
+						+ " music play``. For best results, make sure your tracks' title and artist metadata fields are correct.\n"
 						+ "To export an iTunes playlist, click on a playlist, then go to File > Library > Export Playlist. In the save dialog, make sure the format is **Unicode Text**.\n"
 						+ "\n"
 						+ "**Resuming playback:**\n"

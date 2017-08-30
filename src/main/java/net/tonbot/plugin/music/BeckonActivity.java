@@ -17,6 +17,11 @@ class BeckonActivity implements Activity {
 			.route(ImmutableList.of("music", "beckon"))
 			.description(
 					"Makes me join your voice channel. The channel that this command is sent in will be used for music commands.")
+			.usageDescription(
+					"Once this command is said, I will join the voice channel that you are in. "
+							+ "From then on, I will only respond to music commands in the text channel "
+							+ "where the command was said. Users can still move me to a different text "
+							+ "channel by saying this command in a different text channel.")
 			.build();
 
 	private final DiscordAudioPlayerManager discordAudioPlayerManager;
