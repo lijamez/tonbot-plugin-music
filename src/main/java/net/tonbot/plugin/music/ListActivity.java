@@ -112,7 +112,7 @@ class ListActivity extends AudioSessionActivity {
 
 			ExtraTrackInfo extraTrackInfo = nowPlaying.getUserData(ExtraTrackInfo.class);
 			IUser addedByUser = client.getUserByID(extraTrackInfo.getAddedByUserId());
-			descSb.append(" added by **").append(addedByUser.getNicknameForGuild(guild)).append("**");
+			descSb.append(" added by **").append(addedByUser.getDisplayName(guild)).append("**");
 
 			embedBuilder.withDesc(descSb.toString());
 
@@ -147,7 +147,7 @@ class ListActivity extends AudioSessionActivity {
 						.append(track.getInfo().title)
 						.append("** (")
 						.append(TimeFormatter.toFriendlyString(track.getDuration(), TimeUnit.MILLISECONDS))
-						.append(") added by **").append(addedByUser.getNicknameForGuild(guild))
+						.append(") added by **").append(addedByUser.getDisplayName(guild))
 						.append("**")
 						.toString();
 				trackStrings.add(trackString);

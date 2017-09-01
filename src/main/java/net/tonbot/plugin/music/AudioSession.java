@@ -170,7 +170,7 @@ class AudioSession extends AudioEventAdapter {
 					enqueue(audioTrack, user);
 
 					botUtils.sendMessage(channel, "**" + audioTrack.getInfo().title + "** was queued by **"
-							+ user.getNicknameForGuild(channel.getGuild()) + "**");
+							+ user.getDisplayName(channel.getGuild()) + "**");
 				}
 
 				@Override

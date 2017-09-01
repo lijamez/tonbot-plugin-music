@@ -65,7 +65,7 @@ class RoundRobinTrackManager implements TrackManager {
 			userIdOrder.add(userId);
 			currentUserId = userId;
 		} else {
-			int currentUserIdIdx = userIdOrder.indexOf(userId);
+			int currentUserIdIdx = userIdOrder.indexOf(currentUserId);
 			int targetUserIdx = currentUserIdIdx == 0 ? userIdOrder.size() : currentUserIdIdx - 1;
 			userIdOrder.add(targetUserIdx, userId);
 		}
@@ -200,7 +200,7 @@ class RoundRobinTrackManager implements TrackManager {
 					this.upNext.add(at);
 				}
 
-				userIdIdx = (currentUserIdIdx + 1) % userIdOrder.size();
+				userIdIdx = (userIdIdx + 1) % userIdOrder.size();
 			} while (userIdIdx != currentUserIdIdx);
 		}
 	}
