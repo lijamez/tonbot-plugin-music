@@ -7,6 +7,7 @@ import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
@@ -36,10 +37,10 @@ import lombok.Data;
 import net.tonbot.common.TonbotBusinessException;
 
 /**
- * Retrieves iTunes playlist in Unicode format and then looks up the song in
- * YouTube. Tracks are returned as {@link LazyYoutubeAudioTracks} and hence
- * tracks will only be searched when they start to play. This is to prevent
- * YouTube from throttling us.
+ * Retrieves iTunes playlist in plain text or Unicode format (ie. UTF-8 or
+ * UTF-16LE) and then looks up the song in YouTube. Tracks are returned as
+ * {@link LazyYoutubeAudioTracks} and hence tracks will only be searched when
+ * they start to play. This is to prevent YouTube from throttling us.
  */
 class ITunesPlaylistSourceManager extends YoutubeAudioSourceManager {
 
@@ -111,8 +112,16 @@ class ITunesPlaylistSourceManager extends YoutubeAudioSourceManager {
 			connection.connect();
 
 			// BOMInputStream is used to ignore the the Byte Order Mark (which is 2 bytes).
-			Reader iTunesPlaylistReader = new InputStreamReader(
-					new BOMInputStream(connection.getInputStream(), ByteOrderMark.UTF_16LE), StandardCharsets.UTF_16LE);
+			BOMInputStream bomStream = new BOMInputStream(connection.getInputStream(), ByteOrderMark.UTF_16LE);
+			Charset charset;
+			if (bomStream.getBOM() == ByteOrderMark.UTF_16LE) {
+				charset = StandardCharsets.UTF_16LE;
+			} else {
+				charset = StandardCharsets.UTF_8;
+			}
+			LOG.debug("Detected character set: " + charset);
+
+			Reader iTunesPlaylistReader = new InputStreamReader(bomStream, charset);
 
 			CSVParser parser = csvFormat.parse(iTunesPlaylistReader);
 			Map<String, Integer> headerMap = parser.getHeaderMap();

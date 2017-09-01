@@ -49,7 +49,7 @@ class PlayActivity extends AudioSessionActivity {
 						+ "- Vimeo\n"
 						+ "- Twitch\n"
 						+ "- Beam.pro\n"
-						+ "- iTunes Playlist (in Unicode Text format)\n"
+						+ "- iTunes Playlist\n"
 						+ "- HTTP Audio File\n"
 						+ "\n"
 						+ "**Playing a track via searching YouTube:**\n"
@@ -60,7 +60,7 @@ class PlayActivity extends AudioSessionActivity {
 						+ "**Playing track(s) by iTunes playlist upload:**\n"
 						+ "Send your iTunes playlist export as an attachment with the message ``" + prefix
 						+ " music play``. For best results, make sure your tracks' title and artist metadata fields are correct.\n"
-						+ "To export an iTunes playlist, click on a playlist, then go to File > Library > Export Playlist. In the save dialog, make sure the format is **Unicode Text**.\n"
+						+ "To export an iTunes playlist, click on a playlist, then go to File > Library > Export Playlist.\n"
 						+ "\n"
 						+ "**Resuming playback:**\n"
 						+ "```" + prefix + " music play```\n"
