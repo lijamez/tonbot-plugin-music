@@ -129,7 +129,7 @@ class ITunesPlaylistSourceManager extends YoutubeAudioSourceManager {
 			if (!headerMap.containsKey(TRACK_TITLE_COLUMN) || !headerMap.containsKey(TRACK_ARTIST_COLUMN)
 					|| !headerMap.containsKey(TRACK_DURATION_COLUMN)) {
 				throw new TonbotBusinessException(
-						"File appears to be invalid. Make sure the iTunes playlist was exported in Unicode format.");
+						"File doesn't appear to be an iTunes playlist.");
 			}
 
 			List<SongMetadata> songMetadata = parser.getRecords().stream()

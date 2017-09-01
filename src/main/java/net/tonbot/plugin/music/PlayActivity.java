@@ -39,7 +39,7 @@ class PlayActivity extends AudioSessionActivity {
 				.route(ImmutableList.of("music", "play"))
 				.parameters(ImmutableList.of("link to song"))
 				.description(
-						"Plays the song provided by the link. If no song link is provided, then it unpauses the player.")
+						"Plays a track. If no song link is provided, then it unpauses the player.")
 				.usageDescription("**Playing track(s) via direct link to a track or playlist:**\n"
 						+ "```" + prefix + " music play https://www.youtube.com/watch?v=dQw4w9WgXcQ```\n"
 						+ "The following services are supported:\n"
