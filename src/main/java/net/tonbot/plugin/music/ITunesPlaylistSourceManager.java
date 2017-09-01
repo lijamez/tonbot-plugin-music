@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.io.ByteOrderMark;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.input.BOMInputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -43,6 +44,8 @@ import net.tonbot.common.TonbotBusinessException;
 class ITunesPlaylistSourceManager extends YoutubeAudioSourceManager {
 
 	private static final Logger LOG = LoggerFactory.getLogger(ITunesPlaylistSourceManager.class);
+
+	private static final String DEFAULT_PLAYLIST_NAME = "iTunes Playlist";
 
 	private static final char DELIMITER = '\t';
 
@@ -86,7 +89,12 @@ class ITunesPlaylistSourceManager extends YoutubeAudioSourceManager {
 			List<SongMetadata> songMetadata = getSongMetadata(url);
 			List<AudioTrack> tracks = getLazyTracks(songMetadata);
 
-			return new BasicAudioPlaylist("iTunes Playlist", tracks, null, false);
+			String playlistName = FilenameUtils.getBaseName(url.getPath());
+			if (StringUtils.isEmpty(playlistName)) {
+				playlistName = DEFAULT_PLAYLIST_NAME;
+			}
+
+			return new BasicAudioPlaylist(playlistName, tracks, null, false);
 
 		} catch (MalformedURLException e) {
 			return null;
