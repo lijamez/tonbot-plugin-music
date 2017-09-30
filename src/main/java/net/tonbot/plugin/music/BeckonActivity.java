@@ -28,7 +28,7 @@ class BeckonActivity implements Activity {
 
 	private final DiscordAudioPlayerManager discordAudioPlayerManager;
 	private final BotUtils botUtils;
-	
+
 	@Inject
 	public BeckonActivity(
 			DiscordAudioPlayerManager discordAudioPlayerManager,
@@ -61,13 +61,13 @@ class BeckonActivity implements Activity {
 		if (botVoiceChannel == null || botVoiceChannel.getLongID() != userVoiceChannel.getLongID()) {
 			try {
 				userVoiceChannel.join();
-				
+
 				try {
 					discordAudioPlayerManager.destroyFor(event.getGuild());
 				} catch (NoSessionException e) {
 					// This is fine.
 				}
-				
+
 				discordAudioPlayerManager.initFor(event.getGuild(), event.getChannel());
 			} catch (MissingPermissionsException e) {
 				botUtils.sendMessage(event.getChannel(), "I don't have permission to join your voice channel.");
