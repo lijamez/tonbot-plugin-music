@@ -1,5 +1,7 @@
 package net.tonbot.plugin.music;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -25,15 +27,13 @@ import org.slf4j.LoggerFactory;
 import com.google.api.client.repackaged.com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
-import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager;
-import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeSearchProvider;
+import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import com.sedmelluq.discord.lavaplayer.track.BasicAudioPlaylist;
 
-import lombok.Data;
 import net.tonbot.common.TonbotBusinessException;
 
 /**
@@ -42,7 +42,7 @@ import net.tonbot.common.TonbotBusinessException;
  * {@link LazyYoutubeAudioTracks} and hence tracks will only be searched when
  * they start to play. This is to prevent YouTube from throttling us.
  */
-class ITunesPlaylistSourceManager extends YoutubeAudioSourceManager {
+class ITunesPlaylistSourceManager implements AudioSourceManager {
 
 	private static final Logger LOG = LoggerFactory.getLogger(ITunesPlaylistSourceManager.class);
 
@@ -60,15 +60,15 @@ class ITunesPlaylistSourceManager extends YoutubeAudioSourceManager {
 	private static final String TRACK_DURATION_COLUMN = "Time";
 
 	private final CSVFormat csvFormat;
-	private final YoutubeSearchProvider ytSearchProvider;
+	private final AudioTrackFactory audioTrackFactory;
 
 	@Inject
-	public ITunesPlaylistSourceManager(YoutubeSearchProvider ytSearchProvider) {
+	public ITunesPlaylistSourceManager(AudioTrackFactory audioTrackFactory) {
 		this.csvFormat = CSVFormat.newFormat(DELIMITER)
 				.withIgnoreEmptyLines(true)
 				.withFirstRecordAsHeader()
 				.withTrim();
-		this.ytSearchProvider = Preconditions.checkNotNull(ytSearchProvider, "ytSearchProvider must be non-null.");
+		this.audioTrackFactory = Preconditions.checkNotNull(audioTrackFactory, "audioTrackFactory must be non-null.");
 	}
 
 	@Override
@@ -88,7 +88,7 @@ class ITunesPlaylistSourceManager extends YoutubeAudioSourceManager {
 			}
 
 			List<SongMetadata> songMetadata = getSongMetadata(url);
-			List<AudioTrack> tracks = getLazyTracks(songMetadata);
+			List<AudioTrack> tracks = audioTrackFactory.getAudioTracks(songMetadata);
 
 			String playlistName = FilenameUtils.getBaseName(url.getPath());
 			if (StringUtils.isEmpty(playlistName)) {
@@ -167,16 +167,6 @@ class ITunesPlaylistSourceManager extends YoutubeAudioSourceManager {
 		}
 	}
 
-	private List<AudioTrack> getLazyTracks(List<SongMetadata> songMetadata) {
-		return songMetadata.stream()
-				.map(sm -> {
-					AudioTrackInfo ati = new AudioTrackInfo(sm.getName(), sm.getArtist(), sm.getDuration(), "", true,
-							"");
-					return new LazyYoutubeAudioTrack(ati, this, ytSearchProvider);
-				})
-				.collect(Collectors.toList());
-	}
-
 	@Override
 	public boolean isTrackEncodable(AudioTrack track) {
 		return false;
@@ -187,13 +177,13 @@ class ITunesPlaylistSourceManager extends YoutubeAudioSourceManager {
 
 	}
 
-	@Data
-	private static class SongMetadata {
+	@Override
+	public void encodeTrack(AudioTrack track, DataOutput output) throws IOException {
+		throw new UnsupportedOperationException("encodeTrack is unsupported.");
+	}
 
-		private final String name;
-		private final String artist;
-
-		// The duration in milliseconds.
-		private final long duration;
+	@Override
+	public AudioTrack decodeTrack(AudioTrackInfo trackInfo, DataInput input) throws IOException {
+		throw new UnsupportedOperationException("decodeTrack is unsupported.");
 	}
 }

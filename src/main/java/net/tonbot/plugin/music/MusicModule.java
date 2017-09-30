@@ -47,6 +47,7 @@ class MusicModule extends AbstractModule {
 		bind(BotUtils.class).toInstance(botUtils);
 		bind(DiscordAudioPlayerManager.class).in(Scopes.SINGLETON);
 		bind(String.class).annotatedWith(YouTubeApiKey.class).toInstance(youTubeApiKey);
+		bind(AudioTrackFactory.class).to(LazyYoutubeAudioTrackFactory.class);
 	}
 
 	@Provides
