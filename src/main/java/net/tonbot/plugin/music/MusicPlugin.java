@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.Set;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Preconditions;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -22,8 +21,11 @@ public class MusicPlugin extends TonbotPlugin {
 	public MusicPlugin(TonbotPluginArgs pluginArgs) {
 		super(pluginArgs);
 
-		File configFile = pluginArgs.getConfigFile().orElse(null);
-		Preconditions.checkNotNull(configFile, "configFile must be non-null.");
+		File configFile = pluginArgs.getConfigFile();
+		if (!configFile.exists()) {
+			// TODO: Create the config file.
+			throw new IllegalStateException("Config file doesn't exist.");
+		}
 
 		ObjectMapper objectMapper = new ObjectMapper();
 
