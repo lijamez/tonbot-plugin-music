@@ -6,10 +6,12 @@ import com.google.inject.Inject;
 
 import net.tonbot.common.Activity;
 import net.tonbot.common.ActivityDescriptor;
+import net.tonbot.common.BotUtils;
 import net.tonbot.common.TonbotBusinessException;
 import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.IVoiceChannel;
+import sx.blah.discord.util.MissingPermissionsException;
 
 class BeckonActivity implements Activity {
 
@@ -25,11 +27,16 @@ class BeckonActivity implements Activity {
 			.build();
 
 	private final DiscordAudioPlayerManager discordAudioPlayerManager;
-
+	private final BotUtils botUtils;
+	
 	@Inject
-	public BeckonActivity(DiscordAudioPlayerManager discordAudioPlayerManager) {
+	public BeckonActivity(
+			DiscordAudioPlayerManager discordAudioPlayerManager,
+			BotUtils botUtils) {
 		this.discordAudioPlayerManager = Preconditions.checkNotNull(discordAudioPlayerManager,
 				"discordAudioPlayerManager must be non-null.");
+		this.botUtils = Preconditions.checkNotNull(botUtils,
+				"botUtils must be non-null.");
 	}
 
 	@Override
@@ -52,15 +59,19 @@ class BeckonActivity implements Activity {
 		// channel or if it's in a different voice channel than the user.
 		IVoiceChannel botVoiceChannel = client.getOurUser().getVoiceStateForGuild(event.getGuild()).getChannel();
 		if (botVoiceChannel == null || botVoiceChannel.getLongID() != userVoiceChannel.getLongID()) {
-			userVoiceChannel.join();
-
 			try {
-				discordAudioPlayerManager.destroyFor(event.getGuild());
-			} catch (NoSessionException e) {
-				// This is fine.
+				userVoiceChannel.join();
+				
+				try {
+					discordAudioPlayerManager.destroyFor(event.getGuild());
+				} catch (NoSessionException e) {
+					// This is fine.
+				}
+				
+				discordAudioPlayerManager.initFor(event.getGuild(), event.getChannel());
+			} catch (MissingPermissionsException e) {
+				botUtils.sendMessage(event.getChannel(), "I don't have permission to join your voice channel.");
 			}
-
-			discordAudioPlayerManager.initFor(event.getGuild(), event.getChannel());
 		}
 	}
 }
