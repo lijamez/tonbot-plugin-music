@@ -19,7 +19,7 @@ import sx.blah.discord.util.EmbedBuilder;
 class NowPlayingActivity extends AudioSessionActivity {
 
 	private static final int PROGRESS_BAR_WIDTH = 28;
-
+	private static final String LIVE_TIME = "LIVE";
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
 			.route(ImmutableList.of("music", "np"))
 			.description("Shows what's playing.")
@@ -117,12 +117,19 @@ class NowPlayingActivity extends AudioSessionActivity {
 		String state = audioSession.isPaused() ? ":pause_button:" : ":arrow_forward:";
 		sb.append(state + " ");
 
-		String progressBar = renderProgressBar(npTrack);
-		String positionTime = TimeFormatter.toFriendlyString(npTrack.getPosition(), TimeUnit.MILLISECONDS);
-		String remainingTime = "-"
-				+ TimeFormatter.toFriendlyString(npTrack.getDuration() - npTrack.getPosition(), TimeUnit.MILLISECONDS);
+		if (npTrack.getInfo().isStream) {
+			sb.append("``")
+					.append(LIVE_TIME)
+					.append("``");
+		} else {
+			String progressBar = renderProgressBar(npTrack);
+			String positionTime = TimeFormatter.toFriendlyString(npTrack.getPosition(), TimeUnit.MILLISECONDS);
+			String remainingTime = "-"
+					+ TimeFormatter.toFriendlyString(npTrack.getDuration() - npTrack.getPosition(),
+							TimeUnit.MILLISECONDS);
 
-		sb.append(positionTime + " " + progressBar + " " + remainingTime + " ");
+			sb.append(positionTime + " " + progressBar + " " + remainingTime + " ");
+		}
 
 		String playbackModifiers = renderPlaybackModifiers(audioSession.getStatus());
 		sb.append(playbackModifiers + "\n");

@@ -28,6 +28,7 @@ class ListActivity extends AudioSessionActivity {
 			.description("Displays the upcoming tracks.")
 			.build();
 	private static final int TRACKS_PER_PAGE = 10;
+	private static final String LIVE_TIME = "LIVE";
 
 	private final BotUtils botUtils;
 
@@ -104,10 +105,18 @@ class ListActivity extends AudioSessionActivity {
 			StringBuffer descSb = new StringBuffer();
 
 			StringBuffer timeSb = new StringBuffer();
-			timeSb.append("``[").append(TimeFormatter.toFriendlyString(nowPlaying.getPosition(), TimeUnit.MILLISECONDS))
-					.append("/")
-					.append(TimeFormatter.toFriendlyString(nowPlaying.getDuration(), TimeUnit.MILLISECONDS))
-					.append("]``");
+			timeSb.append("``[");
+
+			if (nowPlaying.getInfo().isStream) {
+				timeSb.append(LIVE_TIME);
+			} else {
+				timeSb.append(TimeFormatter.toFriendlyString(nowPlaying.getPosition(), TimeUnit.MILLISECONDS))
+						.append("/")
+						.append(TimeFormatter.toFriendlyString(nowPlaying.getDuration(), TimeUnit.MILLISECONDS));
+			}
+
+			timeSb.append("]``");
+
 			descSb.append(timeSb);
 
 			ExtraTrackInfo extraTrackInfo = nowPlaying.getUserData(ExtraTrackInfo.class);
@@ -142,15 +151,22 @@ class ListActivity extends AudioSessionActivity {
 				ExtraTrackInfo extraTrackInfo = track.getUserData(ExtraTrackInfo.class);
 				IUser addedByUser = client.fetchUser(extraTrackInfo.getAddedByUserId());
 
-				String trackString = new StringBuffer()
+				StringBuffer trackSb = new StringBuffer()
 						.append("``[").append(i + 1).append("]`` **")
 						.append(track.getInfo().title)
-						.append("** (")
-						.append(TimeFormatter.toFriendlyString(track.getDuration(), TimeUnit.MILLISECONDS))
-						.append(") added by **").append(addedByUser.getDisplayName(guild))
-						.append("**")
-						.toString();
-				trackStrings.add(trackString);
+						.append("** (");
+
+				if (track.getInfo().isStream) {
+					trackSb.append(LIVE_TIME);
+				} else {
+					trackSb.append(TimeFormatter.toFriendlyString(track.getDuration(), TimeUnit.MILLISECONDS));
+				}
+
+				trackSb.append(") added by **")
+						.append(addedByUser.getDisplayName(guild))
+						.append("**");
+
+				trackStrings.add(trackSb.toString());
 			}
 
 			sb.append(StringUtils.join(trackStrings, "\n"));
