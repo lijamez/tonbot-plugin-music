@@ -27,6 +27,9 @@ class SkipActivity extends AudioSessionActivity {
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
 			.route(ImmutableList.of("music", "skip"))
+			.routeAliases(ImmutableList.of(
+					ImmutableList.of("skip"),
+					ImmutableList.of("s")))
 			.parameters(ImmutableList.of("track numbers"))
 			.description(
 					"Skips tracks with comma-separated track numbers or ranges. If none are provided, then the current track is skipped.")

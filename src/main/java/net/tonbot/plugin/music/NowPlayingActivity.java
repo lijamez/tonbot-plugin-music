@@ -21,7 +21,10 @@ class NowPlayingActivity extends AudioSessionActivity {
 	private static final int PROGRESS_BAR_WIDTH = 28;
 	private static final String LIVE_TIME = "LIVE";
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
-			.route(ImmutableList.of("music", "np"))
+			.route(ImmutableList.of("music", "nowplaying"))
+			.routeAliases(ImmutableList.of(
+					ImmutableList.of("music np"),
+					ImmutableList.of("np")))
 			.description("Shows what's playing.")
 			.build();
 

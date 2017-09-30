@@ -12,6 +12,8 @@ class StopActivity extends AudioSessionActivity {
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
 			.route(ImmutableList.of("music", "stop"))
+			.routeAliases(ImmutableList.of(
+					ImmutableList.of("stop")))
 			.description("Stops playing the current track.")
 			.build();
 

@@ -17,13 +17,15 @@ class BeckonActivity implements Activity {
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
 			.route(ImmutableList.of("music", "beckon"))
+			.routeAliases(ImmutableList.of(
+					ImmutableList.of("music", "summon"),
+					ImmutableList.of("music", "join")))
 			.description(
 					"Makes me join your voice channel. The channel that this command is sent in will be used for music commands.")
 			.usageDescription(
-					"Once this command is said, I will join the voice channel that you are in. "
-							+ "From then on, I will only respond to music commands in the text channel "
-							+ "where the command was said. Users can still move me to a different text "
-							+ "channel by saying this command in a different text channel.")
+					"Once this command is said in a text channel, I will join the voice channel that you are in and then "
+							+ "I will only respond to music commands in that same text channel. Users can still move me to another text "
+							+ "channel by saying this command in the text channel they want me to connect to.")
 			.build();
 
 	private final DiscordAudioPlayerManager discordAudioPlayerManager;

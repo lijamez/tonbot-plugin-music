@@ -12,6 +12,8 @@ class PauseActivity extends AudioSessionActivity {
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
 			.route(ImmutableList.of("music", "pause"))
+			.routeAliases(ImmutableList.of(
+					ImmutableList.of("pause")))
 			.description("Pauses the player.")
 			.build();
 

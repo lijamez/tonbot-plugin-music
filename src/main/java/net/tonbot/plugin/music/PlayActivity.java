@@ -37,6 +37,9 @@ class PlayActivity extends AudioSessionActivity {
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
 		this.activityDescriptor = ActivityDescriptor.builder()
 				.route(ImmutableList.of("music", "play"))
+				.routeAliases(ImmutableList.of(
+						ImmutableList.of("play"),
+						ImmutableList.of("p")))
 				.parameters(ImmutableList.of("link to song"))
 				.description(
 						"Plays a track. If no song link is provided, then it unpauses the player.")
