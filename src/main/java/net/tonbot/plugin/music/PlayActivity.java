@@ -53,7 +53,7 @@ class PlayActivity extends AudioSessionActivity {
 						+ "- Twitch\n"
 						+ "- Beam.pro\n"
 						+ "- iTunes Playlist Upload\n"
-						+ "- Spotify Playlist\n"
+						+ "- Spotify\n"
 						+ "- HTTP Audio File\n"
 						+ "\n"
 						+ "**Playing a track via searching YouTube:**\n"
