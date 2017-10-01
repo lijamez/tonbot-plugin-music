@@ -1,7 +1,13 @@
 package net.tonbot.plugin.music;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Set;
+
+import javax.annotation.Nullable;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -20,6 +26,8 @@ import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceMan
 import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeSearchProvider;
+import com.wrapper.spotify.Api;
+import com.wrapper.spotify.exceptions.WebApiException;
 
 import net.tonbot.common.Activity;
 import net.tonbot.common.BotUtils;
@@ -28,16 +36,25 @@ import sx.blah.discord.api.IDiscordClient;
 
 class MusicModule extends AbstractModule {
 
+	private static final Logger LOG = LoggerFactory.getLogger(MusicModule.class);
+
 	private final IDiscordClient discordClient;
 	private final String prefix;
 	private final BotUtils botUtils;
 	private final String youTubeApiKey;
+	private final SpotifyCredentials spotifyCredentials;
 
-	public MusicModule(IDiscordClient discordClient, String prefix, BotUtils botUtils, String youTubeApiKey) {
+	public MusicModule(
+			IDiscordClient discordClient,
+			String prefix,
+			BotUtils botUtils,
+			String youTubeApiKey,
+			SpotifyCredentials spotifyCredentials) {
 		this.discordClient = Preconditions.checkNotNull(discordClient, "discordClient must be non-null.");
 		this.prefix = Preconditions.checkNotNull(prefix, "prefix must be non-null.");
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
 		this.youTubeApiKey = Preconditions.checkNotNull(youTubeApiKey, "youtubeApiKey must be non-null.");
+		this.spotifyCredentials = spotifyCredentials;
 	}
 
 	@Override
@@ -78,7 +95,8 @@ class MusicModule extends AbstractModule {
 	@Singleton
 	AudioPlayerManager audioPlayerManager(
 			YoutubeAudioSourceManager yasm,
-			ITunesPlaylistSourceManager itunesPlaylistSourceManager) {
+			ITunesPlaylistSourceManager itunesPlaylistSourceManager,
+			@Nullable SpotifyPlaylistSourceManager spotifyPlaylistSourceManager) {
 		AudioPlayerManager apm = new DefaultAudioPlayerManager();
 		apm.enableGcMonitoring();
 
@@ -90,7 +108,13 @@ class MusicModule extends AbstractModule {
 		apm.registerSourceManager(new VimeoAudioSourceManager());
 		apm.registerSourceManager(new TwitchStreamAudioSourceManager());
 		apm.registerSourceManager(new BeamAudioSourceManager());
-		apm.registerSourceManager(itunesPlaylistSourceManager);
+
+		if (spotifyPlaylistSourceManager != null) {
+			apm.registerSourceManager(itunesPlaylistSourceManager);
+		}
+
+		apm.registerSourceManager(spotifyPlaylistSourceManager);
+
 		apm.registerSourceManager(new HttpAudioSourceManager());
 
 		return apm;
@@ -112,5 +136,46 @@ class MusicModule extends AbstractModule {
 	@Singleton
 	List<EmbedAppender> embedAppenders(YouTubeVideoEmbedAppender ytEmbedAppender) {
 		return ImmutableList.of(ytEmbedAppender);
+	}
+
+	@Provides
+	@Singleton
+	Api spotifyApi() {
+		if (spotifyCredentials != null) {
+			Api api = Api.builder()
+					.clientId(spotifyCredentials.getClientId())
+					.clientSecret(spotifyCredentials.getClientSecret())
+					.build();
+
+			// Use the Client Credentials Flow to get an access token
+			// https://developer.spotify.com/web-api/authorization-guide/#client-credentials-flow
+			try {
+				String accessToken = api.clientCredentialsGrant().build().get().getAccessToken();
+				api.setAccessToken(accessToken);
+			} catch (IOException | WebApiException e) {
+				LOG.warn(
+						"Unable to get access token from Spotify Accounts Service. Spotify support will "
+								+ "not be available. Please check if the supplied credentials are valid.",
+						e);
+				return null;
+			}
+
+			return api;
+		}
+
+		LOG.warn("No Spotify credentials detected. Spotify will not be available.");
+		return null;
+	}
+
+	@Provides
+	@Singleton
+	SpotifyPlaylistSourceManager spotifyPlaylistSourceManager(
+			@Nullable Api spotifyApi,
+			AudioTrackFactory audioTrackFactory) {
+		if (spotifyApi == null) {
+			return null;
+		}
+
+		return new SpotifyPlaylistSourceManager(spotifyApi, audioTrackFactory);
 	}
 }

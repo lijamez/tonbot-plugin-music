@@ -36,7 +36,8 @@ public class MusicPlugin extends TonbotPlugin {
 							pluginArgs.getDiscordClient(),
 							pluginArgs.getPrefix(),
 							pluginArgs.getBotUtils(),
-							config.getYouTubeApiKey()));
+							config.getYouTubeApiKey(),
+							config.getSpotifyCredentials()));
 		} catch (IOException e) {
 			throw new RuntimeException("Could not read configuration file.", e);
 		}
