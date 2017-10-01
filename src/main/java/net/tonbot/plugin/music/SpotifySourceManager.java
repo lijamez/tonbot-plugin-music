@@ -4,13 +4,19 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
 
 import com.google.api.client.repackaged.com.google.common.base.Preconditions;
 import com.google.inject.Inject;
@@ -24,6 +30,7 @@ import com.sedmelluq.discord.lavaplayer.track.BasicAudioPlaylist;
 import com.wrapper.spotify.Api;
 import com.wrapper.spotify.exceptions.WebApiException;
 import com.wrapper.spotify.methods.PlaylistRequest;
+import com.wrapper.spotify.methods.PlaylistTracksRequest.Builder;
 import com.wrapper.spotify.models.Page;
 import com.wrapper.spotify.models.Playlist;
 import com.wrapper.spotify.models.PlaylistTrack;
@@ -119,13 +126,45 @@ class SpotifySourceManager implements AudioSourceManager {
 			throw new IllegalStateException("Unable to fetch playlist from Spotify API.", e);
 		}
 
-		// TODO: Pagination or else we can only fetch the first 100 songs of a playlist.
-		Page<PlaylistTrack> playlistTracksPage = playlist.getTracks();
+		List<PlaylistTrack> playlistTracks = getAllPlaylistTracks(playlist);
 
-		List<SongMetadata> songMetadata = getSongMetadata(playlistTracksPage);
+		List<SongMetadata> songMetadata = getSongMetadata(playlistTracks);
 		List<AudioTrack> audioTracks = audioTrackFactory.getAudioTracks(songMetadata);
 
 		return new BasicAudioPlaylist(playlist.getName(), audioTracks, null, false);
+	}
+
+	private List<PlaylistTrack> getAllPlaylistTracks(Playlist playlist) {
+		List<PlaylistTrack> playlistTracks = new ArrayList<>();
+
+		Page<PlaylistTrack> currentPage = playlist.getTracks();
+
+		do {
+			playlistTracks.addAll(currentPage.getItems());
+
+			if (currentPage.getNext() == null) {
+				currentPage = null;
+			} else {
+
+				try {
+					URI nextPageUri = new URI(currentPage.getNext());
+					List<NameValuePair> queryPairs = URLEncodedUtils.parse(nextPageUri, StandardCharsets.UTF_8);
+
+					Builder b = spotifyApi.getPlaylistTracks(playlist.getOwner().getId(), playlist.getId());
+					for (NameValuePair queryPair : queryPairs) {
+						b = b.parameter(queryPair.getName(), queryPair.getValue());
+					}
+
+					currentPage = b.build().get();
+				} catch (IOException | WebApiException e) {
+					throw new IllegalStateException("Unable to query Spotify for playlist tracks.", e);
+				} catch (URISyntaxException e) {
+					throw new IllegalStateException("Spotify returned an invalid 'next page' URI.", e);
+				}
+			}
+		} while (currentPage != null);
+
+		return playlistTracks;
 	}
 
 	private PlaylistKey extractPlaylistId(URL url) {
@@ -151,9 +190,9 @@ class SpotifySourceManager implements AudioSourceManager {
 		return new PlaylistKey(userId, playlistId);
 	}
 
-	private List<SongMetadata> getSongMetadata(Page<PlaylistTrack> playlistTracksPage) {
+	private List<SongMetadata> getSongMetadata(List<PlaylistTrack> playlistTracks) {
 
-		List<SongMetadata> songMetadata = playlistTracksPage.getItems().stream()
+		List<SongMetadata> songMetadata = playlistTracks.stream()
 				.map(playlistTrack -> playlistTrack.getTrack())
 				.map(track -> getSongMetadata(track))
 				.collect(Collectors.toList());
