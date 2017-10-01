@@ -108,12 +108,11 @@ class MusicModule extends AbstractModule {
 		apm.registerSourceManager(new VimeoAudioSourceManager());
 		apm.registerSourceManager(new TwitchStreamAudioSourceManager());
 		apm.registerSourceManager(new BeamAudioSourceManager());
+		apm.registerSourceManager(itunesPlaylistSourceManager);
 
 		if (spotifySourceManager != null) {
-			apm.registerSourceManager(itunesPlaylistSourceManager);
+			apm.registerSourceManager(spotifySourceManager);
 		}
-
-		apm.registerSourceManager(spotifySourceManager);
 
 		apm.registerSourceManager(new HttpAudioSourceManager());
 
