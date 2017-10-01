@@ -13,6 +13,7 @@ import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeSearchProvider;
 import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioReference;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import com.sedmelluq.discord.lavaplayer.track.playback.LocalAudioTrackExecutor;
 
@@ -23,7 +24,7 @@ public class LazyYoutubeAudioTrack extends YoutubeAudioTrack {
 	private static final Logger LOG = LoggerFactory.getLogger(LazyYoutubeAudioTrack.class);
 	private static final int SEARCH_RESULTS_LIMIT = 5;
 
-	private final AudioSourceManager sourceManager;
+	private final YoutubeAudioSourceManager sourceManager;
 	private final YoutubeSearchProvider ytSearchProvider;
 	private final AudioTrackInfo initialAudioTrackInfo;
 
@@ -36,7 +37,7 @@ public class LazyYoutubeAudioTrack extends YoutubeAudioTrack {
 		super(initialAudioTrackInfo, sourceManager);
 		this.initialAudioTrackInfo = Preconditions.checkNotNull(initialAudioTrackInfo);
 		this.realTrack = null;
-		this.sourceManager = Preconditions.checkNotNull(sourceManager);
+		this.sourceManager = Preconditions.checkNotNull(sourceManager, "sourceManager must be non-null.");
 		this.ytSearchProvider = Preconditions.checkNotNull(ytSearchProvider, "ytSearchProvider must be non-null.");
 	}
 
@@ -70,6 +71,14 @@ public class LazyYoutubeAudioTrack extends YoutubeAudioTrack {
 		}
 
 		return initialAudioTrackInfo;
+	}
+
+	@Override
+	public AudioTrack makeClone() {
+		LazyYoutubeAudioTrack clone = new LazyYoutubeAudioTrack(this.getInfo(), sourceManager, ytSearchProvider);
+		clone.setUserData(this.getUserData());
+
+		return clone;
 	}
 
 	private YoutubeAudioTrack getTrack() {

@@ -96,7 +96,7 @@ class MusicModule extends AbstractModule {
 	AudioPlayerManager audioPlayerManager(
 			YoutubeAudioSourceManager yasm,
 			ITunesPlaylistSourceManager itunesPlaylistSourceManager,
-			@Nullable SpotifyPlaylistSourceManager spotifyPlaylistSourceManager) {
+			@Nullable SpotifySourceManager spotifySourceManager) {
 		AudioPlayerManager apm = new DefaultAudioPlayerManager();
 		apm.enableGcMonitoring();
 
@@ -109,11 +109,11 @@ class MusicModule extends AbstractModule {
 		apm.registerSourceManager(new TwitchStreamAudioSourceManager());
 		apm.registerSourceManager(new BeamAudioSourceManager());
 
-		if (spotifyPlaylistSourceManager != null) {
+		if (spotifySourceManager != null) {
 			apm.registerSourceManager(itunesPlaylistSourceManager);
 		}
 
-		apm.registerSourceManager(spotifyPlaylistSourceManager);
+		apm.registerSourceManager(spotifySourceManager);
 
 		apm.registerSourceManager(new HttpAudioSourceManager());
 
@@ -169,13 +169,13 @@ class MusicModule extends AbstractModule {
 
 	@Provides
 	@Singleton
-	SpotifyPlaylistSourceManager spotifyPlaylistSourceManager(
+	SpotifySourceManager spotifySourceManager(
 			@Nullable Api spotifyApi,
 			AudioTrackFactory audioTrackFactory) {
 		if (spotifyApi == null) {
 			return null;
 		}
 
-		return new SpotifyPlaylistSourceManager(spotifyApi, audioTrackFactory);
+		return new SpotifySourceManager(spotifyApi, audioTrackFactory);
 	}
 }

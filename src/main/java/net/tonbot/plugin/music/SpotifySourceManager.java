@@ -27,11 +27,12 @@ import com.wrapper.spotify.methods.PlaylistRequest;
 import com.wrapper.spotify.models.Page;
 import com.wrapper.spotify.models.Playlist;
 import com.wrapper.spotify.models.PlaylistTrack;
+import com.wrapper.spotify.models.Track;
 
 import lombok.Data;
 import lombok.NonNull;
 
-class SpotifyPlaylistSourceManager implements AudioSourceManager {
+class SpotifySourceManager implements AudioSourceManager {
 
 	private static final String SPOTIFY_DOMAIN = "open.spotify.com";
 	private static final int EXPECTED_PATH_COMPONENTS = 4;
@@ -40,7 +41,7 @@ class SpotifyPlaylistSourceManager implements AudioSourceManager {
 	private final AudioTrackFactory audioTrackFactory;
 
 	@Inject
-	public SpotifyPlaylistSourceManager(
+	public SpotifySourceManager(
 			Api spotifyApi,
 			AudioTrackFactory audioTrackFactory) {
 		this.spotifyApi = Preconditions.checkNotNull(spotifyApi, "spotifyApi must be non-null.");
@@ -57,41 +58,77 @@ class SpotifyPlaylistSourceManager implements AudioSourceManager {
 		try {
 			URL url = new URL(reference.identifier);
 
-			PlaylistKey playlistKey;
-			try {
-				playlistKey = extractPlaylistId(url);
-			} catch (IllegalArgumentException e) {
+			if (!StringUtils.equals(url.getHost(), SPOTIFY_DOMAIN)) {
 				return null;
 			}
 
-			PlaylistRequest playlistRequest = spotifyApi
-					.getPlaylist(playlistKey.getUserId(), playlistKey.getPlaylistId()).build();
+			AudioItem audioItem = null;
+			audioItem = handleAsPlaylist(url);
 
-			Playlist playlist;
-			try {
-				playlist = playlistRequest.get();
-			} catch (IOException | WebApiException e) {
-				throw new IllegalStateException("Unable to fetch playlist from Spotify API.", e);
+			if (audioItem == null) {
+				audioItem = handleAsTrack(url);
 			}
 
-			// TODO: Pagination or else we can only fetch the first 100 songs of a playlist.
-			Page<PlaylistTrack> playlistTracksPage = playlist.getTracks();
-
-			List<SongMetadata> songMetadata = getSongMetadata(playlistTracksPage);
-			List<AudioTrack> audioTracks = audioTrackFactory.getAudioTracks(songMetadata);
-
-			return new BasicAudioPlaylist(playlist.getName(), audioTracks, null, false);
+			return audioItem;
 
 		} catch (MalformedURLException e) {
 			return null;
 		}
 	}
 
-	private PlaylistKey extractPlaylistId(URL url) {
-		if (!StringUtils.equals(url.getHost(), SPOTIFY_DOMAIN)) {
-			throw new IllegalArgumentException("Domain is not a spotify domain.");
+	private AudioTrack handleAsTrack(URL url) {
+		Path path = Paths.get(url.getPath());
+
+		if (path.getNameCount() < 2) {
+			return null;
 		}
 
+		if (!StringUtils.equals(path.getName(0).toString(), "track")) {
+			return null;
+		}
+
+		String trackId = path.getName(1).toString();
+
+		Track track;
+		try {
+			track = spotifyApi.getTrack(trackId).build().get();
+		} catch (IOException | WebApiException e) {
+			throw new IllegalStateException("Unable to fetch track from Spotify API.", e);
+		}
+
+		SongMetadata songMetadata = getSongMetadata(track);
+
+		return audioTrackFactory.getAudioTrack(songMetadata);
+	}
+
+	private BasicAudioPlaylist handleAsPlaylist(URL url) {
+		PlaylistKey playlistKey;
+		try {
+			playlistKey = extractPlaylistId(url);
+		} catch (IllegalArgumentException e) {
+			return null;
+		}
+
+		PlaylistRequest playlistRequest = spotifyApi
+				.getPlaylist(playlistKey.getUserId(), playlistKey.getPlaylistId()).build();
+
+		Playlist playlist;
+		try {
+			playlist = playlistRequest.get();
+		} catch (IOException | WebApiException e) {
+			throw new IllegalStateException("Unable to fetch playlist from Spotify API.", e);
+		}
+
+		// TODO: Pagination or else we can only fetch the first 100 songs of a playlist.
+		Page<PlaylistTrack> playlistTracksPage = playlist.getTracks();
+
+		List<SongMetadata> songMetadata = getSongMetadata(playlistTracksPage);
+		List<AudioTrack> audioTracks = audioTrackFactory.getAudioTracks(songMetadata);
+
+		return new BasicAudioPlaylist(playlist.getName(), audioTracks, null, false);
+	}
+
+	private PlaylistKey extractPlaylistId(URL url) {
 		Path path = Paths.get(url.getPath());
 		if (path.getNameCount() < EXPECTED_PATH_COMPONENTS) {
 			throw new IllegalArgumentException("Not enough path components.");
@@ -118,14 +155,16 @@ class SpotifyPlaylistSourceManager implements AudioSourceManager {
 
 		List<SongMetadata> songMetadata = playlistTracksPage.getItems().stream()
 				.map(playlistTrack -> playlistTrack.getTrack())
-				.map(track -> {
-					String firstArtistName = track.getArtists().isEmpty() ? "" : track.getArtists().get(0).getName();
-
-					return new SongMetadata(track.getName(), firstArtistName, track.getDuration());
-				})
+				.map(track -> getSongMetadata(track))
 				.collect(Collectors.toList());
 
 		return songMetadata;
+	}
+
+	private SongMetadata getSongMetadata(Track track) {
+		String firstArtistName = track.getArtists().isEmpty() ? "" : track.getArtists().get(0).getName();
+
+		return new SongMetadata(track.getName(), firstArtistName, track.getDuration());
 	}
 
 	@Override

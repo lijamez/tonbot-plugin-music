@@ -26,12 +26,24 @@ class LazyYoutubeAudioTrackFactory implements AudioTrackFactory {
 
 	@Override
 	public List<AudioTrack> getAudioTracks(List<SongMetadata> songMetadata) {
+		Preconditions.checkNotNull(songMetadata, "songMetadata must be non-null.");
+
 		return songMetadata.stream()
-				.map(sm -> {
-					AudioTrackInfo ati = new AudioTrackInfo(sm.getName(), sm.getArtist(), sm.getDuration(), "", false,
-							"");
-					return new LazyYoutubeAudioTrack(ati, ytAudioSourceManager, ytSearchProvider);
-				})
+				.map(sm -> getAudioTrack(sm))
 				.collect(Collectors.toList());
+	}
+
+	@Override
+	public AudioTrack getAudioTrack(SongMetadata songMetadata) {
+		Preconditions.checkNotNull(songMetadata, "songMetadata must be non-null.");
+
+		AudioTrackInfo ati = new AudioTrackInfo(
+				songMetadata.getName(),
+				songMetadata.getArtist(),
+				songMetadata.getDuration(),
+				"",
+				false,
+				"");
+		return new LazyYoutubeAudioTrack(ati, ytAudioSourceManager, ytSearchProvider);
 	}
 }
