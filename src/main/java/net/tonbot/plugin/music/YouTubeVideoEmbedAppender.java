@@ -36,7 +36,7 @@ class YouTubeVideoEmbedAppender implements EmbedAppender {
 	private final YouTube yt;
 
 	@Inject
-	public YouTubeVideoEmbedAppender(@YouTubeApiKey String ytApiKey) {
+	public YouTubeVideoEmbedAppender(@GoogleApiKey String ytApiKey) {
 		this.ytApiKey = Preconditions.checkNotNull(ytApiKey, "ytApiKey must be non-null.");
 
 		this.yt = new YouTube.Builder(new NetHttpTransport(), new JacksonFactory(), new HttpRequestInitializer() {

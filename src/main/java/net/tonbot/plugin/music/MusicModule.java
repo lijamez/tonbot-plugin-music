@@ -1,6 +1,7 @@
 package net.tonbot.plugin.music;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.Set;
 
@@ -9,6 +10,11 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.services.drive.Drive;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -63,7 +69,7 @@ class MusicModule extends AbstractModule {
 		bind(String.class).annotatedWith(Prefix.class).toInstance(prefix);
 		bind(BotUtils.class).toInstance(botUtils);
 		bind(DiscordAudioPlayerManager.class).in(Scopes.SINGLETON);
-		bind(String.class).annotatedWith(YouTubeApiKey.class).toInstance(youTubeApiKey);
+		bind(String.class).annotatedWith(GoogleApiKey.class).toInstance(youTubeApiKey);
 		bind(AudioTrackFactory.class).to(LazyYoutubeAudioTrackFactory.class);
 	}
 
@@ -185,5 +191,15 @@ class MusicModule extends AbstractModule {
 		}
 
 		return new SpotifySourceManager(spotifyApi, audioTrackFactory);
+	}
+
+	@Provides
+	@Singleton
+	Drive drive() throws GeneralSecurityException, IOException {
+		HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+		JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
+
+		return new Drive.Builder(httpTransport, jsonFactory, null)
+				.build();
 	}
 }
