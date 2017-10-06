@@ -96,7 +96,9 @@ class MusicModule extends AbstractModule {
 	AudioPlayerManager audioPlayerManager(
 			YoutubeAudioSourceManager yasm,
 			ITunesPlaylistSourceManager itunesPlaylistSourceManager,
-			@Nullable SpotifySourceManager spotifySourceManager) {
+			@Nullable SpotifySourceManager spotifySourceManager,
+			GoogleDriveSourceManager googleDriveSourceManager,
+			HttpAudioSourceManager httpAudioSourceManager) {
 		AudioPlayerManager apm = new DefaultAudioPlayerManager();
 		apm.enableGcMonitoring();
 
@@ -114,9 +116,16 @@ class MusicModule extends AbstractModule {
 			apm.registerSourceManager(spotifySourceManager);
 		}
 
-		apm.registerSourceManager(new HttpAudioSourceManager());
+		apm.registerSourceManager(googleDriveSourceManager);
+		apm.registerSourceManager(httpAudioSourceManager);
 
 		return apm;
+	}
+
+	@Provides
+	@Singleton
+	HttpAudioSourceManager httpAudioSourceManager() {
+		return new HttpAudioSourceManager();
 	}
 
 	@Provides
