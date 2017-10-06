@@ -54,6 +54,7 @@ class PlayActivity extends AudioSessionActivity {
 						+ "- Beam.pro\n"
 						+ "- iTunes Playlist Upload\n"
 						+ "- Spotify\n"
+						+ "- Google Drive\n"
 						+ "- HTTP Audio File\n"
 						+ "\n"
 						+ "**Playing a track via searching YouTube:**\n"
