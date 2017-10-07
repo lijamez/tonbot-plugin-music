@@ -3,6 +3,7 @@ package net.tonbot.plugin.music;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -33,7 +34,7 @@ class ListActivity extends AudioSessionActivity {
 					"Displays the currently playing track and upcoming tracks. If there are too many upcoming tracks, then you need to specify a page number to see more.")
 			.build();
 	private static final int TRACKS_PER_PAGE = 10;
-	private static final String LIVE_TIME = "LIVE";
+	private static final String STREAM_TIME = "STREAM";
 
 	private final BotUtils botUtils;
 
@@ -113,7 +114,7 @@ class ListActivity extends AudioSessionActivity {
 			timeSb.append("``[");
 
 			if (nowPlaying.getInfo().isStream) {
-				timeSb.append(LIVE_TIME);
+				timeSb.append(STREAM_TIME);
 			} else {
 				timeSb.append(TimeFormatter.toFriendlyString(nowPlaying.getPosition(), TimeUnit.MILLISECONDS))
 						.append("/")
@@ -162,7 +163,7 @@ class ListActivity extends AudioSessionActivity {
 						.append("** (");
 
 				if (track.getInfo().isStream) {
-					trackSb.append(LIVE_TIME);
+					trackSb.append(STREAM_TIME);
 				} else {
 					trackSb.append(TimeFormatter.toFriendlyString(track.getDuration(), TimeUnit.MILLISECONDS));
 				}
@@ -183,12 +184,32 @@ class ListActivity extends AudioSessionActivity {
 						.append("**.");
 			}
 
-			long totalDuration = upcomingTracks.stream()
+			List<AudioTrack> nonStreamTracks = upcomingTracks.stream()
+					.filter(track -> !track.getInfo().isStream)
+					.collect(Collectors.toList());
+
+			long totalNonStreamDuration = nonStreamTracks.stream()
 					.map(track -> track.getDuration())
 					.reduce(0L, (i, j) -> i + j);
 
-			sb.append("\n\nThe queue contains **").append(upcomingTracks.size()).append("** tracks and is **")
-					.append(TimeFormatter.toFriendlyString(totalDuration, TimeUnit.MILLISECONDS)).append("** long.");
+			long streamCount = upcomingTracks.stream()
+					.filter(track -> track.getInfo().isStream)
+					.count();
+
+			sb.append("\n\nThe queue contains ");
+
+			List<String> fragments = new ArrayList<>();
+			if (nonStreamTracks.size() > 0) {
+				fragments.add(String.format("**%d** track(s), which are **%s** long", nonStreamTracks.size(),
+						TimeFormatter.toFriendlyString(totalNonStreamDuration, TimeUnit.MILLISECONDS)));
+			}
+
+			if (streamCount > 0) {
+				fragments.add(String.format("**%d** streams", streamCount));
+			}
+			
+			sb.append(StringUtils.join(fragments, " and ")).append(".");
+
 		}
 
 		embedBuilder.appendField("Next up:", sb.toString(), false);

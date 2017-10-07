@@ -19,7 +19,7 @@ import sx.blah.discord.util.EmbedBuilder;
 class NowPlayingActivity extends AudioSessionActivity {
 
 	private static final int PROGRESS_BAR_WIDTH = 28;
-	private static final String LIVE_TIME = "LIVE";
+	private static final String STREAM_TIME = "STREAM";
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
 			.route(ImmutableList.of("music", "nowplaying"))
 			.routeAliases(ImmutableList.of(
@@ -122,7 +122,7 @@ class NowPlayingActivity extends AudioSessionActivity {
 
 		if (npTrack.getInfo().isStream) {
 			sb.append("``")
-					.append(LIVE_TIME)
+					.append(STREAM_TIME)
 					.append("``");
 		} else {
 			String progressBar = renderProgressBar(npTrack);
