@@ -109,7 +109,7 @@ class GoogleDriveSourceManager implements AudioSourceManager {
 								} catch (FriendlyException e) {
 									// Unfortunately, the HTTPAudioSourceManager throws an exception when it
 									// encounters unknown files instead of just returning null.
-									LOG.debug("File {} cannot be played back.", file.getTitle(), e);
+									LOG.debug("File {} cannot be played back: {}", file.getTitle(), e.getMessage());
 									audioItem = null;
 								}
 							} while (audioItem instanceof AudioReference);
