@@ -47,19 +47,19 @@ class MusicModule extends AbstractModule {
 	private final IDiscordClient discordClient;
 	private final String prefix;
 	private final BotUtils botUtils;
-	private final String youTubeApiKey;
+	private final String googleApiKey;
 	private final SpotifyCredentials spotifyCredentials;
 
 	public MusicModule(
 			IDiscordClient discordClient,
 			String prefix,
 			BotUtils botUtils,
-			String youTubeApiKey,
+			String googleApiKey,
 			SpotifyCredentials spotifyCredentials) {
 		this.discordClient = Preconditions.checkNotNull(discordClient, "discordClient must be non-null.");
 		this.prefix = Preconditions.checkNotNull(prefix, "prefix must be non-null.");
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
-		this.youTubeApiKey = Preconditions.checkNotNull(youTubeApiKey, "youtubeApiKey must be non-null.");
+		this.googleApiKey = Preconditions.checkNotNull(googleApiKey, "googleApiKey must be non-null.");
 		this.spotifyCredentials = spotifyCredentials;
 	}
 
@@ -69,7 +69,7 @@ class MusicModule extends AbstractModule {
 		bind(String.class).annotatedWith(Prefix.class).toInstance(prefix);
 		bind(BotUtils.class).toInstance(botUtils);
 		bind(DiscordAudioPlayerManager.class).in(Scopes.SINGLETON);
-		bind(String.class).annotatedWith(GoogleApiKey.class).toInstance(youTubeApiKey);
+		bind(String.class).annotatedWith(GoogleApiKey.class).toInstance(googleApiKey);
 		bind(AudioTrackFactory.class).to(LazyYoutubeAudioTrackFactory.class);
 	}
 
