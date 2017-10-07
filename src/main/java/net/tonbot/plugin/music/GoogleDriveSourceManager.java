@@ -26,7 +26,6 @@ import com.google.inject.Inject;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.http.HttpAudioSourceManager;
-import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -36,7 +35,7 @@ import com.sedmelluq.discord.lavaplayer.track.BasicAudioPlaylist;
 /**
  * Plays a media file shared via Google Drive share link.
  */
-class GoogleDriveSourceManager implements AudioSourceManager {
+public class GoogleDriveSourceManager implements AudioSourceManager {
 
 	private static final Logger LOG = LoggerFactory.getLogger(GoogleDriveSourceManager.class);
 
@@ -98,29 +97,11 @@ class GoogleDriveSourceManager implements AudioSourceManager {
 				List<File> files = getFilesRecursively(rootFileId);
 				List<AudioTrack> audioTracks = files.stream()
 						.sorted((a, b) -> StringUtils.compare(a.getTitle(), b.getTitle()))
-						.map(file -> {
-							AudioItem audioItem = new AudioReference(file.getWebContentLink(), file.getTitle());
-							// Go through all of the redirects.
-							// FIXME: Possible infinite redirect. Unlikely since it's Google Drive, but you
-							// never know.
-							do {
-								try {
-									audioItem = httpAsm.loadItem(manager, (AudioReference) audioItem);
-								} catch (FriendlyException e) {
-									// Unfortunately, the HTTPAudioSourceManager throws an exception when it
-									// encounters unknown files instead of just returning null.
-									LOG.debug("File {} cannot be played back: {}", file.getTitle(), e.getMessage());
-									audioItem = null;
-								}
-							} while (audioItem instanceof AudioReference);
-
-							if (audioItem instanceof AudioTrack) {
-								return (AudioTrack) audioItem;
-							} else {
-								return null;
-							}
-						})
-						.filter(audioTrack -> audioTrack != null)
+						.map(file -> new LazyGoogleDriveAudioTrack(
+								new AudioTrackInfo(file.getTitle(), "", Long.MAX_VALUE, file.getWebContentLink(), true,
+										file.getWebContentLink()),
+								httpAsm,
+								manager))
 						.collect(Collectors.toList());
 				BasicAudioPlaylist playlist = new BasicAudioPlaylist(rootFile.getTitle(), audioTracks, null, false);
 				return playlist;

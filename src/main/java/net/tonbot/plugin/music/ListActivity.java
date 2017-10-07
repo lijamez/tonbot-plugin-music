@@ -207,7 +207,7 @@ class ListActivity extends AudioSessionActivity {
 			if (streamCount > 0) {
 				fragments.add(String.format("**%d** streams", streamCount));
 			}
-			
+
 			sb.append(StringUtils.join(fragments, " and ")).append(".");
 
 		}
