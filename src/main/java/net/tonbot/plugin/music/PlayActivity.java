@@ -24,9 +24,6 @@ class PlayActivity extends AudioSessionActivity {
 
 	private static final ActivityDescriptor activityDescriptor = ActivityDescriptor.builder()
 			.route("music play")
-			.routeAliases(ImmutableList.of(
-					"play",
-					"p"))
 			.parameters(ImmutableList.of("link to song"))
 			.description(
 					"Plays a track. If no song link is provided, then it unpauses the player.")
@@ -56,7 +53,7 @@ class PlayActivity extends AudioSessionActivity {
 					+ "```${absoluteReferencedRoute}```\n"
 					+ "Saying the command without any arguments or attachments will unpause playback.")
 			.build();
-	
+
 	private final IDiscordClient discordClient;
 	private final BotUtils botUtils;
 

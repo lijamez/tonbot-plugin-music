@@ -1,7 +1,6 @@
 package net.tonbot.plugin.music;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 
 import net.tonbot.common.ActivityDescriptor;
@@ -12,8 +11,6 @@ class PauseActivity extends AudioSessionActivity {
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
 			.route("music pause")
-			.routeAliases(ImmutableList.of(
-					"pause"))
 			.description("Pauses the player.")
 			.build();
 

@@ -25,9 +25,6 @@ class ListActivity extends AudioSessionActivity {
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
 			.route("music list")
-			.routeAliases(ImmutableList.of(
-					"l",
-					"q"))
 			.parameters(ImmutableList.of("page number"))
 			.description("Displays the upcoming tracks.")
 			.usageDescription(

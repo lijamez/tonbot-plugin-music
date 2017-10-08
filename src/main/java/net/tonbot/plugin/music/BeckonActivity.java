@@ -1,7 +1,6 @@
 package net.tonbot.plugin.music;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 
 import net.tonbot.common.Activity;
@@ -17,9 +16,6 @@ class BeckonActivity implements Activity {
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
 			.route("music beckon")
-			.routeAliases(ImmutableList.of(
-					"music summon",
-					"music join"))
 			.description(
 					"Makes me join your voice channel. The channel that this command is sent in will be used for music commands.")
 			.usageDescription(

@@ -6,7 +6,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.StringUtils;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
@@ -22,8 +21,6 @@ class NowPlayingActivity extends AudioSessionActivity {
 	private static final String STREAM_TIME = "STREAM";
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
 			.route("music nowplaying")
-			.routeAliases(ImmutableList.of(
-					"np"))
 			.description("Shows what's playing.")
 			.build();
 
