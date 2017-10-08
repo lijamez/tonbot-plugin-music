@@ -30,12 +30,12 @@ dependencies {
     implementation group: 'com.github.lijamez', name: 'tonbot-common', version: 'master-SNAPSHOT'
 
 	implementation group: 'com.sedmelluq', name: 'lavaplayer', version: '1.2.43'
-	implementation group: 'com.google.apis', name: 'google-api-services-youtube', version: 'v3-rev183-1.22.0'
-	implementation group: 'org.apache.commons', name: 'commons-csv', version: '1.4'
+	implementation group: 'org.apache.commons', name: 'commons-csv', version: '1.5'
 	implementation group: 'commons-io', name: 'commons-io', version: '2.5'
 	
 	implementation group: 'se.michaelthelin.spotify', name: 'spotify-web-api-java', version: '1.5.0'
 	
+	implementation group: 'com.google.apis', name: 'google-api-services-youtube', version: 'v3-rev184-1.22.0'
 	implementation group: 'com.google.apis', name: 'google-api-services-drive', version: 'v2-rev280-1.23.0'
 	
 	implementation group: 'com.google.inject', name: 'guice', version: '4.1.0'
