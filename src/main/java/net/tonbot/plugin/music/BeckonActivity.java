@@ -16,10 +16,10 @@ import sx.blah.discord.util.MissingPermissionsException;
 class BeckonActivity implements Activity {
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
-			.route(ImmutableList.of("music", "beckon"))
+			.route("music beckon")
 			.routeAliases(ImmutableList.of(
-					ImmutableList.of("music", "summon"),
-					ImmutableList.of("music", "join")))
+					"music summon",
+					"music join"))
 			.description(
 					"Makes me join your voice channel. The channel that this command is sent in will be used for music commands.")
 			.usageDescription(

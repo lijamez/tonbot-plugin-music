@@ -14,9 +14,9 @@ import sx.blah.discord.handle.obj.IVoiceChannel;
 class DismissActivity implements Activity {
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
-			.route(ImmutableList.of("music", "dismiss"))
+			.route("music dismiss")
 			.routeAliases(ImmutableList.of(
-					ImmutableList.of("music", "leave")))
+					"music leave"))
 			.description("Makes me leave the voice channel and clear the queue.")
 			.build();
 

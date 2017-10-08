@@ -24,10 +24,10 @@ import sx.blah.discord.util.EmbedBuilder;
 class ListActivity extends AudioSessionActivity {
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
-			.route(ImmutableList.of("music", "list"))
+			.route("music list")
 			.routeAliases(ImmutableList.of(
-					ImmutableList.of("l"),
-					ImmutableList.of("q")))
+					"l",
+					"q"))
 			.parameters(ImmutableList.of("page number"))
 			.description("Displays the upcoming tracks.")
 			.usageDescription(

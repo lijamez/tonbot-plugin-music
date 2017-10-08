@@ -30,22 +30,22 @@ class SkipActivity extends AudioSessionActivity {
 	private static final Logger LOG = LoggerFactory.getLogger(SkipActivity.class);
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
-			.route(ImmutableList.of("music", "skip"))
+			.route("music skip")
 			.routeAliases(ImmutableList.of(
-					ImmutableList.of("skip"),
-					ImmutableList.of("s")))
+					"skip",
+					"s"))
 			.parameters(ImmutableList.of("track numbers"))
 			.description("Skips the currently playing track or several tracks in the Up Next queue.")
 			.usageDescription(
 					"This command skips the current track.\n\n"
 							+ "To skip tracks in the Up Next queue, specify a track number or a comma separated list of track numbers.\n"
-							+ "``music skip 3``\n"
-							+ "``music skip 1, 2, 3, 4, 7``\n\n"
+							+ "``${routeName} 3``\n"
+							+ "``${routeName} 1, 2, 3, 4, 7``\n\n"
 							+ "You can also skip a range of tracks.\n"
-							+ "``music skip 1-7``\n"
-							+ "``music skip 1, 2-4, 7``\n\n"
+							+ "``${routeName} 1-7``\n"
+							+ "``${routeName} 1, 2-4, 7``\n\n"
 							+ "Or you can just skip everything in the Up Next queue with:\n"
-							+ "``music skip all``")
+							+ "``${routeName} all``")
 			.build();
 
 	private static final Pattern RANGE_PATTERN = Pattern.compile("^([0-9]+)-([0-9]+)$");

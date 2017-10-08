@@ -11,9 +11,9 @@ import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedE
 class PauseActivity extends AudioSessionActivity {
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
-			.route(ImmutableList.of("music", "pause"))
+			.route("music pause")
 			.routeAliases(ImmutableList.of(
-					ImmutableList.of("pause")))
+					"pause"))
 			.description("Pauses the player.")
 			.build();
 

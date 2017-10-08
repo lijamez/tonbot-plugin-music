@@ -9,7 +9,7 @@ import net.tonbot.common.BotUtils;
 class RoundRobinActivity extends BinaryModeChangingActivity {
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
-			.route(ImmutableList.of("music", "roundrobin"))
+			.route("music roundrobin")
 			.parameters(ImmutableList.of("on/off"))
 			.description("Toggles round robin mode.")
 			.usageDescription(

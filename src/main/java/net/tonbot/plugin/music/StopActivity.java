@@ -11,9 +11,9 @@ import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedE
 class StopActivity extends AudioSessionActivity {
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
-			.route(ImmutableList.of("music", "stop"))
+			.route("music stop")
 			.routeAliases(ImmutableList.of(
-					ImmutableList.of("stop")))
+					"stop"))
 			.description("Stops playing the current track.")
 			.build();
 
