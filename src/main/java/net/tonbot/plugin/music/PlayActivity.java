@@ -22,7 +22,41 @@ import sx.blah.discord.util.RequestBuilder;
 
 class PlayActivity extends AudioSessionActivity {
 
-	private final ActivityDescriptor activityDescriptor;
+	private static final ActivityDescriptor activityDescriptor = ActivityDescriptor.builder()
+			.route("music play")
+			.routeAliases(ImmutableList.of(
+					"play",
+					"p"))
+			.parameters(ImmutableList.of("link to song"))
+			.description(
+					"Plays a track. If no song link is provided, then it unpauses the player.")
+			.usageDescription("**Playing track(s) via direct link to a track or playlist:**\n"
+					+ "```${absoluteReferencedRoute} https://www.youtube.com/watch?v=dQw4w9WgXcQ```\n"
+					+ "The following services are supported:\n"
+					+ "- YouTube\n"
+					+ "- SoundCloud\n"
+					+ "- Bandcamp\n"
+					+ "- Vimeo\n"
+					+ "- Twitch\n"
+					+ "- Beam.pro\n"
+					+ "- iTunes Playlist Upload\n"
+					+ "- Spotify\n"
+					+ "- Google Drive\n"
+					+ "- HTTP Audio File\n"
+					+ "\n"
+					+ "**Playing a track via searching YouTube:**\n"
+					+ "```${absoluteReferencedRoute} the sound of silence```\n"
+					+ "You'll get a list of search results. Say ``${absoluteReferencedRoute} N`` (where N is the result number) to play it.\n"
+					+ "\n"
+					+ "**Playing track(s) by iTunes playlist upload:**\n"
+					+ "Send your iTunes playlist export as an attachment with the message ``${absoluteReferencedRoute}``. For best results, make sure your tracks' title and artist metadata fields are correct.\n"
+					+ "To export an iTunes playlist, click on a playlist, then go to File > Library > Export Playlist.\n"
+					+ "\n"
+					+ "**Resuming playback:**\n"
+					+ "```${absoluteReferencedRoute}```\n"
+					+ "Saying the command without any arguments or attachments will unpause playback.")
+			.build();
+	
 	private final IDiscordClient discordClient;
 	private final BotUtils botUtils;
 
@@ -35,42 +69,6 @@ class PlayActivity extends AudioSessionActivity {
 		super(discordAudioPlayerManager);
 		this.discordClient = Preconditions.checkNotNull(discordClient, "discordClient must be non-null.");
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
-		this.activityDescriptor = ActivityDescriptor.builder()
-				.route("music play")
-				.routeAliases(ImmutableList.of(
-						"play",
-						"p"))
-				.parameters(ImmutableList.of("link to song"))
-				.description(
-						"Plays a track. If no song link is provided, then it unpauses the player.")
-				.usageDescription("**Playing track(s) via direct link to a track or playlist:**\n"
-						+ "```" + prefix + " music play https://www.youtube.com/watch?v=dQw4w9WgXcQ```\n"
-						+ "The following services are supported:\n"
-						+ "- YouTube\n"
-						+ "- SoundCloud\n"
-						+ "- Bandcamp\n"
-						+ "- Vimeo\n"
-						+ "- Twitch\n"
-						+ "- Beam.pro\n"
-						+ "- iTunes Playlist Upload\n"
-						+ "- Spotify\n"
-						+ "- Google Drive\n"
-						+ "- HTTP Audio File\n"
-						+ "\n"
-						+ "**Playing a track via searching YouTube:**\n"
-						+ "```" + prefix + " music play the sound of silence```\n"
-						+ "You'll get a list of search results. Say ``" + prefix
-						+ " music play N`` (where N is the result number) to play it.\n"
-						+ "\n"
-						+ "**Playing track(s) by iTunes playlist upload:**\n"
-						+ "Send your iTunes playlist export as an attachment with the message ``" + prefix
-						+ " music play``. For best results, make sure your tracks' title and artist metadata fields are correct.\n"
-						+ "To export an iTunes playlist, click on a playlist, then go to File > Library > Export Playlist.\n"
-						+ "\n"
-						+ "**Resuming playback:**\n"
-						+ "```" + prefix + " music play```\n"
-						+ "Saying the command without any arguments or attachments will unpause playback.")
-				.build();
 	}
 
 	@Override
