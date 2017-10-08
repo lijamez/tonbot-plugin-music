@@ -104,9 +104,9 @@ class SkipActivity extends AudioSessionActivity {
 	/**
 	 * Parses the user-supplied arguments to get a list of track numbers to skip.
 	 * 
-	 * @param args
-	 * @param audioSession
-	 * @return
+	 * @param args The user-supplied arguments.
+	 * @param audioSession {@link AudioSession}
+	 * @return A list of zero-indexed indexes in the {@link AudioSession}'s upcoming tracks to skip.
 	 */
 	private List<Integer> getSkipIndexes(String args, AudioSession audioSession) {
 		List<Integer> skipIndexes;
