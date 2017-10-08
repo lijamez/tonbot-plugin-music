@@ -132,7 +132,7 @@ class SkipActivity extends AudioSessionActivity {
 	 * @param args
 	 *            The range as a user supplied string.
 	 * @param maxIndex
-	 *            An (exclusive) upper bound on the indexes to return.
+	 *            A zero-indexed, exclusive upper bound on the indexes to return.
 	 * @return A list of zero-indexed track indexes to skip, sorted in descending
 	 *         order. Guaranteed to have no duplicates.
 	 * @throws TonbotBusinessException
