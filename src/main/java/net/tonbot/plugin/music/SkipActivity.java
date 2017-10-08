@@ -11,6 +11,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -25,17 +27,29 @@ import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedE
 
 class SkipActivity extends AudioSessionActivity {
 
+	private static final Logger LOG = LoggerFactory.getLogger(SkipActivity.class);
+
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
 			.route(ImmutableList.of("music", "skip"))
 			.routeAliases(ImmutableList.of(
 					ImmutableList.of("skip"),
 					ImmutableList.of("s")))
 			.parameters(ImmutableList.of("track numbers"))
-			.description(
-					"Skips tracks with comma-separated track numbers or ranges. If none are provided, then the current track is skipped.")
+			.description("Skips the currently playing track or several tracks in the Up Next queue.")
+			.usageDescription(
+					"This command skips the current track.\n\n"
+							+ "To skip tracks in the Up Next queue, specify a track number or a comma separated list of track numbers.\n"
+							+ "``music skip 3``\n"
+							+ "``music skip 1, 2, 3, 4, 7``\n\n"
+							+ "You can also skip a range of tracks.\n"
+							+ "``music skip 1-7``\n"
+							+ "``music skip 1, 2-4, 7``\n\n"
+							+ "Or you can just skip everything in the Up Next queue with:\n"
+							+ "``music skip all``")
 			.build();
 
 	private static final Pattern RANGE_PATTERN = Pattern.compile("^([0-9]+)-([0-9]+)$");
+	private static final String ALL_KEYWORD = "ALL";
 
 	private final BotUtils botUtils;
 
@@ -52,9 +66,11 @@ class SkipActivity extends AudioSessionActivity {
 
 	@Override
 	protected void enactWithSession(MessageReceivedEvent event, String args, AudioSession audioSession) {
-		// TODO: Add support for skipping ranges.
 
-		List<Integer> skipIndexes = parseSkipIndexes(args);
+		List<Integer> skipIndexes = getSkipIndexes(args, audioSession);
+
+		LOG.debug("User {} entered args '{}' to skip the following indexes: {}", event.getAuthor().getName(), args,
+				skipIndexes);
 
 		if (skipIndexes.isEmpty()) {
 			// Skip the current track.
@@ -86,24 +102,51 @@ class SkipActivity extends AudioSessionActivity {
 	}
 
 	/**
+	 * Parses the user-supplied arguments to get a list of track numbers to skip.
+	 * 
+	 * @param args
+	 * @param audioSession
+	 * @return
+	 */
+	private List<Integer> getSkipIndexes(String args, AudioSession audioSession) {
+		List<Integer> skipIndexes;
+
+		List<AudioTrack> upcomingTracks = audioSession.getStatus().getUpcomingTracks();
+
+		if (StringUtils.equalsIgnoreCase(args, ALL_KEYWORD)) {
+			skipIndexes = IntStream.range(0, upcomingTracks.size())
+					.mapToObj(i -> i)
+					.collect(Collectors.toList());
+		} else {
+			skipIndexes = parseSkipIndexes(args, upcomingTracks.size());
+		}
+
+		return skipIndexes;
+	}
+
+	/**
 	 * Generates a list of track indexes to skip. Will be returned in DESCENDING
 	 * order. The order is important because tracks should be skipped in this order
 	 * to prevent index shifting.
 	 * 
 	 * @param args
 	 *            The range as a user supplied string.
+	 * @param maxIndex
+	 *            An (exclusive) upper bound on the indexes to return.
 	 * @return A list of zero-indexed track indexes to skip, sorted in descending
 	 *         order. Guaranteed to have no duplicates.
 	 * @throws TonbotBusinessException
 	 *             If ranges could not be cleanly parsed.
 	 */
-	private List<Integer> parseSkipIndexes(String args) {
+	private List<Integer> parseSkipIndexes(String args, int maxIndex) {
 		List<Integer> skipIndexes;
 
 		if (!StringUtils.isBlank(args)) {
 			skipIndexes = Arrays.asList(StringUtils.split(args, ',')).stream()
 					.map(String::trim)
 					.map(rangeStr -> {
+						// Interprets the 1-indexed input and returns a stream of 1-indexed Ranges.
+
 						// Maybe it's just a single number
 						Range range;
 						try {
@@ -130,11 +173,13 @@ class SkipActivity extends AudioSessionActivity {
 						return range;
 
 					})
-					.flatMap(range -> IntStream.range(range.getFrom(), range.getTo() + 1).mapToObj(i -> i))
+					.flatMap(range -> IntStream.range(range.getFrom(), Math.min(range.getTo() + 1, maxIndex + 1))
+							.mapToObj(i -> i))
 					.map(i -> i - 1)
 					.distinct()
 					.sorted(new Comparator<Integer>() {
-
+						// Sorts the indexes in descending order. This is necessary to prevent incorrect
+						// track skips due to index shifting.
 						@Override
 						public int compare(Integer a, Integer b) {
 							return b - a;
