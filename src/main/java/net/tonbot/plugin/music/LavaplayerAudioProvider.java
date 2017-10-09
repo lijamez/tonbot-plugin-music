@@ -11,11 +11,11 @@ class LavaplayerAudioProvider implements IAudioProvider {
 
 	private final AudioPlayer audioPlayer;
 
+	private AudioFrame lastFrame = null;
+
 	public LavaplayerAudioProvider(AudioPlayer audioPlayer) {
 		this.audioPlayer = Preconditions.checkNotNull(audioPlayer, "audioPlayer must be non-null.");
 	}
-
-	private AudioFrame lastFrame = null;
 
 	@Override
 	public AudioEncodingType getAudioEncodingType() {
@@ -24,12 +24,12 @@ class LavaplayerAudioProvider implements IAudioProvider {
 
 	@Override
 	public boolean isReady() {
-		lastFrame = audioPlayer.provide();
-		return lastFrame != null;
+		this.lastFrame = audioPlayer.provide();
+		return this.lastFrame != null;
 	}
 
 	@Override
 	public byte[] provide() {
-		return lastFrame.data;
+		return this.lastFrame.data;
 	}
 }
