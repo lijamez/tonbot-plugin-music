@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.api.client.repackaged.com.google.common.base.Preconditions;
-import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioTrack;
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeSearchProvider;
@@ -15,11 +14,12 @@ import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
+import com.sedmelluq.discord.lavaplayer.track.DelegatedAudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.playback.LocalAudioTrackExecutor;
 
 import net.tonbot.common.TonbotBusinessException;
 
-public class LazyYoutubeAudioTrack extends YoutubeAudioTrack {
+public class LazyYoutubeAudioTrack extends DelegatedAudioTrack {
 
 	private static final Logger LOG = LoggerFactory.getLogger(LazyYoutubeAudioTrack.class);
 	private static final int SEARCH_RESULTS_LIMIT = 5;
@@ -34,11 +34,12 @@ public class LazyYoutubeAudioTrack extends YoutubeAudioTrack {
 			AudioTrackInfo initialAudioTrackInfo,
 			YoutubeAudioSourceManager sourceManager,
 			YoutubeSearchProvider ytSearchProvider) {
-		super(initialAudioTrackInfo, sourceManager);
+		super(initialAudioTrackInfo);
 		this.initialAudioTrackInfo = Preconditions.checkNotNull(initialAudioTrackInfo);
-		this.realTrack = null;
 		this.sourceManager = Preconditions.checkNotNull(sourceManager, "sourceManager must be non-null.");
 		this.ytSearchProvider = Preconditions.checkNotNull(ytSearchProvider, "ytSearchProvider must be non-null.");
+		
+		this.realTrack = null;
 	}
 
 	@Override
@@ -48,15 +49,10 @@ public class LazyYoutubeAudioTrack extends YoutubeAudioTrack {
 		}
 
 		if (this.realTrack != null) {
-			this.realTrack.process(executor);
+			this.processDelegate(realTrack, executor);
 		} else {
 			throw new TonbotBusinessException("Couldn't find a track on YouTube.");
 		}
-	}
-
-	@Override
-	public AudioSourceManager getSourceManager() {
-		return this.sourceManager;
 	}
 
 	@Override
