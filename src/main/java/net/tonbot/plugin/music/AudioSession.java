@@ -307,7 +307,7 @@ class AudioSession extends AudioEventAdapter {
 				.nowPlaying(audioPlayer.getPlayingTrack())
 				.upcomingTracks(trackManager.getView())
 				.playMode(playMode)
-				.loopMode(repeatMode)
+				.repeatMode(repeatMode)
 				.build();
 	}
 

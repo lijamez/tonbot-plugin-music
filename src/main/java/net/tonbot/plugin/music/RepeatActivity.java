@@ -46,7 +46,7 @@ public class RepeatActivity extends AudioSessionActivity {
 		RepeatMode targetRepeatMode;
 		if (StringUtils.isBlank(args)) {
 			// Scroll through the various modes.
-			RepeatMode currentMode = audioSession.getStatus().getLoopMode();
+			RepeatMode currentMode = audioSession.getStatus().getRepeatMode();
 			int currentModeOrdinal = currentMode.ordinal();
 			int nextModeOrdinal = (currentModeOrdinal + 1) % RepeatMode.values().length;
 			targetRepeatMode = RepeatMode.values()[nextModeOrdinal];

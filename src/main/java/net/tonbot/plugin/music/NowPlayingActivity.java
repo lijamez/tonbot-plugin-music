@@ -147,10 +147,10 @@ class NowPlayingActivity extends AudioSessionActivity {
 			sb.append(playMode.getEmote().orElse(playMode.getFriendlyName()));
 		}
 
-		// Loop Mode
-		RepeatMode loopMode = sessionStatus.getLoopMode();
-		if (loopMode != RepeatMode.OFF) {
-			sb.append(loopMode.getEmote().orElse(loopMode.name()));
+		// Repeat Mode
+		RepeatMode repeatMode = sessionStatus.getRepeatMode();
+		if (repeatMode != RepeatMode.OFF) {
+			sb.append(repeatMode.getEmote().orElse(repeatMode.name()));
 		}
 
 		String playbackModifiers = sb.toString();

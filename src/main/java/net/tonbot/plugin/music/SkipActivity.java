@@ -11,10 +11,9 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -26,8 +25,6 @@ import net.tonbot.common.TonbotBusinessException;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 
 class SkipActivity extends AudioSessionActivity {
-
-	private static final Logger LOG = LoggerFactory.getLogger(SkipActivity.class);
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
 			.route("music skip")
@@ -76,7 +73,7 @@ class SkipActivity extends AudioSessionActivity {
 				skippedTracks.add(skippedTrack.get());
 			}
 		} else if (StringUtils.equalsIgnoreCase(args, ALL_KEYWORD)) {
-			skippedTracks = audioSession.skip(at -> true);
+			skippedTracks = audioSession.skip(Predicates.alwaysTrue());
 		} else if (StringUtils.equalsIgnoreCase(args, MINE_KEYWORD)) {
 			long userId = event.getAuthor().getLongID();
 			skippedTracks = audioSession.skip(at -> {
@@ -99,9 +96,6 @@ class SkipActivity extends AudioSessionActivity {
 		List<AudioTrack> upcomingTracks = audioSession.getStatus().getUpcomingTracks();
 
 		List<Integer> skipIndexes = parseSkipIndexes(args, upcomingTracks.size());
-
-		LOG.debug("User {} entered args '{}' to skip the following indexes: {}", event.getAuthor().getName(), args,
-				skipIndexes);
 
 		List<AudioTrack> removeTracks = skipIndexes.stream()
 				.map(i -> upcomingTracks.get(i))
@@ -161,7 +155,8 @@ class SkipActivity extends AudioSessionActivity {
 					return range;
 
 				})
-				.flatMap(range -> IntStream.range(range.getFrom(), Math.min(range.getTo() + 1, maxIndex + 1))
+				.flatMap(range -> IntStream
+						.range(Math.max(1, range.getFrom()), Math.min(range.getTo() + 1, maxIndex + 1))
 						.mapToObj(i -> i))
 				.map(i -> i - 1)
 				.distinct()
