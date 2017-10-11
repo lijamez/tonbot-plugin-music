@@ -38,7 +38,7 @@ public class LazyYoutubeAudioTrack extends DelegatedAudioTrack {
 		this.initialAudioTrackInfo = Preconditions.checkNotNull(initialAudioTrackInfo);
 		this.sourceManager = Preconditions.checkNotNull(sourceManager, "sourceManager must be non-null.");
 		this.ytSearchProvider = Preconditions.checkNotNull(ytSearchProvider, "ytSearchProvider must be non-null.");
-		
+
 		this.realTrack = null;
 	}
 

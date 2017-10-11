@@ -3,6 +3,7 @@ package net.tonbot.plugin.music;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
@@ -22,9 +23,15 @@ interface TrackManager {
 	 */
 	List<AudioTrack> getView();
 
-	void remove(AudioTrack track);
-
-	void removeAll(Collection<AudioTrack> tracks);
+	/**
+	 * Removes all tracks that meet the given criteria.
+	 * 
+	 * @param predicate
+	 *            If this {@link Predicate} returns true for a particular track,
+	 *            then that track will be removed. Non-null.
+	 * @return The tracks removed.
+	 */
+	List<AudioTrack> removeAll(Predicate<AudioTrack> predicate);
 
 	/**
 	 * Gets the next track, if any. The returned track will be removed.

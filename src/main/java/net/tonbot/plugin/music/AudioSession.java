@@ -10,7 +10,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
+import java.util.function.Predicate;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -416,28 +416,17 @@ class AudioSession extends AudioEventAdapter {
 	}
 
 	/**
-	 * Skips an item in the queue.
+	 * Skips tracks by {@link Predicate}. Tracks which satisfy the predicate will be
+	 * removed.
 	 * 
-	 * @param i
-	 *            The index of the track to skip.
-	 * @return The skipped {@link AudioTrack}.
-	 * @throws IndexOutOfBoundsException
-	 *             if the provided index is not within playlist bounds.
+	 * @param predicate
+	 *            {@link Predicate}. Non-null.
+	 * @return The skipped tracks.
 	 */
-	public AudioTrack skip(int i) {
-		AudioTrack trackToSkip = this.trackManager.getView().get(i);
-		this.trackManager.remove(trackToSkip);
-		return trackToSkip;
-	}
+	public List<AudioTrack> skip(Predicate<AudioTrack> predicate) {
+		Preconditions.checkNotNull(predicate, "predicate must be non-null.");
 
-	public void skipAll(List<Integer> indices) {
-		Preconditions.checkNotNull(indices, "indices must be non-null.");
-
-		List<AudioTrack> tracksToRemove = indices.stream()
-				.map(i -> this.trackManager.getView().get(i))
-				.collect(Collectors.toList());
-
-		this.trackManager.removeAll(tracksToRemove);
+		return this.trackManager.removeAll(predicate);
 	}
 
 	public Optional<SearchResults> getSearchResults(IUser user) {

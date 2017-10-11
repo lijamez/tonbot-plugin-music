@@ -31,7 +31,7 @@ class SkipActivity extends AudioSessionActivity {
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
 			.route("music skip")
-			.parameters(ImmutableList.of("track numbers"))
+			.parameters(ImmutableList.of("track numbers/mine/all"))
 			.description("Skips the currently playing track or several tracks in the Up Next queue.")
 			.usageDescription(
 					"This command skips the current track.\n\n"
@@ -41,12 +41,15 @@ class SkipActivity extends AudioSessionActivity {
 							+ "You can also skip a range of tracks.\n"
 							+ "``${absoluteReferencedRoute} 1-7``\n"
 							+ "``${absoluteReferencedRoute} 1, 2-4, 7``\n\n"
-							+ "Or you can just skip everything in the Up Next queue with:\n"
+							+ "To skip the tracks that you added to the Up Next queue:\n"
+							+ "``${absoluteReferencedRoute} mine``"
+							+ "To skip all tracks in the Up Next queue:\n"
 							+ "``${absoluteReferencedRoute} all``")
 			.build();
 
 	private static final Pattern RANGE_PATTERN = Pattern.compile("^([0-9]+)-([0-9]+)$");
 	private static final String ALL_KEYWORD = "ALL";
+	private static final String MINE_KEYWORD = "MINE";
 
 	private final BotUtils botUtils;
 
@@ -64,64 +67,51 @@ class SkipActivity extends AudioSessionActivity {
 	@Override
 	protected void enactWithSession(MessageReceivedEvent event, String args, AudioSession audioSession) {
 
-		List<Integer> skipIndexes = getSkipIndexes(args, audioSession);
+		List<AudioTrack> skippedTracks;
+		if (StringUtils.isBlank(args)) {
+			// Skip the current track.
+			skippedTracks = new ArrayList<>();
+			Optional<AudioTrack> skippedTrack = audioSession.skip();
+			if (skippedTrack.isPresent()) {
+				skippedTracks.add(skippedTrack.get());
+			}
+		} else if (StringUtils.equalsIgnoreCase(args, ALL_KEYWORD)) {
+			skippedTracks = audioSession.skip(at -> true);
+		} else if (StringUtils.equalsIgnoreCase(args, MINE_KEYWORD)) {
+			long userId = event.getAuthor().getLongID();
+			skippedTracks = audioSession.skip(at -> {
+				ExtraTrackInfo eti = (ExtraTrackInfo) at.getUserData();
+				return eti != null && eti.getAddedByUserId() == userId;
+			});
+		} else {
+			skippedTracks = removeTracksByIndices(event, args, audioSession);
+		}
+
+		if (skippedTracks.size() == 1) {
+			AudioTrack skippedTrack = skippedTracks.get(0);
+			botUtils.sendMessage(event.getChannel(), "Skipped **" + skippedTrack.getInfo().title + "**");
+		} else {
+			botUtils.sendMessage(event.getChannel(), "Skipped **" + skippedTracks.size() + "** tracks.");
+		}
+	}
+
+	private List<AudioTrack> removeTracksByIndices(MessageReceivedEvent event, String args, AudioSession audioSession) {
+		List<AudioTrack> upcomingTracks = audioSession.getStatus().getUpcomingTracks();
+
+		List<Integer> skipIndexes = parseSkipIndexes(args, upcomingTracks.size());
 
 		LOG.debug("User {} entered args '{}' to skip the following indexes: {}", event.getAuthor().getName(), args,
 				skipIndexes);
 
-		if (skipIndexes.isEmpty()) {
-			// Skip the current track.
-			Optional<AudioTrack> optSkippedTrack = audioSession.skip();
-			optSkippedTrack.ifPresent(skippedTrack -> {
-				botUtils.sendMessage(event.getChannel(), "Skipped **" + skippedTrack.getInfo().title + "**");
-			});
-		} else {
-			// We need to ensure that the largest skip index is within range.
-			// We can take advantage of the fact that skipIndexes is sorted.
-			if (skipIndexes.get(0) >= audioSession.getStatus().getUpcomingTracks().size()
-					|| skipIndexes.get(skipIndexes.size() - 1) < 0) {
-				String message = skipIndexes.size() == 1 ? "That's an invalid track number."
-						: "Range includes an invalid track number.";
+		List<AudioTrack> removeTracks = skipIndexes.stream()
+				.map(i -> upcomingTracks.get(i))
+				.collect(Collectors.toList());
 
-				throw new TonbotBusinessException(message);
-			}
-
-			// Skip the specified track(s).
-			if (skipIndexes.size() == 1) {
-				AudioTrack skippedTrack = audioSession.skip(skipIndexes.get(0));
-				botUtils.sendMessage(event.getChannel(), "Skipped **" + skippedTrack.getInfo().title + "**");
-			} else {
-				audioSession.skipAll(skipIndexes);
-
-				botUtils.sendMessage(event.getChannel(), "Skipped **" + skipIndexes.size() + "** tracks.");
-			}
-		}
-	}
-
-	/**
-	 * Parses the user-supplied arguments to get a list of track numbers to skip.
-	 * 
-	 * @param args
-	 *            The user-supplied arguments.
-	 * @param audioSession
-	 *            {@link AudioSession}
-	 * @return A list of zero-indexed indexes in the {@link AudioSession}'s upcoming
-	 *         tracks to skip.
-	 */
-	private List<Integer> getSkipIndexes(String args, AudioSession audioSession) {
-		List<Integer> skipIndexes;
-
-		List<AudioTrack> upcomingTracks = audioSession.getStatus().getUpcomingTracks();
-
-		if (StringUtils.equalsIgnoreCase(args, ALL_KEYWORD)) {
-			skipIndexes = IntStream.range(0, upcomingTracks.size())
-					.mapToObj(i -> i)
-					.collect(Collectors.toList());
-		} else {
-			skipIndexes = parseSkipIndexes(args, upcomingTracks.size());
+		if (removeTracks.isEmpty()) {
+			throw new TonbotBusinessException("You didn't specify any valid track numbers to skip.");
 		}
 
-		return skipIndexes;
+		return audioSession.skip(at -> removeTracks.contains(at));
 	}
 
 	/**
@@ -139,56 +129,51 @@ class SkipActivity extends AudioSessionActivity {
 	 *             If ranges could not be cleanly parsed.
 	 */
 	private List<Integer> parseSkipIndexes(String args, int maxIndex) {
-		List<Integer> skipIndexes;
 
-		if (!StringUtils.isBlank(args)) {
-			skipIndexes = Arrays.asList(StringUtils.split(args, ',')).stream()
-					.map(String::trim)
-					.map(rangeStr -> {
-						// Interprets the 1-indexed input and returns a stream of 1-indexed Ranges.
+		List<Integer> skipIndexes = Arrays.asList(StringUtils.split(args, ',')).stream()
+				.map(String::trim)
+				.map(rangeStr -> {
+					// Interprets the 1-indexed input and returns a stream of 1-indexed Ranges.
 
-						// Maybe it's just a single number
-						Range range;
-						try {
-							int skipIndex = Integer.parseInt(args);
-							range = new Range(skipIndex, skipIndex);
-						} catch (IllegalArgumentException e) {
-							// Ok, fine it's not a single number.
-							range = null;
+					// Maybe it's just a single number
+					Range range;
+					try {
+						int skipIndex = Integer.parseInt(rangeStr);
+						range = new Range(skipIndex, skipIndex);
+					} catch (IllegalArgumentException e) {
+						// Ok, fine it's not a single number.
+						range = null;
+					}
+
+					if (range == null) {
+						// Maybe its actually a range.
+						Matcher matcher = RANGE_PATTERN.matcher(rangeStr);
+						if (matcher.find()) {
+							range = new Range(Integer.parseInt(matcher.group(1)),
+									Integer.parseInt(matcher.group(2)));
 						}
+					}
 
-						if (range == null) {
-							// Maybe its actually a range.
-							Matcher matcher = RANGE_PATTERN.matcher(rangeStr);
-							if (matcher.find()) {
-								range = new Range(Integer.parseInt(matcher.group(1)),
-										Integer.parseInt(matcher.group(2)));
-							}
-						}
+					if (range == null) {
+						throw new TonbotBusinessException("Couldn't parse the ranges.");
+					}
 
-						if (range == null) {
-							throw new TonbotBusinessException("Couldn't parse the ranges.");
-						}
+					return range;
 
-						return range;
-
-					})
-					.flatMap(range -> IntStream.range(range.getFrom(), Math.min(range.getTo() + 1, maxIndex + 1))
-							.mapToObj(i -> i))
-					.map(i -> i - 1)
-					.distinct()
-					.sorted(new Comparator<Integer>() {
-						// Sorts the indexes in descending order. This is necessary to prevent incorrect
-						// track skips due to index shifting.
-						@Override
-						public int compare(Integer a, Integer b) {
-							return b - a;
-						}
-					})
-					.collect(Collectors.toList());
-		} else {
-			skipIndexes = new ArrayList<>();
-		}
+				})
+				.flatMap(range -> IntStream.range(range.getFrom(), Math.min(range.getTo() + 1, maxIndex + 1))
+						.mapToObj(i -> i))
+				.map(i -> i - 1)
+				.distinct()
+				.sorted(new Comparator<Integer>() {
+					// Sorts the indexes in descending order. This is necessary to prevent incorrect
+					// track skips due to index shifting.
+					@Override
+					public int compare(Integer a, Integer b) {
+						return b - a;
+					}
+				})
+				.collect(Collectors.toList());
 
 		return skipIndexes;
 	}

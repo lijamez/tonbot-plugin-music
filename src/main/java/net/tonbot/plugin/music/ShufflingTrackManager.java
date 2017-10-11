@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Preconditions;
@@ -86,24 +87,18 @@ class ShufflingTrackManager implements TrackManager {
 	}
 
 	@Override
-	public void remove(AudioTrack track) {
-		Preconditions.checkNotNull(track, "track must be non-null.");
+	public List<AudioTrack> removeAll(Predicate<AudioTrack> predicate) {
+		Preconditions.checkNotNull(predicate, "predicate must be non-null.");
 
 		lock.writeLock().lock();
 		try {
-			tracks.remove(track);
-		} finally {
-			lock.writeLock().unlock();
-		}
-	}
+			List<AudioTrack> tracksToRemove = this.getView().stream()
+					.filter(predicate)
+					.collect(Collectors.toList());
 
-	@Override
-	public void removeAll(Collection<AudioTrack> tracks) {
-		Preconditions.checkNotNull(tracks, "tracks must be non-null.");
+			tracks.removeAll(tracksToRemove);
 
-		lock.writeLock().lock();
-		try {
-			tracks.removeAll(tracks);
+			return ImmutableList.copyOf(tracksToRemove);
 		} finally {
 			lock.writeLock().unlock();
 		}

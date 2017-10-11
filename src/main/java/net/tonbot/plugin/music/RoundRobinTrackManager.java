@@ -10,6 +10,8 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -93,22 +95,18 @@ class RoundRobinTrackManager implements TrackManager {
 	}
 
 	@Override
-	public void remove(AudioTrack track) {
-		lock.writeLock().lock();
-		try {
-			removeInternal(track);
-			generateQueue();
-		} finally {
-			lock.writeLock().unlock();
-		}
-	}
+	public List<AudioTrack> removeAll(Predicate<AudioTrack> predicate) {
+		Preconditions.checkNotNull(predicate, "predicate must be non-null.");
 
-	@Override
-	public void removeAll(Collection<AudioTrack> tracks) {
 		lock.writeLock().lock();
 		try {
-			tracks.forEach(track -> removeInternal(track));
-			generateQueue();
+			List<AudioTrack> tracksToRemove = this.getView().stream()
+					.filter(predicate)
+					.collect(Collectors.toList());
+
+			tracksToRemove.forEach(track -> removeInternal(track));
+
+			return ImmutableList.copyOf(tracksToRemove);
 		} finally {
 			lock.writeLock().unlock();
 		}

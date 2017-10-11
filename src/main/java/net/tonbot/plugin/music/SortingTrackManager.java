@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -84,26 +86,18 @@ class SortingTrackManager implements TrackManager {
 	}
 
 	@Override
-	public void remove(AudioTrack track) {
-		Preconditions.checkNotNull(track, "track must be non-null.");
+	public List<AudioTrack> removeAll(Predicate<AudioTrack> predicate) {
+		Preconditions.checkNotNull(predicate, "predicate must be non-null.");
 
 		lock.writeLock().lock();
 		try {
-			tracks.remove(track);
-			Collections.sort(tracks, comparator);
-		} finally {
-			lock.writeLock().unlock();
-		}
-	}
+			List<AudioTrack> tracksToRemove = this.getView().stream()
+					.filter(predicate)
+					.collect(Collectors.toList());
 
-	@Override
-	public void removeAll(Collection<AudioTrack> tracksToRemove) {
-		Preconditions.checkNotNull(tracksToRemove, "tracksToRemove must be non-null.");
+			tracksToRemove.forEach(track -> tracks.remove(track));
 
-		lock.writeLock().lock();
-		try {
-			tracks.removeAll(tracksToRemove);
-			Collections.sort(tracks, comparator);
+			return ImmutableList.copyOf(tracksToRemove);
 		} finally {
 			lock.writeLock().unlock();
 		}
