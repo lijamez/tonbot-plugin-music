@@ -42,7 +42,7 @@ class SkipActivity extends AudioSessionActivity {
 							+ "``${absoluteReferencedRoute} 1-7``\n"
 							+ "``${absoluteReferencedRoute} 1, 2-4, 7``\n\n"
 							+ "To skip the tracks that you added to the Up Next queue:\n"
-							+ "``${absoluteReferencedRoute} mine``"
+							+ "``${absoluteReferencedRoute} mine``\n\n"
 							+ "To skip all tracks in the Up Next queue:\n"
 							+ "``${absoluteReferencedRoute} all``")
 			.build();
