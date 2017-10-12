@@ -98,6 +98,7 @@ class PlayActivity extends AudioSessionActivity {
 
 					// Delete the previous search results message to reduce pollution.
 					delete(prevSearchResults.getMessage());
+					delete(event.getMessage());
 				}
 
 				// If the number wasn't in range, assume it's a mistake and just ignore it.
@@ -110,15 +111,14 @@ class PlayActivity extends AudioSessionActivity {
 		// 2) The user might have entered a link to a track.
 		if (!StringUtils.isBlank(args)) {
 			audioSession.enqueue(args, user);
-			event.getMessage().delete();
+			
 		} else if (!event.getMessage().getAttachments().isEmpty()) {
 			// 3) Maybe the user attached a file.
 			Attachment attachment = event.getMessage().getAttachments().get(0);
 
 			audioSession.enqueue(attachment.getUrl(), user);
-
-			event.getMessage().delete();
 		}
+		delete(event.getMessage());
 
 		audioSession.play();
 	}
