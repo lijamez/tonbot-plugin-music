@@ -34,8 +34,6 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import com.sedmelluq.discord.lavaplayer.track.BasicAudioPlaylist;
 
-import net.tonbot.common.TonbotBusinessException;
-
 /**
  * Retrieves iTunes playlist in plain text or Unicode format (ie. UTF-8 or
  * UTF-16LE) and then looks up the song in YouTube. Tracks are returned as
@@ -97,7 +95,7 @@ class ITunesPlaylistSourceManager implements AudioSourceManager {
 
 			return new BasicAudioPlaylist(playlistName, tracks, null, false);
 
-		} catch (MalformedURLException e) {
+		} catch (MalformedURLException | InvalidItunesPlaylistException e) {
 			return null;
 		}
 	}
@@ -128,7 +126,7 @@ class ITunesPlaylistSourceManager implements AudioSourceManager {
 
 			if (!headerMap.containsKey(TRACK_TITLE_COLUMN) || !headerMap.containsKey(TRACK_ARTIST_COLUMN)
 					|| !headerMap.containsKey(TRACK_DURATION_COLUMN)) {
-				throw new TonbotBusinessException(
+				throw new InvalidItunesPlaylistException(
 						"File doesn't appear to be an iTunes playlist.");
 			}
 
@@ -185,5 +183,12 @@ class ITunesPlaylistSourceManager implements AudioSourceManager {
 	@Override
 	public AudioTrack decodeTrack(AudioTrackInfo trackInfo, DataInput input) throws IOException {
 		throw new UnsupportedOperationException("decodeTrack is unsupported.");
+	}
+
+	@SuppressWarnings("serial")
+	private static class InvalidItunesPlaylistException extends RuntimeException {
+		public InvalidItunesPlaylistException(String message) {
+			super(message);
+		}
 	}
 }

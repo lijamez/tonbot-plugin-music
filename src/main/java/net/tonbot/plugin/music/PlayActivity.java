@@ -40,6 +40,7 @@ class PlayActivity extends AudioSessionActivity {
 					+ "- Spotify\n"
 					+ "- Google Drive\n"
 					+ "- HTTP Audio File\n"
+					+ "- Discord File Upload\n"
 					+ "\n"
 					+ "**Playing a track via searching YouTube:**\n"
 					+ "```${absoluteReferencedRoute} the sound of silence```\n"
@@ -111,7 +112,7 @@ class PlayActivity extends AudioSessionActivity {
 		// 2) The user might have entered a link to a track.
 		if (!StringUtils.isBlank(args)) {
 			audioSession.enqueue(args, user);
-			
+
 		} else if (!event.getMessage().getAttachments().isEmpty()) {
 			// 3) Maybe the user attached a file.
 			Attachment attachment = event.getMessage().getAttachments().get(0);
