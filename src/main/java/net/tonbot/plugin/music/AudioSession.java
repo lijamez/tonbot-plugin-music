@@ -441,6 +441,53 @@ class AudioSession extends AudioEventAdapter {
 		searchResultsByUserId.remove(user.getLongID());
 	}
 
+	/**
+	 * Seeks within the currently playing track. The track's new position is bounded
+	 * by the beginning of the track and the duration of the track (as indicated by
+	 * the AudioTrack's getDuration()). <br/>
+	 * If there is no currently playing track, then no-op.
+	 * 
+	 * @param time
+	 *            The time to seek by, in milliseconds. Must be non-negative if
+	 *            SeekType is ABSOLUTE.
+	 * @param seekType
+	 *            {@link SeekType}. Non-null.<br/>
+	 *            If set to DELTA, then the time is used to move forward and back by
+	 *            that amount. Time may be positive (move forward) or negative (move
+	 *            backward) <br/>
+	 *            If set to ABSOLUTE, then the track's position will be set to the
+	 *            given time. The time must also be non-negative in this case.
+	 * @return The {@link AudioTrack} whose position was just moved. Will be empty
+	 *         if there is no currently playing track.
+	 * @throws IllegalArgumentException
+	 *             If the time is negative and seekType is ABSOLUTE.
+	 * @throws IllegalStateException
+	 *             If the track is not seekable.
+	 */
+	public Optional<AudioTrack> seek(long time, SeekType seekType) {
+		Preconditions.checkNotNull(seekType, "seekType must be non-null.");
+
+		if (seekType == SeekType.ABSOLUTE) {
+			Preconditions.checkArgument(time >= 0, "time must be non-negative when seekType is ABSOLUTE.");
+		}
+
+		AudioTrack nowPlaying = audioPlayer.getPlayingTrack();
+		if (nowPlaying == null) {
+			return Optional.empty();
+		}
+
+		Preconditions.checkState(nowPlaying.isSeekable(), "The currently playing track is not seekable.");
+
+		long newPosition = seekType == SeekType.DELTA ? nowPlaying.getPosition() + time : time;
+
+		newPosition = Math.max(0, newPosition);
+		newPosition = Math.min(nowPlaying.getDuration(), newPosition);
+
+		nowPlaying.setPosition(newPosition);
+
+		return Optional.of(nowPlaying);
+	}
+
 	private AudioTrack clone(AudioTrack originalAudioTrack) {
 		AudioTrack clonedAudioTrack = originalAudioTrack.makeClone();
 		ExtraTrackInfo originalExtraTrackInfo = originalAudioTrack.getUserData(ExtraTrackInfo.class);

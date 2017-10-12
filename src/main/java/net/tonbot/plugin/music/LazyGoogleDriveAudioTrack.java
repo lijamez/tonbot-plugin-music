@@ -85,6 +85,15 @@ public class LazyGoogleDriveAudioTrack extends DelegatedAudioTrack {
 	}
 
 	@Override
+	public boolean isSeekable() {
+		if (realAudioTrack != null) {
+			return realAudioTrack.isSeekable();
+		}
+
+		return false;
+	}
+
+	@Override
 	public AudioTrack makeClone() {
 		LazyGoogleDriveAudioTrack clone = new LazyGoogleDriveAudioTrack(this.getInfo(), httpAudioSourceManager,
 				audioPlayerManager);

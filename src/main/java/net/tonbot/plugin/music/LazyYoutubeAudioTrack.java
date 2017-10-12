@@ -70,6 +70,15 @@ public class LazyYoutubeAudioTrack extends DelegatedAudioTrack {
 	}
 
 	@Override
+	public boolean isSeekable() {
+		if (realTrack != null) {
+			return realTrack.isSeekable();
+		}
+
+		return false;
+	}
+
+	@Override
 	public AudioTrack makeClone() {
 		LazyYoutubeAudioTrack clone = new LazyYoutubeAudioTrack(this.getInfo(), sourceManager, ytSearchProvider);
 		clone.setUserData(this.getUserData());

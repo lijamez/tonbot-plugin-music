@@ -17,7 +17,6 @@ import sx.blah.discord.util.EmbedBuilder;
 
 class NowPlayingActivity extends AudioSessionActivity {
 
-	private static final int PROGRESS_BAR_WIDTH = 28;
 	private static final String STREAM_TIME = "STREAM";
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
 			.route("music nowplaying")
@@ -82,35 +81,6 @@ class NowPlayingActivity extends AudioSessionActivity {
 		}
 	}
 
-	private String renderProgressBar(AudioTrack track) {
-
-		long duration = track.getDuration();
-		long position = track.getPosition();
-
-		// Guarantees that position <= duration for rendering purposes.
-		position = position > duration ? duration : position;
-
-		// Subtracted by 2 because to take the square brackets into account.
-		int totalSpaces = PROGRESS_BAR_WIDTH - 2;
-		int numDots = (int) (totalSpaces * ((double) position / duration));
-		int numSpaces = totalSpaces - numDots;
-
-		StringBuffer sb = new StringBuffer();
-		sb.append("``[");
-
-		for (int i = 0; i < numDots; i++) {
-			sb.append("•");
-		}
-
-		for (int i = 0; i < numSpaces; i++) {
-			sb.append(" ");
-		}
-
-		sb.append("]``");
-
-		return sb.toString();
-	}
-
 	private String renderPlaybackStatus(AudioSession audioSession, AudioTrack npTrack) {
 		StringBuffer sb = new StringBuffer();
 		String state = audioSession.isPaused() ? ":pause_button:" : ":arrow_forward:";
@@ -121,7 +91,7 @@ class NowPlayingActivity extends AudioSessionActivity {
 					.append(STREAM_TIME)
 					.append("``");
 		} else {
-			String progressBar = renderProgressBar(npTrack);
+			String progressBar = ProgressBarRenderer.render(npTrack.getPosition(), npTrack.getDuration());
 			String positionTime = TimeFormatter.toFriendlyString(npTrack.getPosition(), TimeUnit.MILLISECONDS);
 			String remainingTime = "-"
 					+ TimeFormatter.toFriendlyString(npTrack.getDuration() - npTrack.getPosition(),
