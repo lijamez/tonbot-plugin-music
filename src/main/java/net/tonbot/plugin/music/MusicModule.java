@@ -107,7 +107,6 @@ class MusicModule extends AbstractModule {
 			GoogleDriveSourceManager googleDriveSourceManager,
 			HttpAudioSourceManager httpAudioSourceManager) {
 		AudioPlayerManager apm = new DefaultAudioPlayerManager();
-		apm.enableGcMonitoring();
 
 		// Register remote source handlers such as Youtube, SoundCloud, Bandcamp, etc.
 		// AudioSourceManagers.registerRemoteSources(apm);
