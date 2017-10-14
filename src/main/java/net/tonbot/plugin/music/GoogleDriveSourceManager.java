@@ -96,7 +96,6 @@ public class GoogleDriveSourceManager implements AudioSourceManager {
 			} else {
 				List<File> files = getFilesRecursively(rootFileId);
 				List<AudioTrack> audioTracks = files.stream()
-						.sorted((a, b) -> StringUtils.compare(a.getTitle(), b.getTitle()))
 						.map(file -> new LazyGoogleDriveAudioTrack(
 								new AudioTrackInfo(file.getTitle(), "", Long.MAX_VALUE, file.getWebContentLink(), true,
 										file.getWebContentLink()),
@@ -129,6 +128,7 @@ public class GoogleDriveSourceManager implements AudioSourceManager {
 		FileList fileList = drive.files().list()
 				.setKey(apiKey)
 				.setQ(qBuilder.toString())
+				.setOrderBy("title")
 				.execute();
 
 		List<String> subfolderIds = new ArrayList<>();
