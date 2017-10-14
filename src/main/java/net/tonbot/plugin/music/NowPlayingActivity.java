@@ -1,5 +1,6 @@
 package net.tonbot.plugin.music;
 
+import java.awt.Color;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -25,15 +26,18 @@ class NowPlayingActivity extends AudioSessionActivity {
 
 	private final List<EmbedAppender> embedAppenders;
 	private final BotUtils botUtils;
+	private final Color color;
 
 	@Inject
 	public NowPlayingActivity(
 			DiscordAudioPlayerManager discordAudioPlayerManager,
 			List<EmbedAppender> embedAppenders,
-			BotUtils botUtils) {
+			BotUtils botUtils,
+			Color color) {
 		super(discordAudioPlayerManager);
 		this.embedAppenders = Preconditions.checkNotNull(embedAppenders, "embedAppenders must be non-null.");
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
+		this.color = Preconditions.checkNotNull(color);
 	}
 
 	@Override
@@ -50,6 +54,7 @@ class NowPlayingActivity extends AudioSessionActivity {
 		if (npTrack != null) {
 			AudioTrackInfo info = npTrack.getInfo();
 			EmbedBuilder eb = new EmbedBuilder();
+			eb.withColor(color);
 
 			if (!StringUtils.isBlank(info.author)) {
 				eb.withAuthorName(info.author);

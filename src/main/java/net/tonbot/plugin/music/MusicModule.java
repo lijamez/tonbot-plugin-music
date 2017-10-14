@@ -1,5 +1,6 @@
 package net.tonbot.plugin.music;
 
+import java.awt.Color;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.List;
@@ -52,6 +53,7 @@ class MusicModule extends AbstractModule {
 	private final IDiscordClient discordClient;
 	private final String prefix;
 	private final BotUtils botUtils;
+	private final Color color;
 	private final String googleApiKey;
 	private final SpotifyCredentials spotifyCredentials;
 
@@ -59,11 +61,13 @@ class MusicModule extends AbstractModule {
 			IDiscordClient discordClient,
 			String prefix,
 			BotUtils botUtils,
+			Color color,
 			String googleApiKey,
 			SpotifyCredentials spotifyCredentials) {
 		this.discordClient = Preconditions.checkNotNull(discordClient, "discordClient must be non-null.");
 		this.prefix = Preconditions.checkNotNull(prefix, "prefix must be non-null.");
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
+		this.color = Preconditions.checkNotNull(color, "color must be non-null.");
 		this.googleApiKey = Preconditions.checkNotNull(googleApiKey, "googleApiKey must be non-null.");
 		this.spotifyCredentials = spotifyCredentials;
 	}
@@ -73,6 +77,7 @@ class MusicModule extends AbstractModule {
 		bind(IDiscordClient.class).toInstance(discordClient);
 		bind(String.class).annotatedWith(Prefix.class).toInstance(prefix);
 		bind(BotUtils.class).toInstance(botUtils);
+		bind(Color.class).toInstance(color);
 		bind(DiscordAudioPlayerManager.class).in(Scopes.SINGLETON);
 		bind(String.class).annotatedWith(GoogleApiKey.class).toInstance(googleApiKey);
 		bind(AudioTrackFactory.class).to(LazyYoutubeAudioTrackFactory.class);

@@ -1,5 +1,6 @@
 package net.tonbot.plugin.music;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -34,12 +35,16 @@ class ListActivity extends AudioSessionActivity {
 	private static final String STREAM_TIME = "STREAM";
 
 	private final BotUtils botUtils;
+	private final Color color;
 
 	@Inject
-	public ListActivity(DiscordAudioPlayerManager discordAudioPlayerManager, BotUtils botUtils) {
+	public ListActivity(
+			DiscordAudioPlayerManager discordAudioPlayerManager, 
+			BotUtils botUtils,
+			Color color) {
 		super(discordAudioPlayerManager);
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
-
+		this.color = Preconditions.checkNotNull(color, "color must be non-null.");
 	}
 
 	@Override
@@ -72,6 +77,7 @@ class ListActivity extends AudioSessionActivity {
 		}
 
 		EmbedBuilder embedBuilder = new EmbedBuilder();
+		embedBuilder.withColor(color);
 
 		if (requestedPage == 0) {
 			appendNowPlaying(embedBuilder, sessionStatus, client, guild);

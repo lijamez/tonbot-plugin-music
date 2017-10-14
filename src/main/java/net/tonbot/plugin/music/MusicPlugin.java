@@ -36,6 +36,7 @@ public class MusicPlugin extends TonbotPlugin {
 							pluginArgs.getDiscordClient(),
 							pluginArgs.getPrefix(),
 							pluginArgs.getBotUtils(),
+							pluginArgs.getColor(),
 							config.getGoogleApiKey(),
 							config.getSpotifyCredentials()));
 		} catch (IOException e) {
