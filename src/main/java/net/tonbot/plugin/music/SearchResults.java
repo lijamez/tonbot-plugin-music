@@ -1,6 +1,8 @@
 package net.tonbot.plugin.music;
 
-import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
+import java.util.List;
+
+import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
 import lombok.Data;
 import sx.blah.discord.handle.obj.IMessage;
@@ -8,6 +10,6 @@ import sx.blah.discord.handle.obj.IMessage;
 @Data
 class SearchResults {
 
-	private final AudioPlaylist audioPlaylist;
+	private final List<AudioTrack> hits;
 	private final IMessage message;
 }

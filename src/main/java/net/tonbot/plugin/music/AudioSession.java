@@ -3,27 +3,19 @@ package net.tonbot.plugin.music;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
-import org.apache.commons.lang3.StringUtils;
-
 import com.google.common.base.Preconditions;
-import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
+import com.google.common.collect.ImmutableList;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter;
-import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeSearchProvider;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
-import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
-import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
 
@@ -45,8 +37,6 @@ class AudioSession extends AudioEventAdapter {
 	private final IDiscordClient discordClient;
 	private final AudioPlayerManager audioPlayerManager;
 	private final AudioPlayer audioPlayer;
-	private final YoutubeSearchProvider ytSearchProvider;
-	private final Map<Long, SearchResults> searchResultsByUserId;
 
 	@Getter
 	private final long defaultChannelId;
@@ -61,15 +51,12 @@ class AudioSession extends AudioEventAdapter {
 			IDiscordClient discordClient,
 			AudioPlayerManager audioPlayerManager,
 			AudioPlayer audioPlayer,
-			YoutubeSearchProvider ytSearchProvider,
 			long defaultChannelId,
 			BotUtils botUtils) {
 		this.discordClient = Preconditions.checkNotNull(discordClient, "discordClient must be non-null.");
 		this.audioPlayerManager = Preconditions.checkNotNull(audioPlayerManager,
 				"audioPlayerManager must be non-null.");
 		this.audioPlayer = Preconditions.checkNotNull(audioPlayer, "audioPlayer must be non-null.");
-		this.ytSearchProvider = Preconditions.checkNotNull(ytSearchProvider, "ytSearchProvider must be non-null.");
-		this.searchResultsByUserId = new HashMap<>();
 		this.defaultChannelId = defaultChannelId;
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
 		this.repeatMode = RepeatMode.OFF;
@@ -151,8 +138,9 @@ class AudioSession extends AudioEventAdapter {
 	 *            The {@link IUser} that queued the track. Non-null.
 	 * @throws IllegalStateException
 	 *             If there is no session.
+	 * @return {@link AudioLoadResult}. Not null.
 	 */
-	public void enqueue(String identifier, IUser user) {
+	public AudioLoadResult enqueue(String identifier, IUser user) {
 		Preconditions.checkNotNull(identifier, "identifier must be non-null.");
 		Preconditions.checkNotNull(user, "user must be non-null.");
 
@@ -162,86 +150,60 @@ class AudioSession extends AudioEventAdapter {
 			return channel.sendMessage("Finding tracks for ``" + identifier + "``...");
 		});
 
+		TonbotAudioLoadResultHandler resultHandler = new TonbotAudioLoadResultHandler() {
+
+			@Override
+			public void trackLoaded(AudioTrack audioTrack) {
+				enqueue(audioTrack, user);
+
+				this.result = AudioLoadResult.builder()
+						.loadedTracks(ImmutableList.of(audioTrack))
+						.build();
+			}
+
+			@Override
+			public void playlistLoaded(AudioPlaylist loadedPlaylist) {
+				List<AudioTrack> tracks = loadedPlaylist.getTracks();
+				if (tracks.isEmpty()) {
+					botUtils.sendMessage(channel, "There were no songs in that playlist. :thinking:");
+				} else {
+					tracks.forEach(track -> {
+						ExtraTrackInfo extraTrackInfo = ExtraTrackInfo.builder()
+								.addedByUserId(user.getLongID())
+								.addTimestamp(System.currentTimeMillis())
+								.build();
+						track.setUserData(extraTrackInfo);
+					});
+
+					trackManager.putAll(tracks);
+
+					this.result = AudioLoadResult.builder()
+							.loadedTracks(tracks)
+							.playlistName(loadedPlaylist.getName())
+							.build();
+				}
+			}
+
+			@Override
+			public void noMatches() {
+				this.result = AudioLoadResult.builder()
+						.loadedTracks(ImmutableList.of())
+						.build();
+			}
+
+			@Override
+			public void loadFailed(FriendlyException exception) {
+				this.result = AudioLoadResult.builder()
+						.exception(exception)
+						.build();
+			}
+
+		};
+
 		try {
-			audioPlayerManager.loadItem(identifier, new AudioLoadResultHandler() {
+			audioPlayerManager.loadItem(identifier, resultHandler).get();
 
-				@Override
-				public void trackLoaded(AudioTrack audioTrack) {
-					enqueue(audioTrack, user);
-
-					botUtils.sendMessage(channel, "**" + audioTrack.getInfo().title + "** was queued by **"
-							+ user.getDisplayName(channel.getGuild()) + "**");
-				}
-
-				@Override
-				public void playlistLoaded(AudioPlaylist loadedPlaylist) {
-					List<AudioTrack> tracks = loadedPlaylist.getTracks();
-					if (tracks.isEmpty()) {
-						botUtils.sendMessage(channel, "There were no songs in that playlist. :thinking:");
-					} else {
-						tracks.forEach(track -> {
-							ExtraTrackInfo extraTrackInfo = ExtraTrackInfo.builder()
-									.addedByUserId(user.getLongID())
-									.addTimestamp(System.currentTimeMillis())
-									.build();
-							track.setUserData(extraTrackInfo);
-						});
-
-						trackManager.putAll(tracks);
-
-						StringBuffer sb = new StringBuffer();
-						sb.append("Added ").append(tracks.size()).append(" tracks from playlist");
-
-						if (!StringUtils.isBlank(loadedPlaylist.getName())) {
-							sb.append(" **").append(loadedPlaylist.getName()).append("**");
-						}
-
-						sb.append(".");
-
-						botUtils.sendMessage(channel, sb.toString());
-					}
-				}
-
-				@Override
-				public void noMatches() {
-					// Instead of simply failing. We should try to look it up on YouTube.
-					AudioItem audioItem = ytSearchProvider.loadSearchResult(identifier);
-					if (audioItem == AudioReference.NO_TRACK) {
-						botUtils.sendMessage(channel, "I couldn't find anything. :shrug:");
-					} else if (audioItem instanceof AudioPlaylist) {
-						// So we found some results. Show them to the user and then let them pick.
-						AudioPlaylist queryResults = (AudioPlaylist) audioItem;
-
-						StringBuffer sb = new StringBuffer();
-						sb.append("**Search Results:**\n");
-
-						for (int i = 0; i < queryResults.getTracks().size(); i++) {
-							AudioTrack track = queryResults.getTracks().get(i);
-							sb.append("``[").append(i + 1)
-									.append("]`` **").append(track.getInfo().title)
-									.append("** (")
-									.append(TimeFormatter.toFriendlyString(track.getInfo().length,
-											TimeUnit.MILLISECONDS))
-									.append(")\n");
-						}
-
-						IMessage messageWithSearchResults = botUtils.sendMessageSync(channel, sb.toString());
-
-						SearchResults searchResults = new SearchResults(queryResults, messageWithSearchResults);
-
-						searchResultsByUserId.put(user.getLongID(), searchResults);
-					} else if (audioItem instanceof AudioTrack) {
-						// Found an exact match. Queue it.
-						trackLoaded((AudioTrack) audioItem);
-					}
-				}
-
-				@Override
-				public void loadFailed(FriendlyException exception) {
-					botUtils.sendMessage(channel, formatFriendlyException(exception));
-				}
-
-			}).get();
+			return resultHandler.getResult();
 		} catch (InterruptedException | ExecutionException e) {
 			throw new TonbotTechnicalFault("Failed to load track(s).", e);
 		} finally {
@@ -427,18 +389,6 @@ class AudioSession extends AudioEventAdapter {
 		Preconditions.checkNotNull(predicate, "predicate must be non-null.");
 
 		return this.trackManager.removeAll(predicate);
-	}
-
-	public Optional<SearchResults> getSearchResults(IUser user) {
-		Preconditions.checkNotNull(user, "user must be non-null.");
-
-		return Optional.ofNullable(searchResultsByUserId.get(user.getLongID()));
-	}
-
-	public void clearSearchResult(IUser user) {
-		Preconditions.checkNotNull(user, "user must be non-null.");
-
-		searchResultsByUserId.remove(user.getLongID());
 	}
 
 	/**

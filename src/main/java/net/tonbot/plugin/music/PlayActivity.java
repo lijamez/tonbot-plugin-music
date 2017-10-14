@@ -1,20 +1,30 @@
 package net.tonbot.plugin.music;
 
-import java.util.Optional;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
+import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeSearchProvider;
+import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
+import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
+import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
+import lombok.Data;
 import net.tonbot.common.ActivityDescriptor;
 import net.tonbot.common.BotUtils;
 import net.tonbot.common.Prefix;
+import net.tonbot.common.TonbotBusinessException;
 import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
+import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IMessage;
 import sx.blah.discord.handle.obj.IMessage.Attachment;
 import sx.blah.discord.handle.obj.IUser;
@@ -24,7 +34,7 @@ class PlayActivity extends AudioSessionActivity {
 
 	private static final ActivityDescriptor activityDescriptor = ActivityDescriptor.builder()
 			.route("music play")
-			.parameters(ImmutableList.of("link to song"))
+			.parameters(ImmutableList.of("query"))
 			.description(
 					"Plays a track. If no song link is provided, then it unpauses the player.")
 			.usageDescription("**Playing track(s) via direct link to a track or playlist:**\n"
@@ -55,18 +65,29 @@ class PlayActivity extends AudioSessionActivity {
 					+ "Saying the command without any arguments or attachments will unpause playback.")
 			.build();
 
+	private final List<PlayActivityHandler> handlerChain = ImmutableList.of(
+			this::handlePlayWithoutArgs,
+			this::handleSearchResultSelection,
+			this::handleEnqueueIdentifier,
+			this::handleTrackSearch);
+
 	private final IDiscordClient discordClient;
 	private final BotUtils botUtils;
+	private final YoutubeSearchProvider ytSearchProvider;
+	private final Map<SearchResultsKey, SearchResults> searchResultsMap;
 
 	@Inject
 	public PlayActivity(
 			@Prefix String prefix,
 			IDiscordClient discordClient,
 			DiscordAudioPlayerManager discordAudioPlayerManager,
+			YoutubeSearchProvider ytSearchProvider,
 			BotUtils botUtils) {
 		super(discordAudioPlayerManager);
 		this.discordClient = Preconditions.checkNotNull(discordClient, "discordClient must be non-null.");
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
+		this.ytSearchProvider = Preconditions.checkNotNull(ytSearchProvider, "ytSearchProvider must be non-null.");
+		this.searchResultsMap = new HashMap<>();
 	}
 
 	@Override
@@ -76,22 +97,37 @@ class PlayActivity extends AudioSessionActivity {
 
 	@Override
 	protected void enactWithSession(MessageReceivedEvent event, String args, AudioSession audioSession) {
+
+		handlerChain.stream()
+				.filter(handler -> handler.handle(audioSession, event, args))
+				.findFirst();
+	}
+
+	private boolean handlePlayWithoutArgs(AudioSession audioSession, MessageReceivedEvent event, String args) {
+		if (StringUtils.isBlank(args) && event.getMessage().getAttachments().isEmpty()) {
+			audioSession.play();
+			return true;
+		}
+
+		return false;
+	}
+
+	private boolean handleSearchResultSelection(AudioSession audioSession, MessageReceivedEvent event, String args) {
 		IUser user = event.getAuthor();
 
-		// 1) The user maybe entered a number in response to a search query.
-		Optional<SearchResults> optPrevSearchResults = audioSession.getSearchResults(event.getAuthor());
+		SearchResultsKey searchResultsKey = new SearchResultsKey(audioSession, user.getLongID());
+		SearchResults prevSearchResults = searchResultsMap.get(searchResultsKey);
 
-		if (optPrevSearchResults.isPresent()) {
-			SearchResults prevSearchResults = optPrevSearchResults.get();
-			AudioPlaylist prevSearchPlaylist = prevSearchResults.getAudioPlaylist();
+		if (prevSearchResults != null) {
+			List<AudioTrack> hits = prevSearchResults.getHits();
 			try {
 				int chosenIndex = Integer.parseInt(args.trim()) - 1;
 
-				if (chosenIndex >= 0 && chosenIndex < prevSearchPlaylist.getTracks().size()) {
+				if (chosenIndex >= 0 && chosenIndex < hits.size()) {
 					// The number is in range.
-					AudioTrack chosenTrack = prevSearchPlaylist.getTracks().get(chosenIndex);
+					AudioTrack chosenTrack = hits.get(chosenIndex);
 					audioSession.enqueue(chosenTrack, user);
-					audioSession.clearSearchResult(user);
+					searchResultsMap.remove(searchResultsKey);
 					audioSession.play();
 
 					botUtils.sendMessage(event.getChannel(),
@@ -100,28 +136,108 @@ class PlayActivity extends AudioSessionActivity {
 					// Delete the previous search results message to reduce pollution.
 					delete(prevSearchResults.getMessage());
 					delete(event.getMessage());
+
+					return true;
 				}
 
 				// If the number wasn't in range, assume it's a mistake and just ignore it.
-				return;
 			} catch (IllegalArgumentException e) {
-				// The args wasn't a number. Therefore, it's probably a new search.
+				// The args wasn't even a number. Therefore, it's probably a new search.
 			}
 		}
 
-		// 2) The user might have entered a link to a track.
+		return false;
+	}
+
+	private boolean handleEnqueueIdentifier(AudioSession audioSession, MessageReceivedEvent event, String args) {
+		IUser user = event.getAuthor();
+		IChannel channel = event.getChannel();
+
+		AudioLoadResult alr = null;
+		// The user might have entered a link to a track.
 		if (!StringUtils.isBlank(args)) {
-			audioSession.enqueue(args, user);
+			alr = audioSession.enqueue(args, user);
 
 		} else if (!event.getMessage().getAttachments().isEmpty()) {
-			// 3) Maybe the user attached a file.
+			// Maybe the user attached a file.
 			Attachment attachment = event.getMessage().getAttachments().get(0);
 
-			audioSession.enqueue(attachment.getUrl(), user);
+			alr = audioSession.enqueue(attachment.getUrl(), user);
 		}
-		delete(event.getMessage());
 
-		audioSession.play();
+		if (alr != null) {
+			if (alr.getLoadedTracks().isPresent()) {
+				List<AudioTrack> loadedTracks = alr.getLoadedTracks().get();
+
+				if (loadedTracks.isEmpty()) {
+					// No tracks. Let the next handler deal with it.
+					return false;
+				} else if (loadedTracks.size() == 1) {
+					AudioTrack loadedTrack = loadedTracks.get(0);
+
+					botUtils.sendMessage(channel, "**" + loadedTrack.getInfo().title + "** was queued by **"
+							+ user.getDisplayName(channel.getGuild()) + "**");
+				} else if (loadedTracks.size() > 1) {
+					StringBuffer sb = new StringBuffer();
+					sb.append("Added ").append(loadedTracks.size()).append(" tracks from playlist");
+					alr.getPlaylistName().ifPresent(pn -> sb.append(" **").append(pn).append("**"));
+					sb.append(".");
+
+					botUtils.sendMessage(channel, sb.toString());
+				}
+
+				delete(event.getMessage());
+				audioSession.play();
+
+			} else if (alr.getException().isPresent()) {
+				botUtils.sendMessage(channel, formatFriendlyException(alr.getException().get()));
+			}
+
+			return true;
+		}
+
+		return false;
+	}
+
+	private boolean handleTrackSearch(AudioSession audioSession, MessageReceivedEvent event, String args) {
+		// Clear the previous search, if it exists.
+		SearchResultsKey searchResultsKey = new SearchResultsKey(audioSession, event.getAuthor().getLongID());
+		SearchResults prevSearchResults = searchResultsMap.get(searchResultsKey);
+		if (prevSearchResults != null) {
+			delete(prevSearchResults.getMessage());
+			searchResultsMap.remove(searchResultsKey);
+		}
+
+		// Perform a search
+		AudioItem audioItem = ytSearchProvider.loadSearchResult(args);
+		if (audioItem == AudioReference.NO_TRACK) {
+			botUtils.sendMessage(event.getChannel(), "No tracks found.");
+		} else if (audioItem instanceof AudioPlaylist) {
+			List<AudioTrack> searchResultTracks = ((AudioPlaylist) audioItem).getTracks();
+
+			StringBuffer sb = new StringBuffer();
+			sb.append("**Search Results:**\n");
+
+			for (int i = 0; i < searchResultTracks.size(); i++) {
+				AudioTrack track = searchResultTracks.get(i);
+				sb.append("``[").append(i + 1)
+						.append("]`` **").append(track.getInfo().title)
+						.append("** (")
+						.append(TimeFormatter.toFriendlyString(track.getInfo().length,
+								TimeUnit.MILLISECONDS))
+						.append(")\n");
+			}
+
+			IMessage messageWithSearchResults = botUtils.sendMessageSync(event.getChannel(), sb.toString());
+			SearchResults searchResults = new SearchResults(searchResultTracks, messageWithSearchResults);
+
+			searchResultsMap.put(searchResultsKey, searchResults);
+		} else if (audioItem instanceof AudioTrack) {
+			// Found an exact match. Queue it.
+			audioSession.enqueue((AudioTrack) audioItem, event.getAuthor());
+		}
+
+		return true;
 	}
 
 	private void delete(IMessage message) {
@@ -133,5 +249,26 @@ class PlayActivity extends AudioSessionActivity {
 					return true;
 				})
 				.execute();
+	}
+
+	private String formatFriendlyException(FriendlyException friendlyException) {
+		Throwable cause = friendlyException.getCause();
+		if (cause != null && cause instanceof TonbotBusinessException) {
+			return cause.getMessage();
+		} else {
+			return friendlyException.getMessage();
+		}
+	}
+
+	@Data
+	private static class SearchResultsKey {
+		private final AudioSession session;
+		private final long userId;
+	}
+
+	@FunctionalInterface
+	private static interface PlayActivityHandler {
+
+		public abstract boolean handle(AudioSession audioSession, MessageReceivedEvent event, String args);
 	}
 }
