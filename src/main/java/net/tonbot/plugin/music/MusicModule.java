@@ -11,10 +11,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.drive.Drive;
+import com.google.api.services.youtube.YouTube;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -42,6 +46,7 @@ import sx.blah.discord.api.IDiscordClient;
 
 class MusicModule extends AbstractModule {
 
+	private static final String APPLICATION_NAME = "Tonbot";
 	private static final Logger LOG = LoggerFactory.getLogger(MusicModule.class);
 
 	private final IDiscordClient discordClient;
@@ -200,6 +205,19 @@ class MusicModule extends AbstractModule {
 		JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
 
 		return new Drive.Builder(httpTransport, jsonFactory, null)
+				.setApplicationName(APPLICATION_NAME)
+				.build();
+	}
+
+	@Provides
+	@Singleton
+	YouTube youtube() {
+		return new YouTube.Builder(new NetHttpTransport(), new JacksonFactory(), new HttpRequestInitializer() {
+			@Override
+			public void initialize(HttpRequest request) throws IOException {
+			}
+		})
+				.setApplicationName(APPLICATION_NAME)
 				.build();
 	}
 }

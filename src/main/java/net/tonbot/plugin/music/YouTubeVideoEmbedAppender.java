@@ -8,10 +8,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.api.client.http.HttpRequest;
-import com.google.api.client.http.HttpRequestInitializer;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.Preconditions;
 import com.google.api.services.youtube.YouTube;
 import com.google.api.services.youtube.model.Channel;
@@ -36,16 +32,9 @@ class YouTubeVideoEmbedAppender implements EmbedAppender {
 	private final YouTube yt;
 
 	@Inject
-	public YouTubeVideoEmbedAppender(@GoogleApiKey String ytApiKey) {
+	public YouTubeVideoEmbedAppender(@GoogleApiKey String ytApiKey, YouTube yt) {
 		this.ytApiKey = Preconditions.checkNotNull(ytApiKey, "ytApiKey must be non-null.");
-
-		this.yt = new YouTube.Builder(new NetHttpTransport(), new JacksonFactory(), new HttpRequestInitializer() {
-			@Override
-			public void initialize(HttpRequest request) throws IOException {
-			}
-		})
-				.setApplicationName("Tonbot")
-				.build();
+		this.yt = Preconditions.checkNotNull(yt, "yt must be non-null.");
 	}
 
 	@Override
