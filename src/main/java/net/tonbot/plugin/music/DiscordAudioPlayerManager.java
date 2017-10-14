@@ -127,8 +127,12 @@ class DiscordAudioPlayerManager {
 
 		if (lockableSession != null) {
 			lockableSession.getLock().lock();
-			lockableSession.getAudioSession().destroy();
-			lockableSession.getLock().unlock();
+			try {
+				lockableSession.getAudioSession().destroy();
+			} finally {
+				lockableSession.getLock().unlock();
+			}
+			
 		} else {
 			throw new NoSessionException("There is no session for the provided guild.");
 		}
