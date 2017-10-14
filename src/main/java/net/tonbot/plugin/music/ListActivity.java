@@ -31,6 +31,8 @@ class ListActivity extends AudioSessionActivity {
 			.usageDescription(
 					"Displays the currently playing track and upcoming tracks. If there are too many upcoming tracks, then you need to specify a page number to see more.")
 			.build();
+	private static final String NOW_PLAYING_HEADER = "Now Playing";
+	private static final String UNTITLED_TRACK_NAME = "Untitled";
 	private static final int TRACKS_PER_PAGE = 10;
 	private static final String STREAM_TIME = "STREAM";
 
@@ -39,7 +41,7 @@ class ListActivity extends AudioSessionActivity {
 
 	@Inject
 	public ListActivity(
-			DiscordAudioPlayerManager discordAudioPlayerManager, 
+			DiscordAudioPlayerManager discordAudioPlayerManager,
 			BotUtils botUtils,
 			Color color) {
 		super(discordAudioPlayerManager);
@@ -96,14 +98,14 @@ class ListActivity extends AudioSessionActivity {
 
 		AudioTrack nowPlaying = sessionStatus.getNowPlaying().orElse(null);
 
-		embedBuilder.withAuthorName("Now Playing");
+		embedBuilder.withAuthorName(NOW_PLAYING_HEADER);
 
 		if (nowPlaying != null) {
 			String title = nowPlaying.getInfo().title;
 			if (!StringUtils.isBlank(title)) {
 				embedBuilder.withTitle(title);
 			} else {
-				embedBuilder.withTitle("Untitled");
+				embedBuilder.withTitle(UNTITLED_TRACK_NAME);
 			}
 
 			String trackUrl = nowPlaying.getInfo().uri;
