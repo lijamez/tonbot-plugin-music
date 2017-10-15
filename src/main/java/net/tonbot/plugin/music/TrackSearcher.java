@@ -19,6 +19,10 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import lombok.Data;
 import net.tonbot.common.TonbotTechnicalFault;
 
+/**
+ * A class that's responsible for performing searches on YouTube and then
+ * remembering its results. The search operations are thread safe.
+ */
 class TrackSearcher {
 
 	private final YoutubeSearchProvider ytSearchProvider;
@@ -34,7 +38,8 @@ class TrackSearcher {
 
 	/**
 	 * Registers a listener. This listener will be called whenever a
-	 * {@link SearchResult} is forgotten by this {@link TrackSearcher}.
+	 * {@link SearchResult} is forgotten by this {@link TrackSearcher}. <br/>
+	 * This method is NOT thread-safe.
 	 * 
 	 * @param listener
 	 *            A listener. Non-null.
