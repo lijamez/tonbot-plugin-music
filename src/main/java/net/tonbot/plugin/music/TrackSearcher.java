@@ -36,10 +36,10 @@ class TrackSearcher {
 			final YoutubeSearchProvider ytSearchProvider,
 			final int maxResults) {
 		this.ytSearchProvider = Preconditions.checkNotNull(ytSearchProvider, "ytSearchProvider must be non-null.");
-		
+
 		Preconditions.checkArgument(maxResults > 0, "maxResults must be positive.");
 		this.maxResults = maxResults;
-		
+
 		this.searchResultsMap = new ConcurrentHashMap<>();
 		this.searchResultEvictionListeners = new ArrayList<>();
 	}

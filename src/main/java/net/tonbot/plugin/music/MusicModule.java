@@ -226,7 +226,7 @@ class MusicModule extends AbstractModule {
 				.setApplicationName(APPLICATION_NAME)
 				.build();
 	}
-	
+
 	@Provides
 	@Singleton
 	TrackSearcher trackSearcher(YoutubeSearchProvider ytSearchProvider) {

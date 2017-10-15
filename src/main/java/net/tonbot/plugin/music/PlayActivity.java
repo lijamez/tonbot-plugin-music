@@ -1,6 +1,8 @@
 package net.tonbot.plugin.music;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
@@ -21,6 +23,10 @@ import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IMessage;
 import sx.blah.discord.handle.obj.IMessage.Attachment;
 import sx.blah.discord.handle.obj.IUser;
+import sx.blah.discord.util.DiscordException;
+import sx.blah.discord.util.MissingPermissionsException;
+import sx.blah.discord.util.RateLimitException;
+import sx.blah.discord.util.RequestBuffer;
 import sx.blah.discord.util.RequestBuilder;
 
 class PlayActivity extends AudioSessionActivity {
@@ -81,10 +87,10 @@ class PlayActivity extends AudioSessionActivity {
 		this.trackSearcher = Preconditions.checkNotNull(trackSearcher, "trackSearcher must be non-null.");
 
 		// This is to ensure that all search results that are "forgotten" by the track
-		// searcher will also be deleted from discord.
+		// searcher will also be deleted from the channel.
 		this.trackSearcher.addSearchResultEvictionListener(sr -> {
 			if (sr.getMessage().isPresent()) {
-				delete(sr.getMessage().get());
+				deleteAsync(sr.getMessage().get());
 			}
 			return null;
 		});
@@ -98,9 +104,25 @@ class PlayActivity extends AudioSessionActivity {
 	@Override
 	protected void enactWithSession(MessageReceivedEvent event, String args, AudioSession audioSession) {
 
-		handlerChain.stream()
-				.filter(handler -> handler.handle(audioSession, event, args))
-				.findFirst();
+		Future<IMessage> ackMessageFuture = RequestBuffer.request(() -> {
+			return event.getChannel().sendMessage("Finding tracks for ``" + args + "``...");
+		});
+
+		try {
+			handlerChain.stream()
+					.filter(handler -> handler.handle(audioSession, event, args))
+					.findFirst();
+		} finally {
+			try {
+				IMessage ackMessage = ackMessageFuture.get();
+				deleteAsync(ackMessage);
+			} catch (InterruptedException | ExecutionException | DiscordException | RateLimitException
+					| MissingPermissionsException e) {
+				// NBD if the ack message failed to send or if the ack message couldn't be
+				// deleted.
+			}
+
+		}
 	}
 
 	private boolean handlePlayWithoutArgs(AudioSession audioSession, MessageReceivedEvent event, String args) {
@@ -128,12 +150,14 @@ class PlayActivity extends AudioSessionActivity {
 					AudioTrack chosenTrack = hits.get(chosenIndex);
 					audioSession.enqueue(chosenTrack, user);
 					trackSearcher.removePreviousSearchResults(audioSession, user.getLongID());
+
+					if (prevSearchResults.getMessage().isPresent()) {
+						editAsync(
+								prevSearchResults.getMessage().get(),
+								"Selected result #" + (chosenIndex + 1) + ": **" + chosenTrack.getInfo().title + "**");
+					}
+
 					audioSession.play();
-
-					botUtils.sendMessage(event.getChannel(),
-							"Selected result #" + (chosenIndex + 1) + ": **" + chosenTrack.getInfo().title + "**");
-
-					delete(event.getMessage());
 
 					return true;
 				}
@@ -184,7 +208,7 @@ class PlayActivity extends AudioSessionActivity {
 					botUtils.sendMessage(channel, sb.toString());
 				}
 
-				delete(event.getMessage());
+				deleteAsync(event.getMessage());
 				audioSession.play();
 
 			} else if (alr.getException().isPresent()) {
@@ -213,16 +237,16 @@ class PlayActivity extends AudioSessionActivity {
 
 		} else {
 			StringBuffer sb = new StringBuffer();
-			sb.append("**Search Results:**\n");
+			sb.append("__Search Results:__\n\n");
 
 			for (int i = 0; i < hits.size(); i++) {
 				AudioTrack track = hits.get(i);
 				sb.append("``[").append(i + 1)
-						.append("]`` **").append(track.getInfo().title)
-						.append("** (")
+						.append("]`` ").append(track.getInfo().title)
+						.append(" ``(")
 						.append(TimeFormatter.toFriendlyString(track.getInfo().length,
 								TimeUnit.MILLISECONDS))
-						.append(")\n");
+						.append(")``\n");
 			}
 
 			IMessage messageWithSearchResults = botUtils.sendMessageSync(event.getChannel(), sb.toString());
@@ -232,12 +256,23 @@ class PlayActivity extends AudioSessionActivity {
 		return true;
 	}
 
-	private void delete(IMessage message) {
+	private void deleteAsync(IMessage message) {
 		new RequestBuilder(discordClient)
 				.shouldBufferRequests(true)
 				.setAsync(true)
 				.doAction(() -> {
 					message.delete();
+					return true;
+				})
+				.execute();
+	}
+
+	private void editAsync(IMessage message, String newContent) {
+		new RequestBuilder(discordClient)
+				.shouldBufferRequests(true)
+				.setAsync(true)
+				.doAction(() -> {
+					message.edit(newContent);
 					return true;
 				})
 				.execute();

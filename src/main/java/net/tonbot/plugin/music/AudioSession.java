@@ -6,7 +6,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.function.Predicate;
 
 import com.google.common.base.Preconditions;
@@ -25,12 +24,7 @@ import net.tonbot.common.TonbotBusinessException;
 import net.tonbot.common.TonbotTechnicalFault;
 import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.handle.obj.IChannel;
-import sx.blah.discord.handle.obj.IMessage;
 import sx.blah.discord.handle.obj.IUser;
-import sx.blah.discord.util.DiscordException;
-import sx.blah.discord.util.MissingPermissionsException;
-import sx.blah.discord.util.RateLimitException;
-import sx.blah.discord.util.RequestBuffer;
 
 class AudioSession extends AudioEventAdapter {
 
@@ -146,10 +140,6 @@ class AudioSession extends AudioEventAdapter {
 
 		IChannel channel = discordClient.getChannelByID(defaultChannelId);
 
-		Future<IMessage> ackMessageFuture = RequestBuffer.request(() -> {
-			return channel.sendMessage("Finding tracks for ``" + identifier + "``...");
-		});
-
 		TonbotAudioLoadResultHandler resultHandler = new TonbotAudioLoadResultHandler() {
 
 			@Override
@@ -206,16 +196,6 @@ class AudioSession extends AudioEventAdapter {
 			return resultHandler.getResult();
 		} catch (InterruptedException | ExecutionException e) {
 			throw new TonbotTechnicalFault("Failed to load track(s).", e);
-		} finally {
-			try {
-				IMessage ackMessage = ackMessageFuture.get();
-				ackMessage.delete();
-			} catch (InterruptedException | ExecutionException | DiscordException | RateLimitException
-					| MissingPermissionsException e) {
-				// NBD if the ack message failed to send or if the ack message couldn't be
-				// deleted.
-			}
-
 		}
 	}
 
