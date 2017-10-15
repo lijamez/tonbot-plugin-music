@@ -49,6 +49,7 @@ class MusicModule extends AbstractModule {
 
 	private static final String APPLICATION_NAME = "Tonbot";
 	private static final Logger LOG = LoggerFactory.getLogger(MusicModule.class);
+	private static final int MAX_SEARCH_RESULTS = 10;
 
 	private final IDiscordClient discordClient;
 	private final String prefix;
@@ -224,5 +225,11 @@ class MusicModule extends AbstractModule {
 		})
 				.setApplicationName(APPLICATION_NAME)
 				.build();
+	}
+	
+	@Provides
+	@Singleton
+	TrackSearcher trackSearcher(YoutubeSearchProvider ytSearchProvider) {
+		return new TrackSearcher(ytSearchProvider, MAX_SEARCH_RESULTS);
 	}
 }

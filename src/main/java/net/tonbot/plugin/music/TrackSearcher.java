@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -26,19 +27,26 @@ import net.tonbot.common.TonbotTechnicalFault;
 class TrackSearcher {
 
 	private final YoutubeSearchProvider ytSearchProvider;
+	private final int maxResults;
 	private final Map<SearchResultsKey, SearchResults> searchResultsMap;
 	private final List<Function<SearchResults, Void>> searchResultEvictionListeners;
 
 	@Inject
-	public TrackSearcher(YoutubeSearchProvider ytSearchProvider) {
+	public TrackSearcher(
+			final YoutubeSearchProvider ytSearchProvider,
+			final int maxResults) {
 		this.ytSearchProvider = Preconditions.checkNotNull(ytSearchProvider, "ytSearchProvider must be non-null.");
+		
+		Preconditions.checkArgument(maxResults > 0, "maxResults must be positive.");
+		this.maxResults = maxResults;
+		
 		this.searchResultsMap = new ConcurrentHashMap<>();
 		this.searchResultEvictionListeners = new ArrayList<>();
 	}
 
 	/**
 	 * Registers a listener. This listener will be called whenever a
-	 * {@link SearchResult} is forgotten by this {@link TrackSearcher}. <br/>
+	 * {@link SearchResults} is forgotten by this {@link TrackSearcher}. <br/>
 	 * This method is NOT thread-safe.
 	 * 
 	 * @param listener
@@ -51,13 +59,13 @@ class TrackSearcher {
 	}
 
 	/**
-	 * Gets the last remembered {@link SearchResult}.
+	 * Gets the last remembered {@link SearchResults}.
 	 * 
 	 * @param audioSession
 	 *            {@link AudioSession}. Non-null.
 	 * @param userId
 	 *            User ID.
-	 * @return The last remembered {@link SearchResult}, if any.
+	 * @return The last remembered {@link SearchResults}, if any.
 	 */
 	public Optional<SearchResults> getPreviousSearchResults(AudioSession audioSession, long userId) {
 		SearchResultsKey key = new SearchResultsKey(audioSession, userId);
@@ -65,7 +73,7 @@ class TrackSearcher {
 	}
 
 	/**
-	 * Removes the remembered {@link SearchResult}. Listeners will be notified.
+	 * Removes the remembered {@link SearchResults}. Listeners will be notified.
 	 * 
 	 * @param audioSession
 	 *            {@link AudioSession}. Non-null.
@@ -101,8 +109,11 @@ class TrackSearcher {
 		if (audioItem == AudioReference.NO_TRACK) {
 			hits = ImmutableList.of();
 		} else if (audioItem instanceof AudioPlaylist) {
-			List<AudioTrack> searchResultTracks = ((AudioPlaylist) audioItem).getTracks();
-
+			List<AudioTrack> searchResultTracks = ((AudioPlaylist) audioItem)
+					.getTracks()
+					.stream()
+					.limit(maxResults)
+					.collect(Collectors.toList());
 			hits = ImmutableList.copyOf(searchResultTracks);
 		} else if (audioItem instanceof AudioTrack) {
 			// Found an exact match. Queue it.
