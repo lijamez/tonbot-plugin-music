@@ -217,6 +217,6 @@ class ListActivity extends AudioSessionActivity {
 
 		}
 
-		embedBuilder.appendField("Next up:", sb.toString(), false);
+		embedBuilder.appendField("Next Up", sb.toString(), false);
 	}
 }
