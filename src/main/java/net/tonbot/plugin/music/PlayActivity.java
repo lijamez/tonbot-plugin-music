@@ -17,6 +17,7 @@ import net.tonbot.common.ActivityDescriptor;
 import net.tonbot.common.BotUtils;
 import net.tonbot.common.Prefix;
 import net.tonbot.common.TonbotBusinessException;
+import net.tonbot.plugin.music.SearchResultsEviction.EvictionReason;
 import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.IChannel;
@@ -66,7 +67,9 @@ class PlayActivity extends AudioSessionActivity {
 
 	private final List<PlayActivityHandler> handlerChain = ImmutableList.of(
 			this::handlePlayWithoutArgs,
-			this::handleSearchResultSelection,
+			this::handleSearchResultSelection);
+
+	private final List<PlayActivityHandler> searchHandlerChain = ImmutableList.of(
 			this::handleEnqueueIdentifier,
 			this::handleTrackSearch);
 
@@ -86,12 +89,16 @@ class PlayActivity extends AudioSessionActivity {
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
 		this.trackSearcher = Preconditions.checkNotNull(trackSearcher, "trackSearcher must be non-null.");
 
-		// This is to ensure that all search results that are "forgotten" by the track
-		// searcher will also be deleted from the channel.
-		this.trackSearcher.addSearchResultEvictionListener(sr -> {
-			if (sr.getMessage().isPresent()) {
-				deleteAsync(sr.getMessage().get());
+		// This is to ensure that search results that are "forgotten" by the track
+		// searcher due to new searches will also be deleted from the channel.
+		// Evictions due to any other reason should be retained because the PlayActivity
+		// will edit the message.
+		this.trackSearcher.addSearchResultEvictionListener(esr -> {
+			if (esr.getReason() == EvictionReason.NEW_SEARCH
+					&& esr.getEvictedSearchResults().getMessage().isPresent()) {
+				deleteAsync(esr.getEvictedSearchResults().getMessage().get());
 			}
+
 			return null;
 		});
 	}
@@ -104,24 +111,33 @@ class PlayActivity extends AudioSessionActivity {
 	@Override
 	protected void enactWithSession(MessageReceivedEvent event, String args, AudioSession audioSession) {
 
-		Future<IMessage> ackMessageFuture = RequestBuffer.request(() -> {
-			return event.getChannel().sendMessage("Finding tracks for ``" + args + "``...");
-		});
+		boolean eventWasHandled = handlerChain.stream()
+				.filter(handler -> handler.handle(audioSession, event, args))
+				.findFirst()
+				.isPresent();
 
-		try {
-			handlerChain.stream()
-					.filter(handler -> handler.handle(audioSession, event, args))
-					.findFirst();
-		} finally {
+		if (!eventWasHandled) {
+			// The next set of handlers can take more time so we should at least acknowledge
+			// the user's message.
+			Future<IMessage> ackMessageFuture = RequestBuffer.request(() -> {
+				return event.getChannel().sendMessage("Finding tracks for ``" + args + "``...");
+			});
+
 			try {
-				IMessage ackMessage = ackMessageFuture.get();
-				deleteAsync(ackMessage);
-			} catch (InterruptedException | ExecutionException | DiscordException | RateLimitException
-					| MissingPermissionsException e) {
-				// NBD if the ack message failed to send or if the ack message couldn't be
-				// deleted.
-			}
+				searchHandlerChain.stream()
+						.filter(handler -> handler.handle(audioSession, event, args))
+						.findFirst();
+			} finally {
+				try {
+					IMessage ackMessage = ackMessageFuture.get();
+					deleteAsync(ackMessage);
+				} catch (InterruptedException | ExecutionException | DiscordException | RateLimitException
+						| MissingPermissionsException e) {
+					// NBD if the ack message failed to send or if the ack message couldn't be
+					// deleted.
+				}
 
+			}
 		}
 	}
 
@@ -156,6 +172,9 @@ class PlayActivity extends AudioSessionActivity {
 								prevSearchResults.getMessage().get(),
 								"Selected result #" + (chosenIndex + 1) + ": **" + chosenTrack.getInfo().title + "**");
 					}
+
+					// Delete the user's message.
+					deleteAsync(event.getMessage());
 
 					audioSession.play();
 

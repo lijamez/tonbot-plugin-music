@@ -19,6 +19,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
 import lombok.Data;
 import net.tonbot.common.TonbotTechnicalFault;
+import net.tonbot.plugin.music.SearchResultsEviction.EvictionReason;
 
 /**
  * A class that's responsible for performing searches on YouTube and then
@@ -29,7 +30,7 @@ class TrackSearcher {
 	private final YoutubeSearchProvider ytSearchProvider;
 	private final int maxResults;
 	private final Map<SearchResultsKey, SearchResults> searchResultsMap;
-	private final List<Function<SearchResults, Void>> searchResultEvictionListeners;
+	private final List<Function<SearchResultsEviction, Void>> searchResultEvictionListeners;
 
 	@Inject
 	public TrackSearcher(
@@ -52,7 +53,7 @@ class TrackSearcher {
 	 * @param listener
 	 *            A listener. Non-null.
 	 */
-	public void addSearchResultEvictionListener(Function<SearchResults, Void> listener) {
+	public void addSearchResultEvictionListener(Function<SearchResultsEviction, Void> listener) {
 		Preconditions.checkNotNull(listener, "listener must be non-null.");
 
 		searchResultEvictionListeners.add(listener);
@@ -74,6 +75,7 @@ class TrackSearcher {
 
 	/**
 	 * Removes the remembered {@link SearchResults}. Listeners will be notified.
+	 * Evictions will have the reason {@link EvictionReason#MANUAL_REMOVAL}.
 	 * 
 	 * @param audioSession
 	 *            {@link AudioSession}. Non-null.
@@ -84,12 +86,12 @@ class TrackSearcher {
 		Preconditions.checkNotNull(audioSession, "audioSession must be non-null.");
 
 		SearchResultsKey key = new SearchResultsKey(audioSession, userId);
-		removeLoudly(key);
+		removeLoudly(key, EvictionReason.MANUAL_REMOVAL);
 	}
 
 	/**
-	 * Forgets the previous set of search results, if any, (which will inform
-	 * listeners) and then performs a search. These new search results will be
+	 * Performs a search. Results will evict the previous {@link SearchResults} with
+	 * {@link EvictionReason#NEW_SEARCH}, if any. These new search results will be
 	 * automatically remembered, but only if they are not empty.
 	 * 
 	 * @param query
@@ -98,9 +100,6 @@ class TrackSearcher {
 	 */
 	public SearchResults search(AudioSession audioSession, long userId, String query) {
 		Preconditions.checkNotNull(query, "query must be non-null.");
-
-		SearchResultsKey key = new SearchResultsKey(audioSession, userId);
-		removeLoudly(key);
 
 		AudioItem audioItem = ytSearchProvider.loadSearchResult(query);
 
@@ -116,9 +115,6 @@ class TrackSearcher {
 					.collect(Collectors.toList());
 			hits = ImmutableList.copyOf(searchResultTracks);
 		} else if (audioItem instanceof AudioTrack) {
-			// Found an exact match. Queue it.
-			// audioSession.enqueue((AudioTrack) audioItem, event.getAuthor());
-
 			hits = ImmutableList.of((AudioTrack) audioItem);
 		} else {
 			throw new TonbotTechnicalFault("Unknown return value from YoutubeSearchProvider.");
@@ -126,25 +122,37 @@ class TrackSearcher {
 
 		SearchResults searchResults = new SearchResults(hits);
 
+		SearchResultsKey key = new SearchResultsKey(audioSession, userId);
+
 		if (!hits.isEmpty()) {
-			putLoudly(key, searchResults);
+			putLoudly(key, searchResults, EvictionReason.NEW_SEARCH);
+		} else {
+			removeLoudly(key, EvictionReason.NEW_SEARCH);
 		}
 
 		return searchResults;
 	}
 
-	private void removeLoudly(SearchResultsKey key) {
+	private void removeLoudly(SearchResultsKey key, EvictionReason reason) {
 		SearchResults removedSearchResults = searchResultsMap.remove(key);
 		if (removedSearchResults != null) {
-			searchResultEvictionListeners.forEach(listener -> listener.apply(removedSearchResults));
+			notifyListeners(removedSearchResults, reason);
 		}
 	}
 
-	private void putLoudly(SearchResultsKey key, SearchResults searchResults) {
+	private void putLoudly(SearchResultsKey key, SearchResults searchResults, EvictionReason reason) {
 		SearchResults removedSearchResults = searchResultsMap.put(key, searchResults);
 		if (removedSearchResults != null) {
-			searchResultEvictionListeners.forEach(listener -> listener.apply(removedSearchResults));
+			notifyListeners(removedSearchResults, reason);
 		}
+	}
+
+	private void notifyListeners(SearchResults evictedSearchResults, EvictionReason reason) {
+		SearchResultsEviction eviction = SearchResultsEviction.builder()
+				.reason(reason)
+				.evictedSearchResults(evictedSearchResults)
+				.build();
+		searchResultEvictionListeners.forEach(listener -> listener.apply(eviction));
 	}
 
 	@Data
