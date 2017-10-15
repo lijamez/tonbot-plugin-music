@@ -165,15 +165,16 @@ class ListActivity extends AudioSessionActivity {
 				StringBuffer trackSb = new StringBuffer()
 						.append("``[").append(i + 1).append("]`` **")
 						.append(track.getInfo().title)
-						.append("** (");
+						.append("**");
 
-				if (track.getInfo().isStream) {
-					trackSb.append(STREAM_TIME);
-				} else {
-					trackSb.append(TimeFormatter.toFriendlyString(track.getDuration(), TimeUnit.MILLISECONDS));
+				if (!track.getInfo().isStream) {
+					trackSb
+							.append(" (")
+							.append(TimeFormatter.toFriendlyString(track.getDuration(), TimeUnit.MILLISECONDS))
+							.append(")");
 				}
 
-				trackSb.append(") added by **")
+				trackSb.append(" added by **")
 						.append(addedByUser.getDisplayName(guild))
 						.append("**");
 

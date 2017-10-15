@@ -170,7 +170,8 @@ class PlayActivity extends AudioSessionActivity {
 					if (prevSearchResults.getMessage().isPresent()) {
 						editAsync(
 								prevSearchResults.getMessage().get(),
-								"Selected result #" + (chosenIndex + 1) + ": **" + chosenTrack.getInfo().title + "**");
+								"Result #" + (chosenIndex + 1) + ": **" + chosenTrack.getInfo().title
+										+ "** was queued by **" + user.getDisplayName(event.getGuild()) + "**");
 					}
 
 					// Delete the user's message.
