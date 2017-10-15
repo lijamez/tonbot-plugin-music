@@ -120,7 +120,13 @@ class PlayActivity extends AudioSessionActivity {
 			// The next set of handlers can take more time so we should at least acknowledge
 			// the user's message.
 			Future<IMessage> ackMessageFuture = RequestBuffer.request(() -> {
-				return event.getChannel().sendMessage("Finding tracks for ``" + args + "``...");
+				StringBuilder msg = new StringBuilder();
+				msg.append("Finding tracks");
+				if (!StringUtils.isBlank(args)) {
+					msg.append(" for ``").append(args).append("``");
+				}
+				msg.append("...");
+				return event.getChannel().sendMessage(msg.toString());
 			});
 
 			try {
