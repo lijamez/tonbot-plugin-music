@@ -14,6 +14,7 @@ import com.google.api.services.youtube.model.Channel;
 import com.google.api.services.youtube.model.ChannelListResponse;
 import com.google.api.services.youtube.model.Video;
 import com.google.api.services.youtube.model.VideoListResponse;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -23,6 +24,10 @@ import sx.blah.discord.util.EmbedBuilder;
 class YouTubeVideoEmbedAppender implements EmbedAppender {
 
 	private static final Logger LOG = LoggerFactory.getLogger(YouTubeVideoEmbedAppender.class);
+
+	private static final List<Class<? extends AudioTrack>> APPENDABLE_TYPES = ImmutableList.of(
+			YoutubeAudioTrack.class,
+			LazyYoutubeAudioTrack.class);
 
 	private static final int MAX_DESCRIPTION_LENGTH = 800;
 	private static final String TRUNCATION_INDICATOR = "…";
@@ -38,8 +43,8 @@ class YouTubeVideoEmbedAppender implements EmbedAppender {
 	}
 
 	@Override
-	public Class<? extends AudioTrack> getAppendableType() {
-		return YoutubeAudioTrack.class;
+	public List<Class<? extends AudioTrack>> getAppendableTypes() {
+		return APPENDABLE_TYPES;
 	}
 
 	@Override

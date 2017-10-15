@@ -1,5 +1,7 @@
 package net.tonbot.plugin.music;
 
+import java.util.List;
+
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
 import sx.blah.discord.util.EmbedBuilder;
@@ -7,11 +9,11 @@ import sx.blah.discord.util.EmbedBuilder;
 interface EmbedAppender {
 
 	/**
-	 * The class type which this embed can handle.
+	 * The class types which this embed can handle.
 	 * 
-	 * @return The class type which this embed can handle.
+	 * @return The class types which this embed can handle. Non-null.
 	 */
-	Class<? extends AudioTrack> getAppendableType();
+	List<Class<? extends AudioTrack>> getAppendableTypes();
 
 	/**
 	 * Appends additional information to the given {@link EmbedBuilder}.

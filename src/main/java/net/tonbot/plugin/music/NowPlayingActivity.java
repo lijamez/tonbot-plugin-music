@@ -71,11 +71,19 @@ class NowPlayingActivity extends AudioSessionActivity {
 			// Track State
 			eb.appendField("Time", renderPlaybackStatus(audioSession, npTrack), false);
 
-			// Additional Embed Appenders
+			// Apply the first applicable custom embed appender
+			boolean embedAppenderUsed = false;
 			for (EmbedAppender ea : embedAppenders) {
-				Class<? extends AudioTrack> type = ea.getAppendableType();
-				if (type.isAssignableFrom(npTrack.getClass())) {
-					ea.appendDetails(npTrack, eb);
+
+				for (Class<? extends AudioTrack> type : ea.getAppendableTypes()) {
+					if (type.isAssignableFrom(npTrack.getClass())) {
+						ea.appendDetails(npTrack, eb);
+						embedAppenderUsed = true;
+						break;
+					}
+				}
+
+				if (embedAppenderUsed) {
 					break;
 				}
 			}
