@@ -103,7 +103,7 @@ public class LazyYoutubeAudioTrack extends DelegatedAudioTrack {
 			YoutubeAudioTrack bestMatch = audioPlaylist.getTracks().stream()
 					.limit(SEARCH_RESULTS_LIMIT)
 					.map(t -> (YoutubeAudioTrack) t)
-					.sorted(new Comparator<YoutubeAudioTrack>() {
+					.min(new Comparator<YoutubeAudioTrack>() {
 
 						@Override
 						public int compare(YoutubeAudioTrack o1, YoutubeAudioTrack o2) {
@@ -114,8 +114,6 @@ public class LazyYoutubeAudioTrack extends DelegatedAudioTrack {
 						}
 
 					})
-					.filter(at -> at != null)
-					.findFirst()
 					.orElse(null);
 
 			return bestMatch;
