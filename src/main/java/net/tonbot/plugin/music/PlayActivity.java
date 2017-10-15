@@ -1,8 +1,6 @@
 package net.tonbot.plugin.music;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
@@ -10,14 +8,9 @@ import org.apache.commons.lang3.StringUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
-import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeSearchProvider;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
-import com.sedmelluq.discord.lavaplayer.track.AudioItem;
-import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
-import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
-import lombok.Data;
 import net.tonbot.common.ActivityDescriptor;
 import net.tonbot.common.BotUtils;
 import net.tonbot.common.Prefix;
@@ -73,21 +66,28 @@ class PlayActivity extends AudioSessionActivity {
 
 	private final IDiscordClient discordClient;
 	private final BotUtils botUtils;
-	private final YoutubeSearchProvider ytSearchProvider;
-	private final Map<SearchResultsKey, SearchResults> searchResultsMap;
+	private final TrackSearcher trackSearcher;
 
 	@Inject
 	public PlayActivity(
 			@Prefix String prefix,
 			IDiscordClient discordClient,
 			DiscordAudioPlayerManager discordAudioPlayerManager,
-			YoutubeSearchProvider ytSearchProvider,
+			TrackSearcher trackSearcher,
 			BotUtils botUtils) {
 		super(discordAudioPlayerManager);
 		this.discordClient = Preconditions.checkNotNull(discordClient, "discordClient must be non-null.");
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
-		this.ytSearchProvider = Preconditions.checkNotNull(ytSearchProvider, "ytSearchProvider must be non-null.");
-		this.searchResultsMap = new HashMap<>();
+		this.trackSearcher = Preconditions.checkNotNull(trackSearcher, "trackSearcher must be non-null.");
+
+		// This is to ensure that all search results that are "forgotten" by the track
+		// searcher will also be deleted from discord.
+		this.trackSearcher.addSearchResultEvictionListener(sr -> {
+			if (sr.getMessage().isPresent()) {
+				delete(sr.getMessage().get());
+			}
+			return null;
+		});
 	}
 
 	@Override
@@ -115,8 +115,8 @@ class PlayActivity extends AudioSessionActivity {
 	private boolean handleSearchResultSelection(AudioSession audioSession, MessageReceivedEvent event, String args) {
 		IUser user = event.getAuthor();
 
-		SearchResultsKey searchResultsKey = new SearchResultsKey(audioSession, user.getLongID());
-		SearchResults prevSearchResults = searchResultsMap.get(searchResultsKey);
+		SearchResults prevSearchResults = trackSearcher.getPreviousSearchResults(audioSession, user.getLongID())
+				.orElse(null);
 
 		if (prevSearchResults != null) {
 			List<AudioTrack> hits = prevSearchResults.getHits();
@@ -127,14 +127,12 @@ class PlayActivity extends AudioSessionActivity {
 					// The number is in range.
 					AudioTrack chosenTrack = hits.get(chosenIndex);
 					audioSession.enqueue(chosenTrack, user);
-					searchResultsMap.remove(searchResultsKey);
+					trackSearcher.removePreviousSearchResults(audioSession, user.getLongID());
 					audioSession.play();
 
 					botUtils.sendMessage(event.getChannel(),
 							"Selected result #" + (chosenIndex + 1) + ": **" + chosenTrack.getInfo().title + "**");
 
-					// Delete the previous search results message to reduce pollution.
-					delete(prevSearchResults.getMessage());
 					delete(event.getMessage());
 
 					return true;
@@ -199,27 +197,26 @@ class PlayActivity extends AudioSessionActivity {
 		return false;
 	}
 
-	private boolean handleTrackSearch(AudioSession audioSession, MessageReceivedEvent event, String args) {
-		// Clear the previous search, if it exists.
-		SearchResultsKey searchResultsKey = new SearchResultsKey(audioSession, event.getAuthor().getLongID());
-		SearchResults prevSearchResults = searchResultsMap.get(searchResultsKey);
-		if (prevSearchResults != null) {
-			delete(prevSearchResults.getMessage());
-			searchResultsMap.remove(searchResultsKey);
-		}
+	private boolean handleTrackSearch(AudioSession audioSession, MessageReceivedEvent event, String query) {
 
 		// Perform a search
-		AudioItem audioItem = ytSearchProvider.loadSearchResult(args);
-		if (audioItem == AudioReference.NO_TRACK) {
+		SearchResults searchResults = trackSearcher.search(audioSession, event.getAuthor().getLongID(), query);
+		List<AudioTrack> hits = searchResults.getHits();
+		if (hits.isEmpty()) {
 			botUtils.sendMessage(event.getChannel(), "No tracks found.");
-		} else if (audioItem instanceof AudioPlaylist) {
-			List<AudioTrack> searchResultTracks = ((AudioPlaylist) audioItem).getTracks();
+		} else if (hits.size() == 1) {
+			AudioTrack track = hits.get(0);
+			audioSession.enqueue(track, event.getAuthor());
+			trackSearcher.removePreviousSearchResults(audioSession, event.getAuthor().getLongID());
+			botUtils.sendMessage(event.getChannel(), "**" + track.getInfo().title + "** was queued by **"
+					+ event.getAuthor().getDisplayName(event.getChannel().getGuild()) + "**");
 
+		} else {
 			StringBuffer sb = new StringBuffer();
 			sb.append("**Search Results:**\n");
 
-			for (int i = 0; i < searchResultTracks.size(); i++) {
-				AudioTrack track = searchResultTracks.get(i);
+			for (int i = 0; i < hits.size(); i++) {
+				AudioTrack track = hits.get(i);
 				sb.append("``[").append(i + 1)
 						.append("]`` **").append(track.getInfo().title)
 						.append("** (")
@@ -229,12 +226,7 @@ class PlayActivity extends AudioSessionActivity {
 			}
 
 			IMessage messageWithSearchResults = botUtils.sendMessageSync(event.getChannel(), sb.toString());
-			SearchResults searchResults = new SearchResults(searchResultTracks, messageWithSearchResults);
-
-			searchResultsMap.put(searchResultsKey, searchResults);
-		} else if (audioItem instanceof AudioTrack) {
-			// Found an exact match. Queue it.
-			audioSession.enqueue((AudioTrack) audioItem, event.getAuthor());
+			searchResults.setMessage(messageWithSearchResults);
 		}
 
 		return true;
@@ -258,12 +250,6 @@ class PlayActivity extends AudioSessionActivity {
 		} else {
 			return friendlyException.getMessage();
 		}
-	}
-
-	@Data
-	private static class SearchResultsKey {
-		private final AudioSession session;
-		private final long userId;
 	}
 
 	@FunctionalInterface
