@@ -75,6 +75,19 @@ t, music seek 1m30s
 ## Installation
 Add ``net.tonbot.plugin.music.MusicPlugin`` to your Tonbot plugins config.
 
+## Permissions
+For this plugin to work correctly, Tonbot will need the following permissions:
+
+Text Channel:
+* Read Messages
+* Send Messages
+* Manage Messages
+* Embed Links
+
+Voice Channel:
+* Connect
+* Speak
+
 ## Configuration
 The music plugin works right out of the box, but you can enable some extra features by providing API keys. The config file is located at ``{TONBOT CONFIG DIR}/plugin_config/net.tonbot.plugin.music.MusicPlugin.config``. 
 
