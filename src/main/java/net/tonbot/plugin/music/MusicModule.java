@@ -2,12 +2,14 @@ package net.tonbot.plugin.music;
 
 import java.awt.Color;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.Set;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +21,9 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.drive.Drive;
+import com.google.api.services.drive.DriveRequestInitializer;
 import com.google.api.services.youtube.YouTube;
+import com.google.api.services.youtube.YouTubeRequestInitializer;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -38,11 +42,13 @@ import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeSearchProvider;
 import com.wrapper.spotify.Api;
+import com.wrapper.spotify.exceptions.BadRequestException;
 import com.wrapper.spotify.exceptions.WebApiException;
 
 import net.tonbot.common.Activity;
 import net.tonbot.common.BotUtils;
 import net.tonbot.common.Prefix;
+import net.tonbot.common.TonbotTechnicalFault;
 import sx.blah.discord.api.IDiscordClient;
 
 class MusicModule extends AbstractModule {
@@ -55,7 +61,8 @@ class MusicModule extends AbstractModule {
 	private final String prefix;
 	private final BotUtils botUtils;
 	private final Color color;
-	private final String googleApiKey;
+	private final String youtubeApiKey;
+	private final String googleDriveApiKey;
 	private final SpotifyCredentials spotifyCredentials;
 
 	public MusicModule(
@@ -63,13 +70,15 @@ class MusicModule extends AbstractModule {
 			String prefix,
 			BotUtils botUtils,
 			Color color,
-			String googleApiKey,
+			String youtubeApiKey,
+			String googleDriveApiKey,
 			SpotifyCredentials spotifyCredentials) {
 		this.discordClient = Preconditions.checkNotNull(discordClient, "discordClient must be non-null.");
 		this.prefix = Preconditions.checkNotNull(prefix, "prefix must be non-null.");
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
 		this.color = Preconditions.checkNotNull(color, "color must be non-null.");
-		this.googleApiKey = Preconditions.checkNotNull(googleApiKey, "googleApiKey must be non-null.");
+		this.youtubeApiKey = youtubeApiKey;
+		this.googleDriveApiKey = googleDriveApiKey;
 		this.spotifyCredentials = spotifyCredentials;
 	}
 
@@ -80,7 +89,6 @@ class MusicModule extends AbstractModule {
 		bind(BotUtils.class).toInstance(botUtils);
 		bind(Color.class).toInstance(color);
 		bind(DiscordAudioPlayerManager.class).in(Scopes.SINGLETON);
-		bind(String.class).annotatedWith(GoogleApiKey.class).toInstance(googleApiKey);
 		bind(AudioTrackFactory.class).to(LazyYoutubeAudioTrackFactory.class);
 	}
 
@@ -115,7 +123,7 @@ class MusicModule extends AbstractModule {
 			YoutubeAudioSourceManager yasm,
 			ITunesPlaylistSourceManager itunesPlaylistSourceManager,
 			@Nullable SpotifySourceManager spotifySourceManager,
-			GoogleDriveSourceManager googleDriveSourceManager,
+			@Nullable GoogleDriveSourceManager googleDriveSourceManager,
 			HttpAudioSourceManager httpAudioSourceManager) {
 		AudioPlayerManager apm = new DefaultAudioPlayerManager();
 
@@ -133,7 +141,10 @@ class MusicModule extends AbstractModule {
 			apm.registerSourceManager(spotifySourceManager);
 		}
 
-		apm.registerSourceManager(googleDriveSourceManager);
+		if (googleDriveSourceManager != null) {
+			apm.registerSourceManager(googleDriveSourceManager);
+		}
+
 		apm.registerSourceManager(httpAudioSourceManager);
 
 		return apm;
@@ -159,14 +170,42 @@ class MusicModule extends AbstractModule {
 
 	@Provides
 	@Singleton
-	List<EmbedAppender> embedAppenders(YouTubeVideoEmbedAppender ytEmbedAppender) {
-		return ImmutableList.of(ytEmbedAppender);
+	GoogleDriveSourceManager googleDriveSourceManager(
+			@Nullable Drive drive,
+			HttpAudioSourceManager httpAsm) {
+		if (drive == null) {
+			return null;
+		}
+
+		return new GoogleDriveSourceManager(drive, httpAsm);
+	}
+
+	@Provides
+	@Singleton
+	List<EmbedAppender> embedAppenders(@Nullable YouTubeVideoEmbedAppender ytEmbedAppender) {
+		ImmutableList.Builder<EmbedAppender> builder = ImmutableList.builder();
+		if (ytEmbedAppender != null) {
+			builder.add(ytEmbedAppender);
+		}
+
+		return builder.build();
+	}
+
+	@Provides
+	@Singleton
+	YouTubeVideoEmbedAppender ytEmbedAppender(@Nullable YouTube yt) {
+		if (yt == null) {
+			return null;
+		}
+
+		return new YouTubeVideoEmbedAppender(yt);
 	}
 
 	@Provides
 	@Singleton
 	Api spotifyApi() {
-		if (spotifyCredentials != null) {
+		if (spotifyCredentials != null
+				&& !StringUtils.isAnyBlank(spotifyCredentials.getClientId(), spotifyCredentials.getClientSecret())) {
 			Api api = Api.builder()
 					.clientId(spotifyCredentials.getClientId())
 					.clientSecret(spotifyCredentials.getClientSecret())
@@ -177,18 +216,21 @@ class MusicModule extends AbstractModule {
 			try {
 				String accessToken = api.clientCredentialsGrant().build().get().getAccessToken();
 				api.setAccessToken(accessToken);
-			} catch (IOException | WebApiException e) {
+			} catch (IOException e) {
+				throw new UncheckedIOException("Unable to contact Spotify Accounts Service.", e);
+			} catch (BadRequestException e) {
 				LOG.warn(
 						"Unable to get access token from Spotify Accounts Service. Spotify support will "
-								+ "not be available. Please check if the supplied credentials are valid.",
-						e);
+								+ "not be available. Please check if the supplied credentials are valid.");
 				return null;
+			} catch (WebApiException e) {
+				throw new TonbotTechnicalFault("Spotify Accounts Service returned an unknown error.", e);
 			}
 
 			return api;
 		}
 
-		LOG.warn("No Spotify credentials detected. Spotify will not be available.");
+		LOG.warn("No Spotify credentials detected or they are invalid. Spotify support will be disabled.");
 		return null;
 	}
 
@@ -207,23 +249,35 @@ class MusicModule extends AbstractModule {
 	@Provides
 	@Singleton
 	Drive drive() throws GeneralSecurityException, IOException {
+		if (StringUtils.isBlank(googleDriveApiKey)) {
+			LOG.warn("No Google Drive API key found. Google Drive support will be disabled.");
+			return null;
+		}
+
 		HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
 		JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
 
 		return new Drive.Builder(httpTransport, jsonFactory, null)
 				.setApplicationName(APPLICATION_NAME)
+				.setDriveRequestInitializer(new DriveRequestInitializer(googleDriveApiKey))
 				.build();
 	}
 
 	@Provides
 	@Singleton
 	YouTube youtube() {
+		if (StringUtils.isBlank(youtubeApiKey)) {
+			LOG.warn("No YouTube API key found. Enhanced Now Playing will be disabled.");
+			return null;
+		}
+
 		return new YouTube.Builder(new NetHttpTransport(), new JacksonFactory(), new HttpRequestInitializer() {
 			@Override
 			public void initialize(HttpRequest request) throws IOException {
 			}
 		})
 				.setApplicationName(APPLICATION_NAME)
+				.setYouTubeRequestInitializer(new YouTubeRequestInitializer(youtubeApiKey))
 				.build();
 	}
 

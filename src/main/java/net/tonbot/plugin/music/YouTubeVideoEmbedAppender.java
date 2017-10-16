@@ -33,12 +33,10 @@ class YouTubeVideoEmbedAppender implements EmbedAppender {
 	private static final String TRUNCATION_INDICATOR = "…";
 	private static final String YOUTUBE_CHANNEL_URL_BASE = "http://www.youtube.com/channel/";
 
-	private final String ytApiKey;
 	private final YouTube yt;
 
 	@Inject
-	public YouTubeVideoEmbedAppender(@GoogleApiKey String ytApiKey, YouTube yt) {
-		this.ytApiKey = Preconditions.checkNotNull(ytApiKey, "ytApiKey must be non-null.");
+	public YouTubeVideoEmbedAppender(YouTube yt) {
 		this.yt = Preconditions.checkNotNull(yt, "yt must be non-null.");
 	}
 
@@ -83,7 +81,6 @@ class YouTubeVideoEmbedAppender implements EmbedAppender {
 			VideoListResponse videoListResponse = yt.videos()
 					.list("snippet")
 					.setId(youtubeVideoId)
-					.setKey(ytApiKey)
 					.execute();
 
 			List<Video> videoList = videoListResponse.getItems();
@@ -105,7 +102,6 @@ class YouTubeVideoEmbedAppender implements EmbedAppender {
 			ChannelListResponse channelListResponse = yt.channels()
 					.list("snippet")
 					.setId(channelId)
-					.setKey(ytApiKey)
 					.execute();
 
 			List<Channel> channelList = channelListResponse.getItems();

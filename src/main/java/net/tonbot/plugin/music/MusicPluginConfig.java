@@ -8,14 +8,17 @@ import lombok.Data;
 @Data
 class MusicPluginConfig {
 
-	private final String googleApiKey;
+	private final String youtubeApiKey;
+	private final String googleDriveApiKey;
 	private final SpotifyCredentials spotifyCredentials;
 
 	@JsonCreator
 	public MusicPluginConfig(
-			@JsonProperty("googleApiKey") String googleApiKey,
+			@JsonProperty("youtubeApiKey") String youtubeApiKey,
+			@JsonProperty("googleDriveApiKey") String googleDriveApiKey,
 			@JsonProperty("spotifyCredentials") SpotifyCredentials spotifyCredentials) {
-		this.googleApiKey = googleApiKey;
+		this.youtubeApiKey = youtubeApiKey;
+		this.googleDriveApiKey = googleDriveApiKey;
 		this.spotifyCredentials = spotifyCredentials;
 	}
 }

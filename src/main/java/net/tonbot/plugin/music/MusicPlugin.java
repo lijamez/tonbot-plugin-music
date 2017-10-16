@@ -1,10 +1,8 @@
 package net.tonbot.plugin.music;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Set;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -22,26 +20,19 @@ public class MusicPlugin extends TonbotPlugin {
 		super(pluginArgs);
 
 		File configFile = pluginArgs.getConfigFile();
-		if (!configFile.exists()) {
-			// TODO: Create the config file.
-			throw new IllegalStateException("Config file doesn't exist.");
-		}
 
-		ObjectMapper objectMapper = new ObjectMapper();
+		MusicPluginConfigManager configMgr = new MusicPluginConfigManager();
+		MusicPluginConfig config = configMgr.readOrCreateConfig(configFile);
 
-		try {
-			MusicPluginConfig config = objectMapper.readValue(configFile, MusicPluginConfig.class);
-			this.injector = Guice.createInjector(
-					new MusicModule(
-							pluginArgs.getDiscordClient(),
-							pluginArgs.getPrefix(),
-							pluginArgs.getBotUtils(),
-							pluginArgs.getColor(),
-							config.getGoogleApiKey(),
-							config.getSpotifyCredentials()));
-		} catch (IOException e) {
-			throw new RuntimeException("Could not read configuration file.", e);
-		}
+		this.injector = Guice.createInjector(
+				new MusicModule(
+						pluginArgs.getDiscordClient(),
+						pluginArgs.getPrefix(),
+						pluginArgs.getBotUtils(),
+						pluginArgs.getColor(),
+						config.getYoutubeApiKey(),
+						config.getGoogleDriveApiKey(),
+						config.getSpotifyCredentials()));
 	}
 
 	@Override

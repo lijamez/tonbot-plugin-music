@@ -45,13 +45,11 @@ public class GoogleDriveSourceManager implements AudioSourceManager {
 	private static final String FOLDER_MIME_TYPE = "application/vnd.google-apps.folder";
 
 	private final Drive drive;
-	private final String apiKey;
 	private final HttpAudioSourceManager httpAsm;
 
 	@Inject
-	public GoogleDriveSourceManager(Drive drive, @GoogleApiKey String apiKey, HttpAudioSourceManager httpAsm) {
+	public GoogleDriveSourceManager(Drive drive, HttpAudioSourceManager httpAsm) {
 		this.drive = Preconditions.checkNotNull(drive, "drive must be non-null.");
-		this.apiKey = Preconditions.checkNotNull(apiKey, "apiKey must be non-null.");
 		this.httpAsm = Preconditions.checkNotNull(httpAsm, "httpAsm must be non-null.");
 	}
 
@@ -83,7 +81,6 @@ public class GoogleDriveSourceManager implements AudioSourceManager {
 
 			File rootFile = drive.files()
 					.get(rootFileId)
-					.setKey(apiKey)
 					.execute();
 			boolean rootIsFolder = StringUtils.equals(rootFile.getMimeType(), FOLDER_MIME_TYPE);
 
@@ -126,7 +123,6 @@ public class GoogleDriveSourceManager implements AudioSourceManager {
 		qBuilder.append("'").append(folderId).append("' in parents");
 
 		FileList fileList = drive.files().list()
-				.setKey(apiKey)
 				.setQ(qBuilder.toString())
 				.setOrderBy("title")
 				.execute();
