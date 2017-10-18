@@ -24,14 +24,14 @@ class BeckonActivity implements Activity {
 							+ "channel by saying this command in the text channel they want me to connect to.")
 			.build();
 
-	private final DiscordAudioPlayerManager discordAudioPlayerManager;
+	private final GuildMusicManager guildMusicManager;
 	private final BotUtils botUtils;
 
 	@Inject
 	public BeckonActivity(
-			DiscordAudioPlayerManager discordAudioPlayerManager,
+			GuildMusicManager guildMusicManager,
 			BotUtils botUtils) {
-		this.discordAudioPlayerManager = Preconditions.checkNotNull(discordAudioPlayerManager,
+		this.guildMusicManager = Preconditions.checkNotNull(guildMusicManager,
 				"discordAudioPlayerManager must be non-null.");
 		this.botUtils = Preconditions.checkNotNull(botUtils,
 				"botUtils must be non-null.");
@@ -61,12 +61,12 @@ class BeckonActivity implements Activity {
 				userVoiceChannel.join();
 
 				try {
-					discordAudioPlayerManager.destroyFor(event.getGuild());
+					guildMusicManager.destroyAudioSessionFor(event.getGuild().getLongID());
 				} catch (NoSessionException e) {
 					// This is fine.
 				}
 
-				discordAudioPlayerManager.initFor(event.getGuild(), event.getChannel());
+				guildMusicManager.initAudioSessionFor(event.getGuild().getLongID(), event.getChannel().getLongID());
 			} catch (MissingPermissionsException e) {
 				botUtils.sendMessage(event.getChannel(), "I don't have permission to join your voice channel.");
 			}

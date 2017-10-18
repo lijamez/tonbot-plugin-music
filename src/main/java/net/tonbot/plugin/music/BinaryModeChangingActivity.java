@@ -11,8 +11,8 @@ abstract class BinaryModeChangingActivity extends AudioSessionActivity {
 
 	private final BotUtils botUtils;
 
-	public BinaryModeChangingActivity(DiscordAudioPlayerManager discordAudioPlayerManager, BotUtils botUtils) {
-		super(discordAudioPlayerManager);
+	public BinaryModeChangingActivity(GuildMusicManager guildMusicManager, BotUtils botUtils) {
+		super(guildMusicManager);
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
 	}
 

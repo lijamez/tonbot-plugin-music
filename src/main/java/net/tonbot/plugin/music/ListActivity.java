@@ -41,10 +41,10 @@ class ListActivity extends AudioSessionActivity {
 
 	@Inject
 	public ListActivity(
-			DiscordAudioPlayerManager discordAudioPlayerManager,
+			GuildMusicManager guildMusicManager,
 			BotUtils botUtils,
 			Color color) {
-		super(discordAudioPlayerManager);
+		super(guildMusicManager);
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
 		this.color = Preconditions.checkNotNull(color, "color must be non-null.");
 	}

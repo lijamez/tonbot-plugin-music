@@ -17,8 +17,8 @@ class StopActivity extends AudioSessionActivity {
 	private final BotUtils botUtils;
 
 	@Inject
-	public StopActivity(DiscordAudioPlayerManager discordAudioPlayerManager, BotUtils botUtils) {
-		super(discordAudioPlayerManager);
+	public StopActivity(GuildMusicManager guildMusicManager, BotUtils botUtils) {
+		super(guildMusicManager);
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
 	}
 

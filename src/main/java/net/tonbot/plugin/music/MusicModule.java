@@ -88,7 +88,7 @@ class MusicModule extends AbstractModule {
 		bind(String.class).annotatedWith(Prefix.class).toInstance(prefix);
 		bind(BotUtils.class).toInstance(botUtils);
 		bind(Color.class).toInstance(color);
-		bind(DiscordAudioPlayerManager.class).in(Scopes.SINGLETON);
+		bind(GuildMusicManager.class).in(Scopes.SINGLETON);
 		bind(AudioTrackFactory.class).to(LazyYoutubeAudioTrackFactory.class);
 	}
 
@@ -106,9 +106,12 @@ class MusicModule extends AbstractModule {
 			NowPlayingActivity npActivity,
 			ShuffleActivity shuffleActivity,
 			RoundRobinActivity roundRobinActivity,
-			SeekActivity seekActivity) {
+			SeekActivity seekActivity,
+			PermissionsListActivity permissionsListActivity,
+			PermissionsAddActivity permissionsAddActivity) {
 		return ImmutableSet.of(beckonActivity, dismissActivity, playActivity, stopActivity, pauseActivity, listActivity,
-				skipActivity, repeatActivity, npActivity, shuffleActivity, roundRobinActivity, seekActivity);
+				skipActivity, repeatActivity, npActivity, shuffleActivity, roundRobinActivity, seekActivity,
+				permissionsListActivity, permissionsAddActivity);
 	}
 
 	@Provides

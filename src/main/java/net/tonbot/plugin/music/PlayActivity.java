@@ -81,10 +81,10 @@ class PlayActivity extends AudioSessionActivity {
 	public PlayActivity(
 			@Prefix String prefix,
 			IDiscordClient discordClient,
-			DiscordAudioPlayerManager discordAudioPlayerManager,
+			GuildMusicManager guildMusicManager,
 			TrackSearcher trackSearcher,
 			BotUtils botUtils) {
-		super(discordAudioPlayerManager);
+		super(guildMusicManager);
 		this.discordClient = Preconditions.checkNotNull(discordClient, "discordClient must be non-null.");
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
 		this.trackSearcher = Preconditions.checkNotNull(trackSearcher, "trackSearcher must be non-null.");

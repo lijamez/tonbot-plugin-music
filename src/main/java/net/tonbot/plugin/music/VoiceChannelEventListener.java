@@ -26,14 +26,14 @@ class VoiceChannelEventListener {
 
 	private static final Logger LOG = LoggerFactory.getLogger(VoiceChannelEventListener.class);
 
-	private final DiscordAudioPlayerManager discordAudioPlayerManager;
+	private final GuildMusicManager guildMusicManager;
 	private final BotUtils botUtils;
 
 	@Inject
 	public VoiceChannelEventListener(
-			DiscordAudioPlayerManager discordAudioPlayerManager,
+			GuildMusicManager guildMusicManager,
 			BotUtils botUtils) {
-		this.discordAudioPlayerManager = Preconditions.checkNotNull(discordAudioPlayerManager,
+		this.guildMusicManager = Preconditions.checkNotNull(guildMusicManager,
 				"discordAudioPlayerManager must be non-null.");
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
 	}
@@ -107,7 +107,7 @@ class VoiceChannelEventListener {
 		LOG.debug("VoiceDisconnectedEvent fired");
 
 		try {
-			discordAudioPlayerManager.destroyFor(event.getGuild());
+			guildMusicManager.destroyAudioSessionFor(event.getGuild().getLongID());
 		} catch (NoSessionException e) {
 
 		}
@@ -127,7 +127,7 @@ class VoiceChannelEventListener {
 			// If a session exists, but the bot isn't in a VC, then this is a bad state.
 			// Destroy the session to fix itself.
 			try {
-				discordAudioPlayerManager.destroyFor(guild);
+				guildMusicManager.destroyAudioSessionFor(guild.getLongID());
 				LOG.warn("Invalid State: An AudioSession exists, but the bot isn't connected to a VC. "
 						+ "The AudioSession was destroyed.");
 			} catch (NoSessionException e) {
@@ -144,35 +144,31 @@ class VoiceChannelEventListener {
 	 */
 	private void autoPauseAndResume(IGuild guild) {
 
-		try {
-			AudioSession audioSession = discordAudioPlayerManager.checkout(guild);
-
-			IDiscordClient discordClient = guild.getClient();
-			IVoiceChannel botVc = guild.getConnectedVoiceChannel();
-
-			long ourUserId = discordClient.getOurUser().getLongID();
-
-			long otherUsersCount = botVc.getUsersHere().stream()
-					.filter(user -> user.getLongID() != ourUserId)
-					.count();
-
-			IChannel defaultChannel = discordClient.getChannelByID(audioSession.getDefaultChannelId());
-
-			if (otherUsersCount == 1) {
-				// Someone just joined.
-				audioSession.setPaused(false);
-				botUtils.sendMessage(defaultChannel, ":arrow_forward: Resuming playback.");
-			} else if (otherUsersCount == 0) {
-				// Everyone left.
-				audioSession.setPaused(true);
-				botUtils.sendMessage(defaultChannel,
-						":pause_button: Paused because everyone left the voice channel ``" + botVc.getName() + "``.");
-			}
-		} catch (NoSessionException e) {
+		AudioSession audioSession = guildMusicManager.getAudioSession(guild.getLongID()).orElse(null);
+		if (audioSession == null) {
 			return;
-		} finally {
-			discordAudioPlayerManager.checkin(guild);
 		}
 
+		IDiscordClient discordClient = guild.getClient();
+		IVoiceChannel botVc = guild.getConnectedVoiceChannel();
+
+		long ourUserId = discordClient.getOurUser().getLongID();
+
+		long otherUsersCount = botVc.getUsersHere().stream()
+				.filter(user -> user.getLongID() != ourUserId)
+				.count();
+
+		IChannel defaultChannel = discordClient.getChannelByID(audioSession.getDefaultChannelId());
+
+		if (otherUsersCount == 1) {
+			// Someone just joined.
+			audioSession.setPaused(false);
+			botUtils.sendMessage(defaultChannel, ":arrow_forward: Resuming playback.");
+		} else if (otherUsersCount == 0) {
+			// Everyone left.
+			audioSession.setPaused(true);
+			botUtils.sendMessage(defaultChannel,
+					":pause_button: Paused because everyone left the voice channel ``" + botVc.getName() + "``.");
+		}
 	}
 }

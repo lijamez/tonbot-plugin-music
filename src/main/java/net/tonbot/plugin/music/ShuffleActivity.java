@@ -15,8 +15,8 @@ class ShuffleActivity extends BinaryModeChangingActivity {
 			.build();
 
 	@Inject
-	public ShuffleActivity(DiscordAudioPlayerManager discordAudioPlayerManager, BotUtils botUtils) {
-		super(discordAudioPlayerManager, botUtils);
+	public ShuffleActivity(GuildMusicManager guildMusicManager, BotUtils botUtils) {
+		super(guildMusicManager, botUtils);
 	}
 
 	@Override

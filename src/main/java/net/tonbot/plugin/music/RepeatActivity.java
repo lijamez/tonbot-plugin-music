@@ -31,8 +31,8 @@ public class RepeatActivity extends AudioSessionActivity {
 	private final BotUtils botUtils;
 
 	@Inject
-	public RepeatActivity(DiscordAudioPlayerManager discordAudioPlayerManager, BotUtils botUtils) {
-		super(discordAudioPlayerManager);
+	public RepeatActivity(GuildMusicManager guildMusicManager, BotUtils botUtils) {
+		super(guildMusicManager);
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
 	}
 

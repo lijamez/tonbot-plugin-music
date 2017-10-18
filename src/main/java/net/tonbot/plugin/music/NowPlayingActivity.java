@@ -34,11 +34,11 @@ class NowPlayingActivity extends AudioSessionActivity {
 	@Inject
 	public NowPlayingActivity(
 			IDiscordClient discordClient,
-			DiscordAudioPlayerManager discordAudioPlayerManager,
+			GuildMusicManager guildMusicManager,
 			List<EmbedAppender> embedAppenders,
 			BotUtils botUtils,
 			Color color) {
-		super(discordAudioPlayerManager);
+		super(guildMusicManager);
 		this.discordClient = Preconditions.checkNotNull(discordClient, "discordClient must be non-null.");
 		this.embedAppenders = Preconditions.checkNotNull(embedAppenders, "embedAppenders must be non-null.");
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
