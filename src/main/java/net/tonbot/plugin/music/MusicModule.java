@@ -108,10 +108,11 @@ class MusicModule extends AbstractModule {
 			RoundRobinActivity roundRobinActivity,
 			SeekActivity seekActivity,
 			PermissionsListActivity permissionsListActivity,
-			PermissionsAddActivity permissionsAddActivity) {
+			PermissionsAddActivity permissionsAddActivity,
+			PermissionsRemoveActivity permissionsRemoveActivity) {
 		return ImmutableSet.of(beckonActivity, dismissActivity, playActivity, stopActivity, pauseActivity, listActivity,
 				skipActivity, repeatActivity, npActivity, shuffleActivity, roundRobinActivity, seekActivity,
-				permissionsListActivity, permissionsAddActivity);
+				permissionsListActivity, permissionsAddActivity, permissionsRemoveActivity);
 	}
 
 	@Provides

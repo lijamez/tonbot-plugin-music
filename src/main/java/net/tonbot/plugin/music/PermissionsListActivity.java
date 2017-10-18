@@ -1,5 +1,6 @@
 package net.tonbot.plugin.music;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -57,7 +58,7 @@ public class PermissionsListActivity implements Activity {
 
 		EmbedBuilder eb = new EmbedBuilder();
 		eb.withTitle("Music Player Permissions");
-		
+
 		Map<Long, Set<Action>> actionsPerRole = permissions.getPermissions();
 
 		for (Entry<Long, Set<Action>> actionsForRole : actionsPerRole.entrySet()) {
@@ -66,14 +67,27 @@ public class PermissionsListActivity implements Activity {
 
 			IRole role = discordClient.getRoleByID(roleId);
 			List<String> friendlyAllowableActions = allowableActions.stream()
+					.sorted()
 					.map(action -> action.getDescription())
 					.collect(Collectors.toList());
-			
-			eb.appendField(role.getName(), StringUtils.join(friendlyAllowableActions, "\n"), false);
+
+			eb.appendField(role.getName() + " can:", StringUtils.join(friendlyAllowableActions, "\n"), false);
 		}
-		
-		eb.withFooterText("Those who have the 'Manage Server' permission can use any music command.");
-		
+
+		String userName = event.getAuthor().getDisplayName(event.getGuild());
+		List<IRole> userRoles = event.getAuthor().getRolesForGuild(event.getGuild());
+		Set<String> userAllowedActionDescs = userRoles.stream()
+				.map(userRole -> actionsPerRole.get(userRole.getLongID()))
+				.filter(set -> set != null)
+				.flatMap(Collection::stream)
+				.sorted()
+				.map(action -> action.getDescription())
+				.collect(Collectors.toSet());
+
+		eb.appendField("You, " + userName + ", can:", StringUtils.join(userAllowedActionDescs, "\n"), false);
+
+		eb.withFooterText("Administrators have all permissions.");
+
 		botUtils.sendEmbed(event.getChannel(), eb.build());
 	}
 }

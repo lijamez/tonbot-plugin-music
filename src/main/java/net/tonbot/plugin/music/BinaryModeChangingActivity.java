@@ -5,14 +5,18 @@ import org.apache.commons.lang3.StringUtils;
 import com.google.common.base.Preconditions;
 
 import net.tonbot.common.BotUtils;
+import net.tonbot.plugin.music.permissions.Action;
+import net.tonbot.plugin.music.permissions.MusicPermissions;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 
 abstract class BinaryModeChangingActivity extends AudioSessionActivity {
 
+	private final GuildMusicManager guildMusicManager;
 	private final BotUtils botUtils;
 
 	public BinaryModeChangingActivity(GuildMusicManager guildMusicManager, BotUtils botUtils) {
 		super(guildMusicManager);
+		this.guildMusicManager = Preconditions.checkNotNull(guildMusicManager, "guildMusicManager must be non-null.");
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
 	}
 
@@ -20,6 +24,9 @@ abstract class BinaryModeChangingActivity extends AudioSessionActivity {
 
 	@Override
 	protected void enactWithSession(MessageReceivedEvent event, String args, AudioSession audioSession) {
+		MusicPermissions permissions = guildMusicManager.getPermission(event.getGuild().getLongID());
+		permissions.checkPermission(event.getAuthor(), Action.PLAY_MODE_CHANGE);
+
 		PlayMode currentMode = audioSession.getStatus().getPlayMode();
 		PlayMode onMode = onMode();
 		PlayMode targetPlayMode;

@@ -43,15 +43,15 @@ public class MusicPermissions {
 	 * Checks whether if the {@link IUser} has the permission to perform the {@code action}.
 	 * @param user The {@link IUser} who is performing the action. Non-null.
 	 * @param action The {@link Action} being performed. Non-null.
-	 * @return True iff the {@code user} can perform the {@code action}.
+	 * @throws PermissionsException if the user doesn't have permission.
 	 */
-	public boolean doesUserHavePermission(IUser user, Action action) {
+	public void checkPermission(IUser user, Action action) {
 		Preconditions.checkNotNull(user, "user must be non-null.");
 		Preconditions.checkNotNull(action, "action must be non-null.");
 		
-		// Server managers can do anything.
-		if (user.getPermissionsForGuild(guild).contains(Permissions.MANAGE_SERVER)) {
-			return true;
+		// Administrators can do anything.
+		if (user.getPermissionsForGuild(guild).contains(Permissions.ADMINISTRATOR)) {
+			return;
 		}
 		
 		List<IRole> roles = user.getRolesForGuild(guild);
@@ -66,12 +66,13 @@ public class MusicPermissions {
 				}
 				
 				if (permittedActionSet.contains(action)) {
-					return true;
+					return;
 				}
 
 			}
 			
-			return false;
+			String userName = user.getDisplayName(guild);
+			throw new PermissionsException(userName + ", you don't have permission to: " + action.getDescription());
 		} finally {
 			rwLock.readLock().unlock();
 		}
@@ -97,8 +98,9 @@ public class MusicPermissions {
 	/**
 	 * Removes a rule.
 	 * @param rule {@link Rule}. Non-null.
+	 * @return True iff the overall permissions have changed as a result of this call.
 	 */
-	public void removeRule(Rule rule) {
+	public boolean removeRule(Rule rule) {
 		Preconditions.checkNotNull(rule, "rule must be non-null.");
 		
 		rwLock.writeLock().lock();
@@ -106,12 +108,13 @@ public class MusicPermissions {
 			Set<Action> actionSet = permittedActions.get(rule.getRoleId());
 			
 			if (actionSet != null) {
-				actionSet.remove(rule.getAction());
+				return actionSet.remove(rule.getAction());
 			}
 		} finally {
 			rwLock.writeLock().unlock();
 		}
 		
+		return false;
 	}
 	
 	/**

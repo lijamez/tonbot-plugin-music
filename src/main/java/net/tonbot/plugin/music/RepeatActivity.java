@@ -13,6 +13,8 @@ import com.google.inject.Inject;
 import net.tonbot.common.ActivityDescriptor;
 import net.tonbot.common.BotUtils;
 import net.tonbot.common.TonbotBusinessException;
+import net.tonbot.plugin.music.permissions.Action;
+import net.tonbot.plugin.music.permissions.MusicPermissions;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 
 public class RepeatActivity extends AudioSessionActivity {
@@ -28,11 +30,13 @@ public class RepeatActivity extends AudioSessionActivity {
 			.description("Sets the repeat mode to one of: " + FRIENDLY_REPEAT_MODES)
 			.build();
 
+	private final GuildMusicManager guildMusicManager;
 	private final BotUtils botUtils;
 
 	@Inject
 	public RepeatActivity(GuildMusicManager guildMusicManager, BotUtils botUtils) {
 		super(guildMusicManager);
+		this.guildMusicManager = Preconditions.checkNotNull(guildMusicManager, "guildMusicManager must be non-null.");
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
 	}
 
@@ -43,6 +47,9 @@ public class RepeatActivity extends AudioSessionActivity {
 
 	@Override
 	protected void enactWithSession(MessageReceivedEvent event, String args, AudioSession audioSession) {
+		MusicPermissions permissions = guildMusicManager.getPermission(event.getGuild().getLongID());
+		permissions.checkPermission(event.getAuthor(), Action.REPEAT_MODE_CHANGE);
+
 		RepeatMode targetRepeatMode;
 		if (StringUtils.isBlank(args)) {
 			// Scroll through the various modes.

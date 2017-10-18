@@ -18,6 +18,8 @@ import net.tonbot.common.BotUtils;
 import net.tonbot.common.Prefix;
 import net.tonbot.common.TonbotBusinessException;
 import net.tonbot.plugin.music.SearchResultsEviction.EvictionReason;
+import net.tonbot.plugin.music.permissions.Action;
+import net.tonbot.plugin.music.permissions.MusicPermissions;
 import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.IChannel;
@@ -36,7 +38,7 @@ class PlayActivity extends AudioSessionActivity {
 			.route("music play")
 			.parameters(ImmutableList.of("query"))
 			.description(
-					"Plays a track. If no song link is provided, then it unpauses the player.")
+					"Plays a track or unpauses the player.")
 			.usageDescription("**Playing track(s) via direct link to a track or playlist:**\n"
 					+ "```${absoluteReferencedRoute} https://www.youtube.com/watch?v=dQw4w9WgXcQ```\n"
 					+ "The following services are supported:\n"
@@ -73,6 +75,7 @@ class PlayActivity extends AudioSessionActivity {
 			this::handleEnqueueIdentifier,
 			this::handleTrackSearch);
 
+	private final GuildMusicManager guildMusicManager;
 	private final IDiscordClient discordClient;
 	private final BotUtils botUtils;
 	private final TrackSearcher trackSearcher;
@@ -85,6 +88,7 @@ class PlayActivity extends AudioSessionActivity {
 			TrackSearcher trackSearcher,
 			BotUtils botUtils) {
 		super(guildMusicManager);
+		this.guildMusicManager = Preconditions.checkNotNull(guildMusicManager, "guildMusicManager must be non-null.");
 		this.discordClient = Preconditions.checkNotNull(discordClient, "discordClient must be non-null.");
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
 		this.trackSearcher = Preconditions.checkNotNull(trackSearcher, "trackSearcher must be non-null.");
@@ -110,9 +114,10 @@ class PlayActivity extends AudioSessionActivity {
 
 	@Override
 	protected void enactWithSession(MessageReceivedEvent event, String args, AudioSession audioSession) {
+		MusicPermissions permissions = guildMusicManager.getPermission(event.getGuild().getLongID());
 
 		boolean eventWasHandled = handlerChain.stream()
-				.filter(handler -> handler.handle(audioSession, event, args))
+				.filter(handler -> handler.handle(audioSession, event, args, permissions))
 				.findFirst()
 				.isPresent();
 
@@ -131,7 +136,7 @@ class PlayActivity extends AudioSessionActivity {
 
 			try {
 				searchHandlerChain.stream()
-						.filter(handler -> handler.handle(audioSession, event, args))
+						.filter(handler -> handler.handle(audioSession, event, args, permissions))
 						.findFirst();
 			} finally {
 				try {
@@ -147,8 +152,15 @@ class PlayActivity extends AudioSessionActivity {
 		}
 	}
 
-	private boolean handlePlayWithoutArgs(AudioSession audioSession, MessageReceivedEvent event, String args) {
+	private boolean handlePlayWithoutArgs(
+			AudioSession audioSession,
+			MessageReceivedEvent event,
+			String args,
+			MusicPermissions permissions) {
+
 		if (StringUtils.isBlank(args) && event.getMessage().getAttachments().isEmpty()) {
+			permissions.checkPermission(event.getAuthor(), Action.PLAY_PAUSE);
+
 			audioSession.play();
 			return true;
 		}
@@ -156,7 +168,12 @@ class PlayActivity extends AudioSessionActivity {
 		return false;
 	}
 
-	private boolean handleSearchResultSelection(AudioSession audioSession, MessageReceivedEvent event, String args) {
+	private boolean handleSearchResultSelection(
+			AudioSession audioSession,
+			MessageReceivedEvent event,
+			String args,
+			MusicPermissions permissions) {
+
 		IUser user = event.getAuthor();
 
 		SearchResults prevSearchResults = trackSearcher.getPreviousSearchResults(audioSession, user.getLongID())
@@ -197,7 +214,13 @@ class PlayActivity extends AudioSessionActivity {
 		return false;
 	}
 
-	private boolean handleEnqueueIdentifier(AudioSession audioSession, MessageReceivedEvent event, String args) {
+	private boolean handleEnqueueIdentifier(
+			AudioSession audioSession,
+			MessageReceivedEvent event,
+			String args,
+			MusicPermissions permissions) {
+		permissions.checkPermission(event.getAuthor(), Action.ADD_TRACKS);
+
 		IUser user = event.getAuthor();
 		IChannel channel = event.getChannel();
 
@@ -247,7 +270,12 @@ class PlayActivity extends AudioSessionActivity {
 		return false;
 	}
 
-	private boolean handleTrackSearch(AudioSession audioSession, MessageReceivedEvent event, String query) {
+	private boolean handleTrackSearch(
+			AudioSession audioSession,
+			MessageReceivedEvent event,
+			String query,
+			MusicPermissions permissions) {
+		permissions.checkPermission(event.getAuthor(), Action.ADD_TRACKS);
 
 		// Perform a search
 		SearchResults searchResults = trackSearcher.search(audioSession, event.getAuthor().getLongID(), query);
@@ -316,6 +344,10 @@ class PlayActivity extends AudioSessionActivity {
 	@FunctionalInterface
 	private static interface PlayActivityHandler {
 
-		public abstract boolean handle(AudioSession audioSession, MessageReceivedEvent event, String args);
+		public abstract boolean handle(
+				AudioSession audioSession,
+				MessageReceivedEvent event,
+				String args,
+				MusicPermissions permissions);
 	}
 }

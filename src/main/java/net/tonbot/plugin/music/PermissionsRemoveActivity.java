@@ -17,13 +17,13 @@ import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedE
 import sx.blah.discord.handle.obj.IRole;
 import sx.blah.discord.handle.obj.Permissions;
 
-public class PermissionsAddActivity implements Activity {
+public class PermissionsRemoveActivity implements Activity {
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
-			.route("music allow")
+			.route("music disallow")
 			.parameters(ImmutableList.of("role", "action"))
 			.description(
-					"Gives a permission to a role.")
+					"Removes a permission from a role")
 			.build();
 
 	private final IDiscordClient discordClient;
@@ -32,7 +32,7 @@ public class PermissionsAddActivity implements Activity {
 	private final PermissionsArgsParser permArgsParser;
 
 	@Inject
-	public PermissionsAddActivity(
+	public PermissionsRemoveActivity(
 			IDiscordClient discordClient,
 			GuildMusicManager guildMusicManager,
 			BotUtils botUtils,
@@ -43,6 +43,7 @@ public class PermissionsAddActivity implements Activity {
 		this.botUtils = Preconditions.checkNotNull(botUtils,
 				"botUtils must be non-null.");
 		this.permArgsParser = Preconditions.checkNotNull(permArgsParser, "permArgsParser must be non-null.");
+
 	}
 
 	@Override
@@ -65,10 +66,14 @@ public class PermissionsAddActivity implements Activity {
 		}
 
 		MusicPermissions permissions = guildMusicManager.getPermission(event.getGuild().getLongID());
-		permissions.addRule(rule);
+		boolean removed = permissions.removeRule(rule);
 
-		IRole role = discordClient.getRoleByID(rule.getRoleId());
-
-		botUtils.sendMessage(event.getChannel(), role.getName() + " may now: " + rule.getAction().getDescription());
+		if (removed) {
+			IRole role = discordClient.getRoleByID(rule.getRoleId());
+			botUtils.sendMessage(event.getChannel(),
+					role.getName() + " can no longer: " + rule.getAction().getDescription());
+		} else {
+			botUtils.sendMessage(event.getChannel(), "That rule doesn't exist.");
+		}
 	}
 }

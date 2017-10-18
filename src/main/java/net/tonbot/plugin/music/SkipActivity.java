@@ -22,6 +22,8 @@ import lombok.Data;
 import net.tonbot.common.ActivityDescriptor;
 import net.tonbot.common.BotUtils;
 import net.tonbot.common.TonbotBusinessException;
+import net.tonbot.plugin.music.permissions.Action;
+import net.tonbot.plugin.music.permissions.MusicPermissions;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 
 class SkipActivity extends AudioSessionActivity {
@@ -29,7 +31,7 @@ class SkipActivity extends AudioSessionActivity {
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
 			.route("music skip")
 			.parameters(ImmutableList.of("track numbers/mine/all"))
-			.description("Skips the currently playing track or several tracks in the Up Next queue.")
+			.description("Skips the currently playing track or several tracks.")
 			.usageDescription(
 					"This command skips the current track.\n\n"
 							+ "To skip tracks in the Up Next queue, specify a track number or a comma separated list of track numbers.\n"
@@ -48,11 +50,13 @@ class SkipActivity extends AudioSessionActivity {
 	private static final String ALL_KEYWORD = "ALL";
 	private static final String MINE_KEYWORD = "MINE";
 
+	private final GuildMusicManager guildMusicManager;
 	private final BotUtils botUtils;
 
 	@Inject
 	public SkipActivity(GuildMusicManager guildMusicManager, BotUtils botUtils) {
 		super(guildMusicManager);
+		this.guildMusicManager = Preconditions.checkNotNull(guildMusicManager, "guildMusicManager must be non-null.");
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
 	}
 
@@ -64,8 +68,17 @@ class SkipActivity extends AudioSessionActivity {
 	@Override
 	protected void enactWithSession(MessageReceivedEvent event, String args, AudioSession audioSession) {
 
+		MusicPermissions permissions = guildMusicManager.getPermission(event.getGuild().getLongID());
+
 		List<AudioTrack> skippedTracks;
 		if (StringUtils.isBlank(args)) {
+			// Check if the user is allowed to skip another users' tracks
+			AudioTrack currentTrack = audioSession.getStatus().getNowPlaying().orElse(null);
+			if (currentTrack != null && ((ExtraTrackInfo) currentTrack.getUserData()).getAddedByUserId() != event
+					.getAuthor().getLongID()) {
+				permissions.checkPermission(event.getAuthor(), Action.SKIP_OTHERS);
+			}
+
 			// Skip the current track.
 			skippedTracks = new ArrayList<>();
 			Optional<AudioTrack> skippedTrack = audioSession.skip();
@@ -73,6 +86,7 @@ class SkipActivity extends AudioSessionActivity {
 				skippedTracks.add(skippedTrack.get());
 			}
 		} else if (StringUtils.equalsIgnoreCase(args, ALL_KEYWORD)) {
+			permissions.checkPermission(event.getAuthor(), Action.SKIP_ALL);
 			skippedTracks = audioSession.skip(Predicates.alwaysTrue());
 		} else if (StringUtils.equalsIgnoreCase(args, MINE_KEYWORD)) {
 			long userId = event.getAuthor().getLongID();
@@ -92,7 +106,10 @@ class SkipActivity extends AudioSessionActivity {
 		}
 	}
 
-	private List<AudioTrack> removeTracksByIndices(MessageReceivedEvent event, String args, AudioSession audioSession) {
+	private List<AudioTrack> removeTracksByIndices(
+			MessageReceivedEvent event,
+			String args,
+			AudioSession audioSession) {
 		List<AudioTrack> upcomingTracks = audioSession.getStatus().getUpcomingTracks();
 
 		List<Integer> skipIndexes = parseSkipIndexes(args, upcomingTracks.size());
@@ -104,6 +121,14 @@ class SkipActivity extends AudioSessionActivity {
 		if (removeTracks.isEmpty()) {
 			throw new TonbotBusinessException("You didn't specify any valid track numbers to skip.");
 		}
+
+		MusicPermissions permissions = guildMusicManager.getPermission(event.getGuild().getLongID());
+
+		removeTracks.forEach(track -> {
+			if (((ExtraTrackInfo) track.getUserData()).getAddedByUserId() != event.getAuthor().getLongID()) {
+				permissions.checkPermission(event.getAuthor(), Action.SKIP_OTHERS);
+			}
+		});
 
 		return audioSession.skip(at -> removeTracks.contains(at));
 	}

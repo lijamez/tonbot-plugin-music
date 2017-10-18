@@ -17,7 +17,7 @@ class BeckonActivity implements Activity {
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
 			.route("music beckon")
 			.description(
-					"Makes me join your voice channel. The channel that this command is sent in will be used for music commands.")
+					"Makes me join your voice channel.")
 			.usageDescription(
 					"Once this command is said in a text channel, I will join the voice channel that you are in and then "
 							+ "I will only respond to music commands in that same text channel. Users can still move me to another text "
