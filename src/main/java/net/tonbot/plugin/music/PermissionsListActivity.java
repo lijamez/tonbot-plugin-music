@@ -1,5 +1,6 @@
 package net.tonbot.plugin.music;
 
+import java.awt.Color;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -33,17 +34,20 @@ public class PermissionsListActivity implements Activity {
 	private final IDiscordClient discordClient;
 	private final GuildMusicManager guildMusicManager;
 	private final BotUtils botUtils;
+	private final Color color;
 
 	@Inject
 	public PermissionsListActivity(
 			IDiscordClient discordClient,
 			GuildMusicManager guildMusicManager,
-			BotUtils botUtils) {
+			BotUtils botUtils,
+			Color color) {
 		this.discordClient = Preconditions.checkNotNull(discordClient, "discordClient must be non-null.");
 		this.guildMusicManager = Preconditions.checkNotNull(guildMusicManager,
 				"discordAudioPlayerManager must be non-null.");
 		this.botUtils = Preconditions.checkNotNull(botUtils,
 				"botUtils must be non-null.");
+		this.color = Preconditions.checkNotNull(color, "color must be non-null.");
 	}
 
 	@Override
@@ -57,6 +61,7 @@ public class PermissionsListActivity implements Activity {
 		MusicPermissions permissions = guildMusicManager.getPermission(event.getGuild().getLongID());
 
 		EmbedBuilder eb = new EmbedBuilder();
+		eb.withColor(color);
 		eb.withTitle("Music Player Permissions");
 
 		Map<Long, Set<Action>> actionsPerRole = permissions.getPermissions();
@@ -76,15 +81,15 @@ public class PermissionsListActivity implements Activity {
 
 		String userName = event.getAuthor().getDisplayName(event.getGuild());
 		List<IRole> userRoles = event.getAuthor().getRolesForGuild(event.getGuild());
-		Set<String> userAllowedActionDescs = userRoles.stream()
+		List<String> userAllowedActionDescs = userRoles.stream()
 				.map(userRole -> actionsPerRole.get(userRole.getLongID()))
 				.filter(set -> set != null)
 				.flatMap(Collection::stream)
 				.sorted()
 				.map(action -> action.getDescription())
-				.collect(Collectors.toSet());
+				.collect(Collectors.toList());
 
-		eb.appendField("You, " + userName + ", can:", StringUtils.join(userAllowedActionDescs, "\n"), false);
+		eb.appendField(userName + ", you can:", StringUtils.join(userAllowedActionDescs, "\n"), false);
 
 		eb.withFooterText("Administrators have all permissions.");
 

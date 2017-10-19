@@ -1,6 +1,10 @@
 package net.tonbot.plugin.music;
 
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.apache.commons.lang.StringUtils;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -10,6 +14,7 @@ import net.tonbot.common.Activity;
 import net.tonbot.common.ActivityDescriptor;
 import net.tonbot.common.BotUtils;
 import net.tonbot.common.TonbotBusinessException;
+import net.tonbot.plugin.music.permissions.Action;
 import net.tonbot.plugin.music.permissions.MusicPermissions;
 import net.tonbot.plugin.music.permissions.Rule;
 import sx.blah.discord.api.IDiscordClient;
@@ -58,22 +63,33 @@ public class PermissionsRemoveActivity implements Activity {
 			throw new TonbotBusinessException("You don't permissions to edit the permissions.");
 		}
 
-		Rule rule;
+		List<Rule> rules;
 		try {
-			rule = permArgsParser.parseRule(args);
+			rules = permArgsParser.parseRules(args, event.getGuild());
+			if (rules.isEmpty()) {
+				botUtils.sendMessage(event.getChannel(),
+						"You didn't say any actions. Here are the available actions: "
+								+ StringUtils.join(Action.values(), ", "));
+				return;
+			}
 		} catch (IllegalArgumentException e) {
 			throw new TonbotBusinessException(e.getMessage());
 		}
 
 		MusicPermissions permissions = guildMusicManager.getPermission(event.getGuild().getLongID());
-		boolean removed = permissions.removeRule(rule);
+		List<Rule> actualRemovedRules = permissions.removeAll(rules);
 
-		if (removed) {
-			IRole role = discordClient.getRoleByID(rule.getRoleId());
+		if (!actualRemovedRules.isEmpty()) {
+			IRole role = discordClient.getRoleByID(rules.get(0).getRoleId());
+
+			List<String> removedActionsDescs = actualRemovedRules.stream()
+					.map(rule -> rule.getAction().getDescription())
+					.collect(Collectors.toList());
+
 			botUtils.sendMessage(event.getChannel(),
-					role.getName() + " can no longer: " + rule.getAction().getDescription());
+					role.getName() + " can no longer: " + StringUtils.join(removedActionsDescs, ", "));
 		} else {
-			botUtils.sendMessage(event.getChannel(), "That rule doesn't exist.");
+			botUtils.sendMessage(event.getChannel(), "No rules were removed.");
 		}
 	}
 }
