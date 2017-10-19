@@ -51,7 +51,7 @@ class PermissionsArgsParser {
 	 */
 	public List<Rule> parseRules(String line, IGuild guild) {
 		Preconditions.checkNotNull(guild, "guild must be non-null.");
-		
+
 		if (StringUtils.isBlank(line)) {
 			throw new IllegalArgumentException("You need to provide a role mention and an action.");
 		}

@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -17,6 +18,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
+import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.handle.obj.IGuild;
 import sx.blah.discord.handle.obj.IRole;
 import sx.blah.discord.handle.obj.IUser;
@@ -31,14 +33,18 @@ public class MusicPermissions {
 			Action.PLAY_PAUSE,
 			Action.ADD_TRACKS);
 
-	private final IGuild guild;
+	private final IDiscordClient discordClient;
+	private final long guildId;
 
 	private final Map<Long, Set<Action>> permittedActions;
 
 	private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
 
-	public MusicPermissions(IGuild guild) {
-		this.guild = Preconditions.checkNotNull(guild, "guild must be non-null.");
+	public MusicPermissions(
+			IDiscordClient discordClient,
+			long guildId) {
+		this.discordClient = Preconditions.checkNotNull(discordClient, "discordClient must be non-null.");
+		this.guildId = guildId;
 		this.permittedActions = new HashMap<>();
 	}
 
@@ -58,6 +64,7 @@ public class MusicPermissions {
 		Preconditions.checkNotNull(action, "action must be non-null.");
 
 		// Administrators can do anything.
+		IGuild guild = discordClient.getGuildByID(guildId);
 		if (user.getPermissionsForGuild(guild).contains(Permissions.ADMINISTRATOR)) {
 			return;
 		}
@@ -163,12 +170,37 @@ public class MusicPermissions {
 	}
 
 	/**
-	 * Gets the map of role IDs to permitted actions.
+	 * Gets a new immutable map of role IDs to permitted actions.
 	 * 
-	 * @return A map of role IDs to permitted actions.
+	 * @return A new immutable map of role IDs to permitted actions.
 	 */
 	public Map<Long, Set<Action>> getPermissions() {
-		return ImmutableMap.copyOf(permittedActions);
+		ImmutableMap.Builder<Long, Set<Action>> mapBuilder = ImmutableMap.builder();
+		rwLock.readLock().lock();
+		try {
+			for (Entry<Long, Set<Action>> entry : permittedActions.entrySet()) {
+				mapBuilder.put(entry.getKey(), ImmutableSet.copyOf(entry.getValue()));
+			}
+
+			return mapBuilder.build();
+		} finally {
+			rwLock.readLock().unlock();
+		}
+	}
+
+	/**
+	 * Sets permissions.
+	 * 
+	 * @param permissions
+	 */
+	public void setPermissions(Map<Long, Set<Action>> permissions) {
+		rwLock.writeLock().lock();
+		try {
+			this.permittedActions.clear();
+			this.permittedActions.putAll(permissions);
+		} finally {
+			rwLock.writeLock().unlock();
+		}
 	}
 
 	/**
@@ -179,11 +211,13 @@ public class MusicPermissions {
 		try {
 			permittedActions.clear();
 
+			IGuild guild = discordClient.getGuildByID(guildId);
+
 			IRole everyoneRole = guild.getEveryoneRole();
 			List<Rule> everyoneRules = DEFAULT_EVERYONE_ACTIONS.stream()
-				.map(action -> new Rule(everyoneRole.getLongID(), action))
-				.collect(Collectors.toList());
-			
+					.map(action -> new Rule(everyoneRole.getLongID(), action))
+					.collect(Collectors.toList());
+
 			this.addAll(everyoneRules);
 		} finally {
 			rwLock.writeLock().unlock();
