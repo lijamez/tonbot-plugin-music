@@ -1,9 +1,9 @@
-package net.tonbot.plugin.music;
+package net.tonbot.plugin.music.spotify;
 
 import lombok.Data;
 
 @Data
-class SpotifyCredentials {
+public class SpotifyCredentials {
 
 	private final String clientId;
 	private final String clientSecret;

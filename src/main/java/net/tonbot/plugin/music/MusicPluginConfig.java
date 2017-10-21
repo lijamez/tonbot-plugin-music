@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Data;
+import net.tonbot.plugin.music.spotify.SpotifyCredentials;
 
 @Data
 class MusicPluginConfig {

@@ -1,4 +1,4 @@
-package net.tonbot.plugin.music;
+package net.tonbot.plugin.music.spotify;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -38,8 +38,10 @@ import com.wrapper.spotify.models.Track;
 
 import lombok.Data;
 import lombok.NonNull;
+import net.tonbot.plugin.music.AudioTrackFactory;
+import net.tonbot.plugin.music.SongMetadata;
 
-class SpotifySourceManager implements AudioSourceManager {
+public class SpotifySourceManager implements AudioSourceManager {
 
 	private static final String SPOTIFY_DOMAIN = "open.spotify.com";
 	private static final int EXPECTED_PATH_COMPONENTS = 4;

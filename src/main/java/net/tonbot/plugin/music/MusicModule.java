@@ -50,6 +50,10 @@ import net.tonbot.common.Activity;
 import net.tonbot.common.BotUtils;
 import net.tonbot.common.Prefix;
 import net.tonbot.common.TonbotTechnicalFault;
+import net.tonbot.plugin.music.googledrive.GoogleDriveSourceManager;
+import net.tonbot.plugin.music.itunes.ITunesPlaylistSourceManager;
+import net.tonbot.plugin.music.spotify.SpotifyCredentials;
+import net.tonbot.plugin.music.spotify.SpotifySourceManager;
 import sx.blah.discord.api.IDiscordClient;
 
 class MusicModule extends AbstractModule {

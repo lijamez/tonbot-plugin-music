@@ -1,4 +1,4 @@
-package net.tonbot.plugin.music;
+package net.tonbot.plugin.music.googledrive;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

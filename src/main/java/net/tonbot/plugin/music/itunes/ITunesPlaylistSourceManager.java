@@ -1,4 +1,4 @@
-package net.tonbot.plugin.music;
+package net.tonbot.plugin.music.itunes;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -34,13 +34,16 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import com.sedmelluq.discord.lavaplayer.track.BasicAudioPlaylist;
 
+import net.tonbot.plugin.music.AudioTrackFactory;
+import net.tonbot.plugin.music.SongMetadata;
+
 /**
  * Retrieves iTunes playlist in plain text or Unicode format (ie. UTF-8 or
  * UTF-16LE) and then looks up the song in YouTube. Tracks are returned as
  * {@link LazyYoutubeAudioTracks} and hence tracks will only be searched when
  * they start to play. This is to prevent YouTube from throttling us.
  */
-class ITunesPlaylistSourceManager implements AudioSourceManager {
+public class ITunesPlaylistSourceManager implements AudioSourceManager {
 
 	private static final Logger LOG = LoggerFactory.getLogger(ITunesPlaylistSourceManager.class);
 

@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
-interface AudioTrackFactory {
+public interface AudioTrackFactory {
 
 	List<AudioTrack> getAudioTracks(List<SongMetadata> songMetadata);
 

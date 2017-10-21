@@ -1,4 +1,4 @@
-package net.tonbot.plugin.music;
+package net.tonbot.plugin.music.googledrive;
 
 import java.io.DataInput;
 import java.io.DataOutput;
