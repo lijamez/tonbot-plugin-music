@@ -17,8 +17,8 @@ class PauseActivity extends AudioSessionActivity {
 	private final BotUtils botUtils;
 
 	@Inject
-	public PauseActivity(DiscordAudioPlayerManager discordAudioPlayerManager, BotUtils botUtils) {
-		super(discordAudioPlayerManager);
+	public PauseActivity(GuildMusicManager guildMusicManager, BotUtils botUtils) {
+		super(guildMusicManager);
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
 	}
 

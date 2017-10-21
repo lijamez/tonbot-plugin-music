@@ -17,21 +17,21 @@ class BeckonActivity implements Activity {
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
 			.route("music beckon")
 			.description(
-					"Makes me join your voice channel. The channel that this command is sent in will be used for music commands.")
+					"Makes me join your voice channel.")
 			.usageDescription(
 					"Once this command is said in a text channel, I will join the voice channel that you are in and then "
 							+ "I will only respond to music commands in that same text channel. Users can still move me to another text "
 							+ "channel by saying this command in the text channel they want me to connect to.")
 			.build();
 
-	private final DiscordAudioPlayerManager discordAudioPlayerManager;
+	private final GuildMusicManager guildMusicManager;
 	private final BotUtils botUtils;
 
 	@Inject
 	public BeckonActivity(
-			DiscordAudioPlayerManager discordAudioPlayerManager,
+			GuildMusicManager guildMusicManager,
 			BotUtils botUtils) {
-		this.discordAudioPlayerManager = Preconditions.checkNotNull(discordAudioPlayerManager,
+		this.guildMusicManager = Preconditions.checkNotNull(guildMusicManager,
 				"discordAudioPlayerManager must be non-null.");
 		this.botUtils = Preconditions.checkNotNull(botUtils,
 				"botUtils must be non-null.");
@@ -61,12 +61,12 @@ class BeckonActivity implements Activity {
 				userVoiceChannel.join();
 
 				try {
-					discordAudioPlayerManager.destroyFor(event.getGuild());
+					guildMusicManager.destroyAudioSessionFor(event.getGuild().getLongID());
 				} catch (NoSessionException e) {
 					// This is fine.
 				}
 
-				discordAudioPlayerManager.initFor(event.getGuild(), event.getChannel());
+				guildMusicManager.initAudioSessionFor(event.getGuild().getLongID(), event.getChannel().getLongID());
 			} catch (MissingPermissionsException e) {
 				botUtils.sendMessage(event.getChannel(), "I don't have permission to join your voice channel.");
 			}

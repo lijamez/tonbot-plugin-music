@@ -13,21 +13,19 @@ abstract class AudioSessionActivity implements Activity {
 
 	private static final Logger LOG = LoggerFactory.getLogger(AudioSessionActivity.class);
 
-	private final DiscordAudioPlayerManager discordAudioPlayerManager;
+	private final GuildMusicManager guildMusicManager;
 
-	public AudioSessionActivity(DiscordAudioPlayerManager discordAudioPlayerManager) {
-		this.discordAudioPlayerManager = Preconditions.checkNotNull(discordAudioPlayerManager,
-				"discordAudioPlayerManager must be non-null.");
+	public AudioSessionActivity(GuildMusicManager guildMusicManager) {
+		this.guildMusicManager = Preconditions.checkNotNull(guildMusicManager,
+				"guildMusicManager must be non-null.");
 	}
 
 	@Override
 	public void enact(MessageReceivedEvent event, String args) {
 
 		final IGuild guild = event.getGuild();
-		AudioSession audioSession;
-		try {
-			audioSession = discordAudioPlayerManager.checkout(guild);
-		} catch (NoSessionException e) {
+		AudioSession audioSession = guildMusicManager.getAudioSession(guild.getLongID()).orElse(null);
+		if (audioSession == null) {
 			// Ignore it because there's no session.
 
 			LOG.debug("The music command '{}' was ignored because there's no AudioSession for the guild '{}'.",
@@ -36,16 +34,12 @@ abstract class AudioSessionActivity implements Activity {
 			return;
 		}
 
-		try {
-			if (event.getChannel().getLongID() != audioSession.getDefaultChannelId()) {
-				// Message was sent to a channel other than the session's default.
-				return;
-			}
-
-			enactWithSession(event, args, audioSession);
-		} finally {
-			discordAudioPlayerManager.checkin(guild);
+		if (event.getChannel().getLongID() != audioSession.getDefaultChannelId()) {
+			// Message was sent to a channel other than the session's default.
+			return;
 		}
+
+		enactWithSession(event, args, audioSession);
 	}
 
 	protected abstract void enactWithSession(MessageReceivedEvent event, String args, AudioSession audioSession);

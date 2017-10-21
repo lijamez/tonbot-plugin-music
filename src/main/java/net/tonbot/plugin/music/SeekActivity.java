@@ -34,9 +34,9 @@ class SeekActivity extends AudioSessionActivity {
 
 	@Inject
 	public SeekActivity(
-			DiscordAudioPlayerManager discordAudioPlayerManager,
+			GuildMusicManager guildMusicManager,
 			BotUtils botUtils) {
-		super(discordAudioPlayerManager);
+		super(guildMusicManager);
 
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
 	}

@@ -1,6 +1,7 @@
 package net.tonbot.plugin.music;
 
 import java.awt.Color;
+import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.security.GeneralSecurityException;
@@ -13,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestInitializer;
@@ -29,7 +31,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
@@ -64,6 +65,7 @@ class MusicModule extends AbstractModule {
 	private final String youtubeApiKey;
 	private final String googleDriveApiKey;
 	private final SpotifyCredentials spotifyCredentials;
+	private final File saveDir;
 
 	public MusicModule(
 			IDiscordClient discordClient,
@@ -72,7 +74,8 @@ class MusicModule extends AbstractModule {
 			Color color,
 			String youtubeApiKey,
 			String googleDriveApiKey,
-			SpotifyCredentials spotifyCredentials) {
+			SpotifyCredentials spotifyCredentials,
+			File saveDir) {
 		this.discordClient = Preconditions.checkNotNull(discordClient, "discordClient must be non-null.");
 		this.prefix = Preconditions.checkNotNull(prefix, "prefix must be non-null.");
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
@@ -80,6 +83,7 @@ class MusicModule extends AbstractModule {
 		this.youtubeApiKey = youtubeApiKey;
 		this.googleDriveApiKey = googleDriveApiKey;
 		this.spotifyCredentials = spotifyCredentials;
+		this.saveDir = Preconditions.checkNotNull(saveDir, "saveDir must be non-null.");
 	}
 
 	@Override
@@ -88,8 +92,8 @@ class MusicModule extends AbstractModule {
 		bind(String.class).annotatedWith(Prefix.class).toInstance(prefix);
 		bind(BotUtils.class).toInstance(botUtils);
 		bind(Color.class).toInstance(color);
-		bind(DiscordAudioPlayerManager.class).in(Scopes.SINGLETON);
 		bind(AudioTrackFactory.class).to(LazyYoutubeAudioTrackFactory.class);
+		bind(File.class).toInstance(saveDir);
 	}
 
 	@Provides
@@ -106,9 +110,13 @@ class MusicModule extends AbstractModule {
 			NowPlayingActivity npActivity,
 			ShuffleActivity shuffleActivity,
 			RoundRobinActivity roundRobinActivity,
-			SeekActivity seekActivity) {
+			SeekActivity seekActivity,
+			PermissionsListActivity permissionsListActivity,
+			PermissionsAddActivity permissionsAddActivity,
+			PermissionsRemoveActivity permissionsRemoveActivity) {
 		return ImmutableSet.of(beckonActivity, dismissActivity, playActivity, stopActivity, pauseActivity, listActivity,
-				skipActivity, repeatActivity, npActivity, shuffleActivity, roundRobinActivity, seekActivity);
+				skipActivity, repeatActivity, npActivity, shuffleActivity, roundRobinActivity, seekActivity,
+				permissionsListActivity, permissionsAddActivity, permissionsRemoveActivity);
 	}
 
 	@Provides
@@ -285,5 +293,23 @@ class MusicModule extends AbstractModule {
 	@Singleton
 	TrackSearcher trackSearcher(YoutubeSearchProvider ytSearchProvider) {
 		return new TrackSearcher(ytSearchProvider, MAX_SEARCH_RESULTS);
+	}
+
+	@Provides
+	@Singleton
+	GuildMusicManager guildMusicManager(
+			IDiscordClient discordClient,
+			AudioSessionFactory audioSessionFactory,
+			File saveDir,
+			ObjectMapper objectMapper) {
+		GuildMusicManager gmm = new GuildMusicManager(
+				discordClient,
+				audioSessionFactory,
+				saveDir,
+				objectMapper);
+
+		gmm.load();
+
+		return gmm;
 	}
 }

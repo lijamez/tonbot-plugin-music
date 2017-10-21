@@ -14,7 +14,7 @@ class DismissActivity implements Activity {
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
 			.route("music dismiss")
-			.description("Makes me leave the voice channel and clear the queue.")
+			.description("Makes me leave the voice channel.")
 			.build();
 
 	private final BotUtils botUtils;

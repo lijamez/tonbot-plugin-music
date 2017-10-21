@@ -19,8 +19,8 @@ class RoundRobinActivity extends BinaryModeChangingActivity {
 			.build();
 
 	@Inject
-	public RoundRobinActivity(DiscordAudioPlayerManager discordAudioPlayerManager, BotUtils botUtils) {
-		super(discordAudioPlayerManager, botUtils);
+	public RoundRobinActivity(GuildMusicManager guildMusicManager, BotUtils botUtils) {
+		super(guildMusicManager, botUtils);
 	}
 
 	@Override

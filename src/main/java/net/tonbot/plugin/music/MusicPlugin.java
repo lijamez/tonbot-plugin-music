@@ -23,6 +23,9 @@ public class MusicPlugin extends TonbotPlugin {
 
 		MusicPluginConfigManager configMgr = new MusicPluginConfigManager();
 		MusicPluginConfig config = configMgr.readOrCreateConfig(configFile);
+		
+		//TODO: Tonbot should have a framework-wide standard for plugin directories.
+		File saveDir = new File(configFile.getParentFile(), "MusicPlugin");
 
 		this.injector = Guice.createInjector(
 				new MusicModule(
@@ -32,7 +35,8 @@ public class MusicPlugin extends TonbotPlugin {
 						pluginArgs.getColor(),
 						config.getYoutubeApiKey(),
 						config.getGoogleDriveApiKey(),
-						config.getSpotifyCredentials()));
+						config.getSpotifyCredentials(),
+						saveDir));
 	}
 
 	@Override
@@ -57,4 +61,9 @@ public class MusicPlugin extends TonbotPlugin {
 		}));
 	}
 
+	@Override
+	public void destroy() {
+		GuildMusicManager gmm = injector.getInstance(GuildMusicManager.class);
+		gmm.save();
+	}
 }
