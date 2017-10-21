@@ -66,28 +66,28 @@ class MusicModule extends AbstractModule {
 	private final String prefix;
 	private final BotUtils botUtils;
 	private final Color color;
+	private final File saveDir;
 	private final String youtubeApiKey;
 	private final String googleDriveApiKey;
 	private final SpotifyCredentials spotifyCredentials;
-	private final File saveDir;
 
 	public MusicModule(
 			IDiscordClient discordClient,
 			String prefix,
 			BotUtils botUtils,
 			Color color,
+			File saveDir,
 			String youtubeApiKey,
 			String googleDriveApiKey,
-			SpotifyCredentials spotifyCredentials,
-			File saveDir) {
+			SpotifyCredentials spotifyCredentials) {
 		this.discordClient = Preconditions.checkNotNull(discordClient, "discordClient must be non-null.");
 		this.prefix = Preconditions.checkNotNull(prefix, "prefix must be non-null.");
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
 		this.color = Preconditions.checkNotNull(color, "color must be non-null.");
+		this.saveDir = Preconditions.checkNotNull(saveDir, "saveDir must be non-null.");
 		this.youtubeApiKey = youtubeApiKey;
 		this.googleDriveApiKey = googleDriveApiKey;
 		this.spotifyCredentials = spotifyCredentials;
-		this.saveDir = Preconditions.checkNotNull(saveDir, "saveDir must be non-null.");
 	}
 
 	@Override

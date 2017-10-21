@@ -124,12 +124,13 @@ class SkipActivity extends AudioSessionActivity {
 
 		// Permissions check if a track being skipped wasn't added by the skipper.
 		removeTracks.stream()
-			.filter(track -> ((ExtraTrackInfo) track.getUserData()).getAddedByUserId() != event.getAuthor().getLongID())
-			.findAny()
-			.ifPresent(track -> {
-				MusicPermissions permissions = guildMusicManager.getPermission(event.getGuild().getLongID());
-				permissions.checkPermission(event.getAuthor(), Action.SKIP_OTHERS);
-			});
+				.filter(track -> ((ExtraTrackInfo) track.getUserData()).getAddedByUserId() != event.getAuthor()
+						.getLongID())
+				.findAny()
+				.ifPresent(track -> {
+					MusicPermissions permissions = guildMusicManager.getPermission(event.getGuild().getLongID());
+					permissions.checkPermission(event.getAuthor(), Action.SKIP_OTHERS);
+				});
 
 		return audioSession.skip(at -> removeTracks.contains(at));
 	}
