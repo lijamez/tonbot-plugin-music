@@ -57,7 +57,7 @@ class VoiceChannelEventListener {
 			return;
 		}
 
-		autoPauseAndResume(event.getGuild());
+		autoPauseAndResume(event.getGuild(), true);
 	}
 
 	@EventSubscriber
@@ -78,7 +78,7 @@ class VoiceChannelEventListener {
 			return;
 		}
 
-		autoPauseAndResume(event.getGuild());
+		autoPauseAndResume(event.getGuild(), false);
 	}
 
 	@EventSubscriber
@@ -89,15 +89,16 @@ class VoiceChannelEventListener {
 		checkIntegrity(event.getGuild());
 
 		IVoiceChannel botVc = event.getGuild().getConnectedVoiceChannel();
-		if (botVc == null
-				|| (event.getNewChannel().getLongID() != botVc.getLongID()
-						&& event.getOldChannel().getLongID() != botVc.getLongID())) {
+		boolean userLeftBotVc = event.getOldChannel().getLongID() == botVc.getLongID();
+		boolean userJoinedBotVc = event.getNewChannel().getLongID() == botVc.getLongID();
+
+		if (botVc == null || userLeftBotVc || userJoinedBotVc) {
 			// Event is not applicable to us because either we are not in a VC or the event
 			// has nothing to do with our VC.
 			return;
 		}
 
-		autoPauseAndResume(event.getGuild());
+		autoPauseAndResume(event.getGuild(), userJoinedBotVc);
 	}
 
 	@EventSubscriber
@@ -141,8 +142,12 @@ class VoiceChannelEventListener {
 	 * 
 	 * @param guild
 	 *            {@link IGuild} where the voice activity occurred.
+	 * @param userJoined
+	 *            True if this method was called as a result of a user joining the
+	 *            bot's VC. False if this method was called a result of a user
+	 *            leaving the bot's VC.
 	 */
-	private void autoPauseAndResume(IGuild guild) {
+	private void autoPauseAndResume(IGuild guild, boolean userJoined) {
 
 		AudioSession audioSession = guildMusicManager.getAudioSession(guild.getLongID()).orElse(null);
 		if (audioSession == null) {
@@ -160,7 +165,7 @@ class VoiceChannelEventListener {
 
 		IChannel defaultChannel = discordClient.getChannelByID(audioSession.getDefaultChannelId());
 
-		if (otherUsersCount == 1) {
+		if (otherUsersCount == 1 && userJoined) {
 			// Someone just joined.
 			audioSession.setPaused(false);
 			botUtils.sendMessage(defaultChannel, ":arrow_forward: Resuming playback.");
@@ -168,7 +173,7 @@ class VoiceChannelEventListener {
 			// Everyone left.
 			audioSession.setPaused(true);
 			botUtils.sendMessage(defaultChannel,
-					":pause_button: Paused because everyone left the voice channel ``" + botVc.getName() + "``.");
+					":pause_button: Paused because everyone left ``" + botVc.getName() + "``.");
 		}
 	}
 }
