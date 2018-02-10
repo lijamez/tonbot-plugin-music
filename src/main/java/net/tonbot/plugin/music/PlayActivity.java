@@ -36,7 +36,7 @@ class PlayActivity extends AudioSessionActivity {
 
 	private static final ActivityDescriptor activityDescriptor = ActivityDescriptor.builder()
 			.route("music play")
-			.parameters(ImmutableList.of("query"))
+			.parameters(ImmutableList.of("[query]"))
 			.description(
 					"Plays a track or unpauses the player.")
 			.usageDescription("**Playing track(s) via direct link to a track or playlist:**\n"

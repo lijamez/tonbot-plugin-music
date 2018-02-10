@@ -30,7 +30,7 @@ class SkipActivity extends AudioSessionActivity {
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
 			.route("music skip")
-			.parameters(ImmutableList.of("track numbers/mine/all"))
+			.parameters(ImmutableList.of("<track numbers/mine/all>"))
 			.description("Skips the currently playing track or several tracks.")
 			.usageDescription(
 					"This command skips the current track.\n\n"

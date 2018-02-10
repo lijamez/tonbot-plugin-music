@@ -17,7 +17,7 @@ class SeekActivity extends AudioSessionActivity {
 
 	private static final ActivityDescriptor DESCRIPTOR = ActivityDescriptor.builder()
 			.route("music seek")
-			.parameters(ImmutableList.of("time or offset"))
+			.parameters(ImmutableList.of("<time or offset>"))
 			.description(
 					"Seeks within the current track.")
 			.usageDescription(

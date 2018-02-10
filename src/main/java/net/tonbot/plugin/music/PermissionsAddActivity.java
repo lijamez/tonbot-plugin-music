@@ -26,7 +26,7 @@ public class PermissionsAddActivity implements Activity {
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
 			.route("music allow")
-			.parameters(ImmutableList.of("role", "action"))
+			.parameters(ImmutableList.of("<role>", "<action>"))
 			.description(
 					"Gives a permission to a role.")
 			.build();

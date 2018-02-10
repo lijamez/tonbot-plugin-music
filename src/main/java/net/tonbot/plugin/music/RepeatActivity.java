@@ -26,7 +26,7 @@ public class RepeatActivity extends AudioSessionActivity {
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
 			.route("music repeat")
-			.parameters(ImmutableList.of("mode"))
+			.parameters(ImmutableList.of("[mode]"))
 			.description("Sets the repeat mode to one of: " + FRIENDLY_REPEAT_MODES)
 			.build();
 

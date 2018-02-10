@@ -26,7 +26,7 @@ public class PermissionsRemoveActivity implements Activity {
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
 			.route("music disallow")
-			.parameters(ImmutableList.of("role", "action"))
+			.parameters(ImmutableList.of("<role>", "<action>"))
 			.description(
 					"Removes a permission from a role")
 			.build();

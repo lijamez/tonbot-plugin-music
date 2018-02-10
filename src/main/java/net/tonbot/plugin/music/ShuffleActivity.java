@@ -10,7 +10,7 @@ class ShuffleActivity extends BinaryModeChangingActivity {
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
 			.route("music shuffle")
-			.parameters(ImmutableList.of("on/off"))
+			.parameters(ImmutableList.of("[on/off]"))
 			.description("Toggles shuffle mode.")
 			.build();
 
