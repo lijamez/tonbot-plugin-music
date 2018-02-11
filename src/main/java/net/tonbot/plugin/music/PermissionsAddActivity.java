@@ -12,6 +12,7 @@ import com.google.inject.Inject;
 
 import net.tonbot.common.Activity;
 import net.tonbot.common.ActivityDescriptor;
+import net.tonbot.common.ActivityUsageException;
 import net.tonbot.common.BotUtils;
 import net.tonbot.common.TonbotBusinessException;
 import net.tonbot.plugin.music.permissions.Action;
@@ -59,20 +60,18 @@ public class PermissionsAddActivity implements Activity {
 	public void enact(MessageReceivedEvent event, String args) {
 		Set<Permissions> userPermissions = event.getAuthor().getPermissionsForGuild(event.getGuild());
 		if (!userPermissions.contains(Permissions.ADMINISTRATOR)) {
-			throw new TonbotBusinessException("You don't permissions to edit the permissions.");
+			throw new TonbotBusinessException("You're not allowed to edit the permissions.");
 		}
 
 		List<Rule> rules;
 		try {
 			rules = permArgsParser.parseRules(args, event.getGuild());
 			if (rules.isEmpty()) {
-				botUtils.sendMessage(event.getChannel(),
-						"You didn't say any actions. Here are the available actions: "
-								+ StringUtils.join(Action.values(), ", "));
-				return;
+				throw new ActivityUsageException("You didn't say any actions. Here are the available actions: "
+						+ StringUtils.join(Action.values(), ", "));
 			}
 		} catch (IllegalArgumentException e) {
-			throw new TonbotBusinessException(e.getMessage());
+			throw new ActivityUsageException(e.getMessage());
 		}
 
 		MusicPermissions permissions = guildMusicManager.getPermission(event.getGuild().getLongID());

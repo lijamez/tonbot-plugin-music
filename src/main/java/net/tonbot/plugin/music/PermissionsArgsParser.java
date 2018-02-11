@@ -48,12 +48,15 @@ class PermissionsArgsParser {
 	 *            The {@link IGuild} applicable for the parsing. This is needed in
 	 *            case the {@literal @everyone} role is mentioned. Non-null.
 	 * @return A list of parsed rules.
+	 * @throws IllegalArgumentException
+	 *             if the arguments are invalid or incomplete.
 	 */
 	public List<Rule> parseRules(String line, IGuild guild) {
 		Preconditions.checkNotNull(guild, "guild must be non-null.");
 
 		if (StringUtils.isBlank(line)) {
-			throw new IllegalArgumentException("You need to provide a role mention and an action.");
+			throw new IllegalArgumentException("You need to provide a role mention and an action: "
+					+ StringUtils.join(Action.values(), ", "));
 		}
 
 		MessageTokenizer tokenizer = new MessageTokenizer(discordClient, line);
