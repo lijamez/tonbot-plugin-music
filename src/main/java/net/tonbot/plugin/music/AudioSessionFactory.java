@@ -16,10 +16,7 @@ class AudioSessionFactory {
 	private final BotUtils botUtils;
 
 	@Inject
-	public AudioSessionFactory(
-			IDiscordClient discordClient,
-			AudioPlayerManager audioPlayerManager,
-			BotUtils botUtils) {
+	public AudioSessionFactory(IDiscordClient discordClient, AudioPlayerManager audioPlayerManager, BotUtils botUtils) {
 		this.discordClient = Preconditions.checkNotNull(discordClient, "discordClient must be non-null.");
 		this.audioPlayerManager = Preconditions.checkNotNull(audioPlayerManager,
 				"audioPlayerManager must be non-null.");
@@ -32,8 +29,8 @@ class AudioSessionFactory {
 		AudioPlayer audioPlayer = audioPlayerManager.createPlayer();
 		guild.getAudioManager().setAudioProvider(new LavaplayerAudioProvider(audioPlayer));
 
-		AudioSession audioSession = new AudioSession(
-				discordClient, audioPlayerManager, audioPlayer, textChannelId, botUtils);
+		AudioSession audioSession = new AudioSession(discordClient, audioPlayerManager, audioPlayer, textChannelId,
+				botUtils);
 		audioPlayer.addListener(audioSession);
 
 		return audioSession;

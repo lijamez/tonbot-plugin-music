@@ -12,9 +12,7 @@ class SearchResultsEviction {
 	private final EvictionReason reason;
 
 	@Builder
-	private SearchResultsEviction(
-			SearchResults evictedSearchResults,
-			EvictionReason reason) {
+	private SearchResultsEviction(SearchResults evictedSearchResults, EvictionReason reason) {
 		this.evictedSearchResults = Preconditions.checkNotNull(evictedSearchResults,
 				"evictedSearchResults must be non-null.");
 		this.reason = Preconditions.checkNotNull(reason, "reason must be non-null.");
@@ -22,7 +20,6 @@ class SearchResultsEviction {
 	}
 
 	public static enum EvictionReason {
-		NEW_SEARCH,
-		MANUAL_REMOVAL
+		NEW_SEARCH, MANUAL_REMOVAL
 	}
 }

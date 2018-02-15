@@ -33,9 +33,7 @@ class TrackSearcher {
 	private final List<Function<SearchResultsEviction, Void>> searchResultEvictionListeners;
 
 	@Inject
-	public TrackSearcher(
-			final YoutubeSearchProvider ytSearchProvider,
-			final int maxResults) {
+	public TrackSearcher(final YoutubeSearchProvider ytSearchProvider, final int maxResults) {
 		this.ytSearchProvider = Preconditions.checkNotNull(ytSearchProvider, "ytSearchProvider must be non-null.");
 
 		Preconditions.checkArgument(maxResults > 0, "maxResults must be positive.");
@@ -108,10 +106,7 @@ class TrackSearcher {
 		if (audioItem == AudioReference.NO_TRACK) {
 			hits = ImmutableList.of();
 		} else if (audioItem instanceof AudioPlaylist) {
-			List<AudioTrack> searchResultTracks = ((AudioPlaylist) audioItem)
-					.getTracks()
-					.stream()
-					.limit(maxResults)
+			List<AudioTrack> searchResultTracks = ((AudioPlaylist) audioItem).getTracks().stream().limit(maxResults)
 					.collect(Collectors.toList());
 			hits = ImmutableList.copyOf(searchResultTracks);
 		} else if (audioItem instanceof AudioTrack) {
@@ -148,10 +143,8 @@ class TrackSearcher {
 	}
 
 	private void notifyListeners(SearchResults evictedSearchResults, EvictionReason reason) {
-		SearchResultsEviction eviction = SearchResultsEviction.builder()
-				.reason(reason)
-				.evictedSearchResults(evictedSearchResults)
-				.build();
+		SearchResultsEviction eviction = SearchResultsEviction.builder().reason(reason)
+				.evictedSearchResults(evictedSearchResults).build();
 		searchResultEvictionListeners.forEach(listener -> listener.apply(eviction));
 	}
 

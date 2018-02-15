@@ -6,6 +6,7 @@ import com.google.inject.Inject;
 import net.tonbot.common.Activity;
 import net.tonbot.common.ActivityDescriptor;
 import net.tonbot.common.BotUtils;
+import net.tonbot.common.Enactable;
 import net.tonbot.common.TonbotBusinessException;
 import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
@@ -14,10 +15,8 @@ import sx.blah.discord.util.MissingPermissionsException;
 
 class BeckonActivity implements Activity {
 
-	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
-			.route("music beckon")
-			.description(
-					"Makes me join your voice channel.")
+	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder().route("music beckon")
+			.description("Makes me join your voice channel.")
 			.usageDescription(
 					"Once this command is said in a text channel, I will join the voice channel that you are in and then "
 							+ "I will only respond to music commands in that same text channel. Users can still move me to another text "
@@ -28,13 +27,10 @@ class BeckonActivity implements Activity {
 	private final BotUtils botUtils;
 
 	@Inject
-	public BeckonActivity(
-			GuildMusicManager guildMusicManager,
-			BotUtils botUtils) {
+	public BeckonActivity(GuildMusicManager guildMusicManager, BotUtils botUtils) {
 		this.guildMusicManager = Preconditions.checkNotNull(guildMusicManager,
 				"discordAudioPlayerManager must be non-null.");
-		this.botUtils = Preconditions.checkNotNull(botUtils,
-				"botUtils must be non-null.");
+		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
 	}
 
 	@Override
@@ -42,8 +38,8 @@ class BeckonActivity implements Activity {
 		return ACTIVITY_DESCRIPTOR;
 	}
 
-	@Override
-	public void enact(MessageReceivedEvent event, String args) {
+	@Enactable
+	public void enact(MessageReceivedEvent event) {
 
 		IVoiceChannel userVoiceChannel = event.getAuthor().getVoiceStateForGuild(event.getGuild()).getChannel();
 

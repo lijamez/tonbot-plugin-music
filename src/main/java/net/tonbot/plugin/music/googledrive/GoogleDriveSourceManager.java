@@ -79,9 +79,7 @@ public class GoogleDriveSourceManager implements AudioSourceManager {
 				return null;
 			}
 
-			File rootFile = drive.files()
-					.get(rootFileId)
-					.execute();
+			File rootFile = drive.files().get(rootFileId).execute();
 			boolean rootIsFolder = StringUtils.equals(rootFile.getMimeType(), FOLDER_MIME_TYPE);
 
 			LOG.debug("File with ID {} is a folder? {}", rootFileId, rootIsFolder);
@@ -93,10 +91,8 @@ public class GoogleDriveSourceManager implements AudioSourceManager {
 			} else {
 				List<File> files = getFilesRecursively(rootFileId);
 				List<AudioTrack> audioTracks = files.stream()
-						.map(file -> new LazyGoogleDriveAudioTrack(
-								new AudioTrackInfo(file.getTitle(), "", Long.MAX_VALUE, file.getWebContentLink(), true,
-										file.getWebContentLink()),
-								httpAsm,
+						.map(file -> new LazyGoogleDriveAudioTrack(new AudioTrackInfo(file.getTitle(), "",
+								Long.MAX_VALUE, file.getWebContentLink(), true, file.getWebContentLink()), httpAsm,
 								manager))
 						.collect(Collectors.toList());
 				BasicAudioPlaylist playlist = new BasicAudioPlaylist(rootFile.getTitle(), audioTracks, null, false);
@@ -122,10 +118,7 @@ public class GoogleDriveSourceManager implements AudioSourceManager {
 		StringBuffer qBuilder = new StringBuffer();
 		qBuilder.append("'").append(folderId).append("' in parents");
 
-		FileList fileList = drive.files().list()
-				.setQ(qBuilder.toString())
-				.setOrderBy("title")
-				.execute();
+		FileList fileList = drive.files().list().setQ(qBuilder.toString()).setOrderBy("title").execute();
 
 		List<String> subfolderIds = new ArrayList<>();
 		fileList.getItems().forEach(file -> {

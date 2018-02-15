@@ -29,9 +29,7 @@ import sx.blah.discord.handle.obj.Permissions;
  */
 public class MusicPermissions {
 
-	private static final Set<Action> DEFAULT_EVERYONE_ACTIONS = ImmutableSet.of(
-			Action.PLAY_PAUSE,
-			Action.ADD_TRACKS);
+	private static final Set<Action> DEFAULT_EVERYONE_ACTIONS = ImmutableSet.of(Action.PLAY_PAUSE, Action.ADD_TRACKS);
 
 	private final IDiscordClient discordClient;
 	private final long guildId;
@@ -40,9 +38,7 @@ public class MusicPermissions {
 
 	private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
 
-	public MusicPermissions(
-			IDiscordClient discordClient,
-			long guildId) {
+	public MusicPermissions(IDiscordClient discordClient, long guildId) {
 		this.discordClient = Preconditions.checkNotNull(discordClient, "discordClient must be non-null.");
 		this.guildId = guildId;
 		this.permittedActions = new HashMap<>();
@@ -215,8 +211,7 @@ public class MusicPermissions {
 
 			IRole everyoneRole = guild.getEveryoneRole();
 			List<Rule> everyoneRules = DEFAULT_EVERYONE_ACTIONS.stream()
-					.map(action -> new Rule(everyoneRole.getLongID(), action))
-					.collect(Collectors.toList());
+					.map(action -> new Rule(everyoneRole.getLongID(), action)).collect(Collectors.toList());
 
 			this.addAll(everyoneRules);
 		} finally {

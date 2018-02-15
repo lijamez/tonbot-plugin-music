@@ -41,12 +41,8 @@ class AudioSession extends AudioEventAdapter {
 	private PlayMode playMode;
 	private RepeatMode repeatMode;
 
-	public AudioSession(
-			IDiscordClient discordClient,
-			AudioPlayerManager audioPlayerManager,
-			AudioPlayer audioPlayer,
-			long defaultChannelId,
-			BotUtils botUtils) {
+	public AudioSession(IDiscordClient discordClient, AudioPlayerManager audioPlayerManager, AudioPlayer audioPlayer,
+			long defaultChannelId, BotUtils botUtils) {
 		this.discordClient = Preconditions.checkNotNull(discordClient, "discordClient must be non-null.");
 		this.audioPlayerManager = Preconditions.checkNotNull(audioPlayerManager,
 				"audioPlayerManager must be non-null.");
@@ -146,9 +142,7 @@ class AudioSession extends AudioEventAdapter {
 			public void trackLoaded(AudioTrack audioTrack) {
 				enqueue(audioTrack, user);
 
-				this.result = AudioLoadResult.builder()
-						.loadedTracks(ImmutableList.of(audioTrack))
-						.build();
+				this.result = AudioLoadResult.builder().loadedTracks(ImmutableList.of(audioTrack)).build();
 			}
 
 			@Override
@@ -158,34 +152,26 @@ class AudioSession extends AudioEventAdapter {
 					botUtils.sendMessage(channel, "There were no songs in that playlist. :thinking:");
 				} else {
 					tracks.forEach(track -> {
-						ExtraTrackInfo extraTrackInfo = ExtraTrackInfo.builder()
-								.addedByUserId(user.getLongID())
-								.addTimestamp(System.currentTimeMillis())
-								.build();
+						ExtraTrackInfo extraTrackInfo = ExtraTrackInfo.builder().addedByUserId(user.getLongID())
+								.addTimestamp(System.currentTimeMillis()).build();
 						track.setUserData(extraTrackInfo);
 					});
 
 					trackManager.putAll(tracks);
 
-					this.result = AudioLoadResult.builder()
-							.loadedTracks(tracks)
-							.playlistName(loadedPlaylist.getName())
+					this.result = AudioLoadResult.builder().loadedTracks(tracks).playlistName(loadedPlaylist.getName())
 							.build();
 				}
 			}
 
 			@Override
 			public void noMatches() {
-				this.result = AudioLoadResult.builder()
-						.loadedTracks(ImmutableList.of())
-						.build();
+				this.result = AudioLoadResult.builder().loadedTracks(ImmutableList.of()).build();
 			}
 
 			@Override
 			public void loadFailed(FriendlyException exception) {
-				this.result = AudioLoadResult.builder()
-						.exception(exception)
-						.build();
+				this.result = AudioLoadResult.builder().exception(exception).build();
 			}
 
 		};
@@ -212,10 +198,8 @@ class AudioSession extends AudioEventAdapter {
 		Preconditions.checkNotNull(user, "user must be non-null.");
 
 		AudioTrack clonedTrack = track.makeClone();
-		clonedTrack.setUserData(ExtraTrackInfo.builder()
-				.addedByUserId(user.getLongID())
-				.addTimestamp(System.currentTimeMillis())
-				.build());
+		clonedTrack.setUserData(ExtraTrackInfo.builder().addedByUserId(user.getLongID())
+				.addTimestamp(System.currentTimeMillis()).build());
 
 		trackManager.put(clonedTrack);
 	}
@@ -245,12 +229,8 @@ class AudioSession extends AudioEventAdapter {
 	 * @return {@link AudioSessionStatus}. Never null.
 	 */
 	public AudioSessionStatus getStatus() {
-		return AudioSessionStatus.builder()
-				.nowPlaying(audioPlayer.getPlayingTrack())
-				.upcomingTracks(trackManager.getView())
-				.playMode(playMode)
-				.repeatMode(repeatMode)
-				.build();
+		return AudioSessionStatus.builder().nowPlaying(audioPlayer.getPlayingTrack())
+				.upcomingTracks(trackManager.getView()).playMode(playMode).repeatMode(repeatMode).build();
 	}
 
 	/**
@@ -422,10 +402,8 @@ class AudioSession extends AudioEventAdapter {
 		AudioTrack clonedAudioTrack = originalAudioTrack.makeClone();
 		ExtraTrackInfo originalExtraTrackInfo = originalAudioTrack.getUserData(ExtraTrackInfo.class);
 
-		clonedAudioTrack.setUserData(ExtraTrackInfo.builder()
-				.addedByUserId(originalExtraTrackInfo.getAddedByUserId())
-				.addTimestamp(System.currentTimeMillis())
-				.build());
+		clonedAudioTrack.setUserData(ExtraTrackInfo.builder().addedByUserId(originalExtraTrackInfo.getAddedByUserId())
+				.addTimestamp(System.currentTimeMillis()).build());
 
 		return clonedAudioTrack;
 	}

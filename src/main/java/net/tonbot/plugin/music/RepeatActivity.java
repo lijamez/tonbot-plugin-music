@@ -19,16 +19,12 @@ import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedE
 
 public class RepeatActivity extends AudioSessionActivity {
 
-	private static final List<String> FRIENDLY_REPEAT_MODES = Arrays.asList(RepeatMode.values())
-			.stream()
-			.map(m -> m.getFriendlyName())
-			.collect(Collectors.toList());
+	private static final List<String> FRIENDLY_REPEAT_MODES = Arrays.asList(RepeatMode.values()).stream()
+			.map(m -> m.getFriendlyName()).collect(Collectors.toList());
 
-	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
-			.route("music repeat")
+	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder().route("music repeat")
 			.parameters(ImmutableList.of("[mode]"))
-			.description("Sets the repeat mode to one of: " + FRIENDLY_REPEAT_MODES)
-			.build();
+			.description("Sets the repeat mode to one of: " + FRIENDLY_REPEAT_MODES).build();
 
 	private final GuildMusicManager guildMusicManager;
 	private final BotUtils botUtils;
@@ -61,8 +57,7 @@ public class RepeatActivity extends AudioSessionActivity {
 			// Find the desired repeat mode or else fail.
 			targetRepeatMode = Arrays.asList(RepeatMode.values()).stream()
 					.filter(repeatMode -> StringUtils.equalsIgnoreCase(repeatMode.getFriendlyName(), args.trim()))
-					.findFirst()
-					.orElseThrow(() -> new TonbotBusinessException(
+					.findFirst().orElseThrow(() -> new TonbotBusinessException(
 							"Invalid repeat mode. You can enter one of: ``" + FRIENDLY_REPEAT_MODES + "``"));
 		}
 

@@ -30,9 +30,7 @@ public class LazyYoutubeAudioTrack extends DelegatedAudioTrack {
 
 	private YoutubeAudioTrack realTrack;
 
-	public LazyYoutubeAudioTrack(
-			AudioTrackInfo initialAudioTrackInfo,
-			YoutubeAudioSourceManager sourceManager,
+	public LazyYoutubeAudioTrack(AudioTrackInfo initialAudioTrackInfo, YoutubeAudioSourceManager sourceManager,
 			YoutubeSearchProvider ytSearchProvider) {
 		super(initialAudioTrackInfo);
 		this.initialAudioTrackInfo = Preconditions.checkNotNull(initialAudioTrackInfo);
@@ -100,10 +98,8 @@ public class LazyYoutubeAudioTrack extends DelegatedAudioTrack {
 			// The number of matches is limited to reduce the chances of matching against
 			// less than optimal results.
 			// The best match is the one that has the smallest track duration delta.
-			YoutubeAudioTrack bestMatch = audioPlaylist.getTracks().stream()
-					.limit(SEARCH_RESULTS_LIMIT)
-					.map(t -> (YoutubeAudioTrack) t)
-					.min(new Comparator<YoutubeAudioTrack>() {
+			YoutubeAudioTrack bestMatch = audioPlaylist.getTracks().stream().limit(SEARCH_RESULTS_LIMIT)
+					.map(t -> (YoutubeAudioTrack) t).min(new Comparator<YoutubeAudioTrack>() {
 
 						@Override
 						public int compare(YoutubeAudioTrack o1, YoutubeAudioTrack o2) {
@@ -113,8 +109,7 @@ public class LazyYoutubeAudioTrack extends DelegatedAudioTrack {
 							return (int) (o1TimeDelta - o2TimeDelta);
 						}
 
-					})
-					.orElse(null);
+					}).orElse(null);
 
 			return bestMatch;
 		} else if (audioItem instanceof YoutubeAudioTrack) {

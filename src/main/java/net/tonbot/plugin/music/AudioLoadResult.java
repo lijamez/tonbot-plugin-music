@@ -19,10 +19,7 @@ class AudioLoadResult {
 	private final String playlistName;
 	private final FriendlyException exception;
 
-	public AudioLoadResult(
-			List<AudioTrack> loadedTracks,
-			String playlistName,
-			FriendlyException exception) {
+	public AudioLoadResult(List<AudioTrack> loadedTracks, String playlistName, FriendlyException exception) {
 		this.loadedTracks = loadedTracks != null ? ImmutableList.copyOf(loadedTracks) : null;
 		this.playlistName = playlistName;
 		this.exception = exception;

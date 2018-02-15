@@ -37,10 +37,8 @@ public class LazyGoogleDriveAudioTrack extends DelegatedAudioTrack {
 
 	private InternalAudioTrack realAudioTrack;
 
-	public LazyGoogleDriveAudioTrack(
-			AudioTrackInfo initialAudioTrackInfo,
-			HttpAudioSourceManager httpAudioSourceManager,
-			DefaultAudioPlayerManager audioPlayerManager) {
+	public LazyGoogleDriveAudioTrack(AudioTrackInfo initialAudioTrackInfo,
+			HttpAudioSourceManager httpAudioSourceManager, DefaultAudioPlayerManager audioPlayerManager) {
 		super(initialAudioTrackInfo);
 		this.initialAudioTrackInfo = Preconditions.checkNotNull(initialAudioTrackInfo,
 				"initialAudioTrackInfo must be non-null.");

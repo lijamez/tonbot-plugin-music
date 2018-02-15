@@ -16,6 +16,7 @@ import com.google.inject.Inject;
 import net.tonbot.common.Activity;
 import net.tonbot.common.ActivityDescriptor;
 import net.tonbot.common.BotUtils;
+import net.tonbot.common.Enactable;
 import net.tonbot.plugin.music.permissions.Action;
 import net.tonbot.plugin.music.permissions.MusicPermissions;
 import sx.blah.discord.api.IDiscordClient;
@@ -26,10 +27,7 @@ import sx.blah.discord.util.EmbedBuilder;
 public class PermissionsListActivity implements Activity {
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
-			.route("music permissions")
-			.description(
-					"Lists the music player-specific permissions.")
-			.build();
+			.route("music permissions").description("Lists the music player-specific permissions.").build();
 
 	private final IDiscordClient discordClient;
 	private final GuildMusicManager guildMusicManager;
@@ -37,16 +35,12 @@ public class PermissionsListActivity implements Activity {
 	private final Color color;
 
 	@Inject
-	public PermissionsListActivity(
-			IDiscordClient discordClient,
-			GuildMusicManager guildMusicManager,
-			BotUtils botUtils,
+	public PermissionsListActivity(IDiscordClient discordClient, GuildMusicManager guildMusicManager, BotUtils botUtils,
 			Color color) {
 		this.discordClient = Preconditions.checkNotNull(discordClient, "discordClient must be non-null.");
 		this.guildMusicManager = Preconditions.checkNotNull(guildMusicManager,
 				"discordAudioPlayerManager must be non-null.");
-		this.botUtils = Preconditions.checkNotNull(botUtils,
-				"botUtils must be non-null.");
+		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
 		this.color = Preconditions.checkNotNull(color, "color must be non-null.");
 	}
 
@@ -55,8 +49,8 @@ public class PermissionsListActivity implements Activity {
 		return ACTIVITY_DESCRIPTOR;
 	}
 
-	@Override
-	public void enact(MessageReceivedEvent event, String args) {
+	@Enactable
+	public void enact(MessageReceivedEvent event) {
 
 		MusicPermissions permissions = guildMusicManager.getPermission(event.getGuild().getLongID());
 
@@ -71,10 +65,8 @@ public class PermissionsListActivity implements Activity {
 			Set<Action> allowableActions = actionsForRole.getValue();
 
 			IRole role = discordClient.getRoleByID(roleId);
-			List<String> friendlyAllowableActions = allowableActions.stream()
-					.sorted()
-					.map(action -> action.getDescription())
-					.collect(Collectors.toList());
+			List<String> friendlyAllowableActions = allowableActions.stream().sorted()
+					.map(action -> action.getDescription()).collect(Collectors.toList());
 
 			eb.appendField(role.getName() + " can:", StringUtils.join(friendlyAllowableActions, "\n"), false);
 		}
@@ -82,11 +74,8 @@ public class PermissionsListActivity implements Activity {
 		String userName = event.getAuthor().getDisplayName(event.getGuild());
 		List<IRole> userRoles = event.getAuthor().getRolesForGuild(event.getGuild());
 		List<String> userAllowedActionDescs = userRoles.stream()
-				.map(userRole -> actionsPerRole.get(userRole.getLongID()))
-				.filter(set -> set != null)
-				.flatMap(Collection::stream)
-				.sorted()
-				.map(action -> action.getDescription())
+				.map(userRole -> actionsPerRole.get(userRole.getLongID())).filter(set -> set != null)
+				.flatMap(Collection::stream).sorted().map(action -> action.getDescription())
 				.collect(Collectors.toList());
 
 		eb.appendField(userName + ", you can:", StringUtils.join(userAllowedActionDescs, "\n"), false);

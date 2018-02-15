@@ -9,10 +9,8 @@ import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedE
 
 class PauseActivity extends AudioSessionActivity {
 
-	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
-			.route("music pause")
-			.description("Pauses the player.")
-			.build();
+	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder().route("music pause")
+			.description("Pauses the player.").build();
 
 	private final BotUtils botUtils;
 

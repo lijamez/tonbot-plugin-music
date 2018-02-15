@@ -19,10 +19,7 @@ class AudioSessionStatus {
 	private final RepeatMode repeatMode;
 
 	@Builder
-	private AudioSessionStatus(
-			AudioTrack nowPlaying,
-			List<AudioTrack> upcomingTracks,
-			PlayMode playMode,
+	private AudioSessionStatus(AudioTrack nowPlaying, List<AudioTrack> upcomingTracks, PlayMode playMode,
 			RepeatMode repeatMode) {
 		this.nowPlaying = nowPlaying;
 

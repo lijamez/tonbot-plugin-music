@@ -14,8 +14,7 @@ class MusicPluginConfig {
 	private final SpotifyCredentials spotifyCredentials;
 
 	@JsonCreator
-	public MusicPluginConfig(
-			@JsonProperty("youtubeApiKey") String youtubeApiKey,
+	public MusicPluginConfig(@JsonProperty("youtubeApiKey") String youtubeApiKey,
 			@JsonProperty("googleDriveApiKey") String googleDriveApiKey,
 			@JsonProperty("spotifyCredentials") SpotifyCredentials spotifyCredentials) {
 		this.youtubeApiKey = youtubeApiKey;

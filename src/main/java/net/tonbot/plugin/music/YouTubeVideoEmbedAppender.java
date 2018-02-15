@@ -25,8 +25,7 @@ class YouTubeVideoEmbedAppender implements EmbedAppender {
 
 	private static final Logger LOG = LoggerFactory.getLogger(YouTubeVideoEmbedAppender.class);
 
-	private static final List<Class<? extends AudioTrack>> APPENDABLE_TYPES = ImmutableList.of(
-			YoutubeAudioTrack.class,
+	private static final List<Class<? extends AudioTrack>> APPENDABLE_TYPES = ImmutableList.of(YoutubeAudioTrack.class,
 			LazyYoutubeAudioTrack.class);
 
 	private static final int MAX_DESCRIPTION_LENGTH = 800;
@@ -78,10 +77,7 @@ class YouTubeVideoEmbedAppender implements EmbedAppender {
 
 	private Video getVideo(String youtubeVideoId) {
 		try {
-			VideoListResponse videoListResponse = yt.videos()
-					.list("snippet")
-					.setId(youtubeVideoId)
-					.execute();
+			VideoListResponse videoListResponse = yt.videos().list("snippet").setId(youtubeVideoId).execute();
 
 			List<Video> videoList = videoListResponse.getItems();
 
@@ -99,10 +95,7 @@ class YouTubeVideoEmbedAppender implements EmbedAppender {
 
 	private Channel getChannel(String channelId) {
 		try {
-			ChannelListResponse channelListResponse = yt.channels()
-					.list("snippet")
-					.setId(channelId)
-					.execute();
+			ChannelListResponse channelListResponse = yt.channels().list("snippet").setId(channelId).execute();
 
 			List<Channel> channelList = channelListResponse.getItems();
 

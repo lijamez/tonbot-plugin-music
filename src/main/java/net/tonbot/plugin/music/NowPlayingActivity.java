@@ -21,10 +21,8 @@ import sx.blah.discord.util.EmbedBuilder;
 class NowPlayingActivity extends AudioSessionActivity {
 
 	private static final String STREAM_TIME = "STREAM";
-	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
-			.route("music nowplaying")
-			.description("Shows what's playing.")
-			.build();
+	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder().route("music nowplaying")
+			.description("Shows what's playing.").build();
 
 	private final IDiscordClient discordClient;
 	private final List<EmbedAppender> embedAppenders;
@@ -32,12 +30,8 @@ class NowPlayingActivity extends AudioSessionActivity {
 	private final Color color;
 
 	@Inject
-	public NowPlayingActivity(
-			IDiscordClient discordClient,
-			GuildMusicManager guildMusicManager,
-			List<EmbedAppender> embedAppenders,
-			BotUtils botUtils,
-			Color color) {
+	public NowPlayingActivity(IDiscordClient discordClient, GuildMusicManager guildMusicManager,
+			List<EmbedAppender> embedAppenders, BotUtils botUtils, Color color) {
 		super(guildMusicManager);
 		this.discordClient = Preconditions.checkNotNull(discordClient, "discordClient must be non-null.");
 		this.embedAppenders = Preconditions.checkNotNull(embedAppenders, "embedAppenders must be non-null.");
@@ -108,15 +102,12 @@ class NowPlayingActivity extends AudioSessionActivity {
 		sb.append(state + " ");
 
 		if (npTrack.getInfo().isStream) {
-			sb.append("``")
-					.append(STREAM_TIME)
-					.append("``");
+			sb.append("``").append(STREAM_TIME).append("``");
 		} else {
 			String progressBar = ProgressBarRenderer.render(npTrack.getPosition(), npTrack.getDuration());
 			String positionTime = TimeFormatter.toFriendlyString(npTrack.getPosition(), TimeUnit.MILLISECONDS);
-			String remainingTime = "-"
-					+ TimeFormatter.toFriendlyString(npTrack.getDuration() - npTrack.getPosition(),
-							TimeUnit.MILLISECONDS);
+			String remainingTime = "-" + TimeFormatter.toFriendlyString(npTrack.getDuration() - npTrack.getPosition(),
+					TimeUnit.MILLISECONDS);
 
 			sb.append(positionTime + " " + progressBar + " " + remainingTime + " ");
 		}
@@ -127,8 +118,7 @@ class NowPlayingActivity extends AudioSessionActivity {
 		return sb.toString();
 	}
 
-	private String renderPlaybackModifiers(
-			AudioSessionStatus sessionStatus) {
+	private String renderPlaybackModifiers(AudioSessionStatus sessionStatus) {
 
 		StringBuffer sb = new StringBuffer();
 

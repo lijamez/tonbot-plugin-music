@@ -16,8 +16,7 @@ abstract class AudioSessionActivity implements Activity {
 	private final GuildMusicManager guildMusicManager;
 
 	public AudioSessionActivity(GuildMusicManager guildMusicManager) {
-		this.guildMusicManager = Preconditions.checkNotNull(guildMusicManager,
-				"guildMusicManager must be non-null.");
+		this.guildMusicManager = Preconditions.checkNotNull(guildMusicManager, "guildMusicManager must be non-null.");
 	}
 
 	@Override

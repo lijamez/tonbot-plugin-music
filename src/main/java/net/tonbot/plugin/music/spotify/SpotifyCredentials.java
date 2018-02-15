@@ -11,12 +11,11 @@ public class SpotifyCredentials {
 
 	private final String clientId;
 	private final String clientSecret;
-	
-    @JsonCreator
-    public SpotifyCredentials(
-            @JsonProperty("clientId") String clientId,
-            @JsonProperty("clientSecret") String clientSecret) {
-        this.clientId = Preconditions.checkNotNull(clientId, "clientId must be non-null.");
-        this.clientSecret = Preconditions.checkNotNull(clientSecret, "clientSecret must be non-null.");
-    }
+
+	@JsonCreator
+	public SpotifyCredentials(@JsonProperty("clientId") String clientId,
+			@JsonProperty("clientSecret") String clientSecret) {
+		this.clientId = Preconditions.checkNotNull(clientId, "clientId must be non-null.");
+		this.clientSecret = Preconditions.checkNotNull(clientSecret, "clientSecret must be non-null.");
+	}
 }

@@ -78,8 +78,7 @@ class ShufflingTrackManager implements TrackManager {
 
 		lock.readLock().lock();
 		try {
-			return ImmutableList.copyOf(tracks.stream()
-					.collect(Collectors.toList()));
+			return ImmutableList.copyOf(tracks.stream().collect(Collectors.toList()));
 		} finally {
 			lock.readLock().unlock();
 		}
@@ -92,9 +91,7 @@ class ShufflingTrackManager implements TrackManager {
 
 		lock.writeLock().lock();
 		try {
-			List<AudioTrack> tracksToRemove = this.getView().stream()
-					.filter(predicate)
-					.collect(Collectors.toList());
+			List<AudioTrack> tracksToRemove = this.getView().stream().filter(predicate).collect(Collectors.toList());
 
 			tracks.removeAll(tracksToRemove);
 

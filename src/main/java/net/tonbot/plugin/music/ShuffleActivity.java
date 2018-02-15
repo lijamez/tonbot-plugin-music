@@ -8,11 +8,8 @@ import net.tonbot.common.BotUtils;
 
 class ShuffleActivity extends BinaryModeChangingActivity {
 
-	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
-			.route("music shuffle")
-			.parameters(ImmutableList.of("[on/off]"))
-			.description("Toggles shuffle mode.")
-			.build();
+	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder().route("music shuffle")
+			.parameters(ImmutableList.of("[on/off]")).description("Toggles shuffle mode.").build();
 
 	@Inject
 	public ShuffleActivity(GuildMusicManager guildMusicManager, BotUtils botUtils) {

@@ -30,9 +30,7 @@ class VoiceChannelEventListener {
 	private final BotUtils botUtils;
 
 	@Inject
-	public VoiceChannelEventListener(
-			GuildMusicManager guildMusicManager,
-			BotUtils botUtils) {
+	public VoiceChannelEventListener(GuildMusicManager guildMusicManager, BotUtils botUtils) {
 		this.guildMusicManager = Preconditions.checkNotNull(guildMusicManager,
 				"discordAudioPlayerManager must be non-null.");
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
@@ -159,9 +157,7 @@ class VoiceChannelEventListener {
 
 		long ourUserId = discordClient.getOurUser().getLongID();
 
-		long otherUsersCount = botVc.getUsersHere().stream()
-				.filter(user -> user.getLongID() != ourUserId)
-				.count();
+		long otherUsersCount = botVc.getUsersHere().stream().filter(user -> user.getLongID() != ourUserId).count();
 
 		IChannel defaultChannel = discordClient.getChannelByID(audioSession.getDefaultChannelId());
 

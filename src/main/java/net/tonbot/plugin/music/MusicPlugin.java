@@ -24,16 +24,9 @@ public class MusicPlugin extends TonbotPlugin {
 		MusicPluginConfigManager configMgr = new MusicPluginConfigManager();
 		MusicPluginConfig config = configMgr.readOrCreateConfig(configFile);
 
-		this.injector = Guice.createInjector(
-				new MusicModule(
-						pluginArgs.getDiscordClient(),
-						pluginArgs.getPrefix(),
-						pluginArgs.getBotUtils(),
-						pluginArgs.getColor(),
-						pluginArgs.getPluginDataDir(),
-						config.getYoutubeApiKey(),
-						config.getGoogleDriveApiKey(),
-						config.getSpotifyCredentials()));
+		this.injector = Guice.createInjector(new MusicModule(pluginArgs.getDiscordClient(), pluginArgs.getPrefix(),
+				pluginArgs.getBotUtils(), pluginArgs.getColor(), pluginArgs.getPluginDataDir(),
+				config.getYoutubeApiKey(), config.getGoogleDriveApiKey(), config.getSpotifyCredentials()));
 	}
 
 	@Override

@@ -54,8 +54,7 @@ abstract class BinaryModeChangingActivity extends AudioSessionActivity {
 			botUtils.sendMessage(event.getChannel(),
 					"Play mode changed from " + prettyMode(currentMode) + " to " + prettyMode(targetPlayMode));
 		} else {
-			botUtils.sendMessage(event.getChannel(),
-					"Play mode is already set to " + prettyMode(targetPlayMode));
+			botUtils.sendMessage(event.getChannel(), "Play mode is already set to " + prettyMode(targetPlayMode));
 		}
 
 	}

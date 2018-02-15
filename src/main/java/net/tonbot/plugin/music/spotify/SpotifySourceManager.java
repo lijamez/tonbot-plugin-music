@@ -50,9 +50,7 @@ public class SpotifySourceManager implements AudioSourceManager {
 	private final AudioTrackFactory audioTrackFactory;
 
 	@Inject
-	public SpotifySourceManager(
-			Api spotifyApi,
-			AudioTrackFactory audioTrackFactory) {
+	public SpotifySourceManager(Api spotifyApi, AudioTrackFactory audioTrackFactory) {
 		this.spotifyApi = Preconditions.checkNotNull(spotifyApi, "spotifyApi must be non-null.");
 		this.audioTrackFactory = Preconditions.checkNotNull(audioTrackFactory, "audioTrackFactory must be non-null.");
 	}
@@ -118,8 +116,8 @@ public class SpotifySourceManager implements AudioSourceManager {
 			return null;
 		}
 
-		PlaylistRequest playlistRequest = spotifyApi
-				.getPlaylist(playlistKey.getUserId(), playlistKey.getPlaylistId()).build();
+		PlaylistRequest playlistRequest = spotifyApi.getPlaylist(playlistKey.getUserId(), playlistKey.getPlaylistId())
+				.build();
 
 		Playlist playlist;
 		try {
@@ -194,10 +192,8 @@ public class SpotifySourceManager implements AudioSourceManager {
 
 	private List<SongMetadata> getSongMetadata(List<PlaylistTrack> playlistTracks) {
 
-		List<SongMetadata> songMetadata = playlistTracks.stream()
-				.map(playlistTrack -> playlistTrack.getTrack())
-				.map(track -> getSongMetadata(track))
-				.collect(Collectors.toList());
+		List<SongMetadata> songMetadata = playlistTracks.stream().map(playlistTrack -> playlistTrack.getTrack())
+				.map(track -> getSongMetadata(track)).collect(Collectors.toList());
 
 		return songMetadata;
 	}

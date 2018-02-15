@@ -15,27 +15,18 @@ import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedE
 
 class SeekActivity extends AudioSessionActivity {
 
-	private static final ActivityDescriptor DESCRIPTOR = ActivityDescriptor.builder()
-			.route("music seek")
-			.parameters(ImmutableList.of("<time or offset>"))
-			.description(
-					"Seeks within the current track.")
-			.usageDescription(
-					"**Jump to a position:**\n"
-							+ "``${absoluteReferencedRoute} 2m30s``\n"
-							+ "``${absoluteReferencedRoute} 1h20m45s``\n"
-							+ "\n"
-							+ "**Move the position forward and backward:**\n"
-							+ "``${absoluteReferencedRoute} +30s``\n"
-							+ "``${absoluteReferencedRoute} -1m10s``\n")
+	private static final ActivityDescriptor DESCRIPTOR = ActivityDescriptor.builder().route("music seek")
+			.parameters(ImmutableList.of("<time or offset>")).description("Seeks within the current track.")
+			.usageDescription("**Jump to a position:**\n" + "``${absoluteReferencedRoute} 2m30s``\n"
+					+ "``${absoluteReferencedRoute} 1h20m45s``\n" + "\n"
+					+ "**Move the position forward and backward:**\n" + "``${absoluteReferencedRoute} +30s``\n"
+					+ "``${absoluteReferencedRoute} -1m10s``\n")
 			.build();
 
 	private BotUtils botUtils;
 
 	@Inject
-	public SeekActivity(
-			GuildMusicManager guildMusicManager,
-			BotUtils botUtils) {
+	public SeekActivity(GuildMusicManager guildMusicManager, BotUtils botUtils) {
 		super(guildMusicManager);
 
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
@@ -74,12 +65,10 @@ class SeekActivity extends AudioSessionActivity {
 			}
 
 			if (seekedTrack != null) {
-				String progressBar = ProgressBarRenderer.render(seekedTrack.getPosition(),
-						seekedTrack.getDuration());
+				String progressBar = ProgressBarRenderer.render(seekedTrack.getPosition(), seekedTrack.getDuration());
 				String positionTime = TimeFormatter.toFriendlyString(seekedTrack.getPosition(), TimeUnit.MILLISECONDS);
-				String remainingTime = "-"
-						+ TimeFormatter.toFriendlyString(seekedTrack.getDuration() - seekedTrack.getPosition(),
-								TimeUnit.MILLISECONDS);
+				String remainingTime = "-" + TimeFormatter
+						.toFriendlyString(seekedTrack.getDuration() - seekedTrack.getPosition(), TimeUnit.MILLISECONDS);
 
 				botUtils.sendMessage(event.getChannel(), positionTime + " " + progressBar + " " + remainingTime + " ");
 			} else {

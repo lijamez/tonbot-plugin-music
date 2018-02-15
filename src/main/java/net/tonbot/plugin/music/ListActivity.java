@@ -24,10 +24,8 @@ import sx.blah.discord.util.EmbedBuilder;
 
 class ListActivity extends AudioSessionActivity {
 
-	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder()
-			.route("music list")
-			.parameters(ImmutableList.of("[page number]"))
-			.description("Displays the upcoming tracks.")
+	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder().route("music list")
+			.parameters(ImmutableList.of("[page number]")).description("Displays the upcoming tracks.")
 			.usageDescription(
 					"Displays the currently playing track and upcoming tracks. If there are too many upcoming tracks, then you need to specify a page number to see more.")
 			.build();
@@ -40,10 +38,7 @@ class ListActivity extends AudioSessionActivity {
 	private final Color color;
 
 	@Inject
-	public ListActivity(
-			GuildMusicManager guildMusicManager,
-			BotUtils botUtils,
-			Color color) {
+	public ListActivity(GuildMusicManager guildMusicManager, BotUtils botUtils, Color color) {
 		super(guildMusicManager);
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
 		this.color = Preconditions.checkNotNull(color, "color must be non-null.");
@@ -90,10 +85,7 @@ class ListActivity extends AudioSessionActivity {
 		botUtils.sendEmbed(event.getChannel(), embedBuilder.build());
 	}
 
-	private void appendNowPlaying(
-			EmbedBuilder embedBuilder,
-			AudioSessionStatus sessionStatus,
-			IDiscordClient client,
+	private void appendNowPlaying(EmbedBuilder embedBuilder, AudioSessionStatus sessionStatus, IDiscordClient client,
 			IGuild guild) {
 
 		AudioTrack nowPlaying = sessionStatus.getNowPlaying().orElse(null);
@@ -141,12 +133,8 @@ class ListActivity extends AudioSessionActivity {
 		}
 	}
 
-	private void appendUpNext(
-			int page,
-			EmbedBuilder embedBuilder,
-			AudioSessionStatus sessionStatus,
-			IDiscordClient client,
-			IGuild guild) {
+	private void appendUpNext(int page, EmbedBuilder embedBuilder, AudioSessionStatus sessionStatus,
+			IDiscordClient client, IGuild guild) {
 
 		List<AudioTrack> upcomingTracks = sessionStatus.getUpcomingTracks();
 
@@ -162,21 +150,16 @@ class ListActivity extends AudioSessionActivity {
 				ExtraTrackInfo extraTrackInfo = track.getUserData(ExtraTrackInfo.class);
 				IUser addedByUser = client.fetchUser(extraTrackInfo.getAddedByUserId());
 
-				StringBuffer trackSb = new StringBuffer()
-						.append("``[").append(i + 1).append("]`` **")
-						.append(track.getInfo().title)
-						.append("**");
+				StringBuffer trackSb = new StringBuffer().append("``[").append(i + 1).append("]`` **")
+						.append(track.getInfo().title).append("**");
 
 				if (!track.getInfo().isStream) {
-					trackSb
-							.append(" (")
+					trackSb.append(" (")
 							.append(TimeFormatter.toFriendlyString(track.getDuration(), TimeUnit.MILLISECONDS))
 							.append(")");
 				}
 
-				trackSb.append(" added by **")
-						.append(addedByUser.getDisplayName(guild))
-						.append("**");
+				trackSb.append(" added by **").append(addedByUser.getDisplayName(guild)).append("**");
 
 				trackStrings.add(trackSb.toString());
 			}
@@ -186,21 +169,16 @@ class ListActivity extends AudioSessionActivity {
 			int totalPagesCount = (upcomingTracks.isEmpty() ? 0 : (upcomingTracks.size() - 1) / TRACKS_PER_PAGE) + 1;
 
 			if (totalPagesCount > 1) {
-				sb.append("\n\nPage **").append(page + 1).append("** of **").append(totalPagesCount)
-						.append("**.");
+				sb.append("\n\nPage **").append(page + 1).append("** of **").append(totalPagesCount).append("**.");
 			}
 
-			List<AudioTrack> nonStreamTracks = upcomingTracks.stream()
-					.filter(track -> !track.getInfo().isStream)
+			List<AudioTrack> nonStreamTracks = upcomingTracks.stream().filter(track -> !track.getInfo().isStream)
 					.collect(Collectors.toList());
 
-			long totalNonStreamDuration = nonStreamTracks.stream()
-					.map(track -> track.getDuration())
-					.reduce(0L, (i, j) -> i + j);
+			long totalNonStreamDuration = nonStreamTracks.stream().map(track -> track.getDuration()).reduce(0L,
+					(i, j) -> i + j);
 
-			long streamCount = upcomingTracks.stream()
-					.filter(track -> track.getInfo().isStream)
-					.count();
+			long streamCount = upcomingTracks.stream().filter(track -> track.getInfo().isStream).count();
 
 			sb.append("\n\nThe queue contains ");
 

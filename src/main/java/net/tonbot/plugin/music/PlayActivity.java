@@ -34,45 +34,27 @@ import sx.blah.discord.util.RequestBuilder;
 
 class PlayActivity extends AudioSessionActivity {
 
-	private static final ActivityDescriptor activityDescriptor = ActivityDescriptor.builder()
-			.route("music play")
-			.parameters(ImmutableList.of("[query]"))
-			.description(
-					"Plays a track or unpauses the player.")
+	private static final ActivityDescriptor activityDescriptor = ActivityDescriptor.builder().route("music play")
+			.parameters(ImmutableList.of("[query]")).description("Plays a track or unpauses the player.")
 			.usageDescription("**Playing track(s) via direct link to a track or playlist:**\n"
 					+ "```${absoluteReferencedRoute} https://www.youtube.com/watch?v=dQw4w9WgXcQ```\n"
-					+ "The following services are supported:\n"
-					+ "- YouTube\n"
-					+ "- SoundCloud\n"
-					+ "- Bandcamp\n"
-					+ "- Vimeo\n"
-					+ "- Twitch\n"
-					+ "- Beam.pro\n"
-					+ "- iTunes Playlist Upload\n"
-					+ "- Spotify\n"
-					+ "- Google Drive\n"
-					+ "- HTTP Audio File\n"
-					+ "- Discord File Upload\n"
-					+ "\n"
+					+ "The following services are supported:\n" + "- YouTube\n" + "- SoundCloud\n" + "- Bandcamp\n"
+					+ "- Vimeo\n" + "- Twitch\n" + "- Beam.pro\n" + "- iTunes Playlist Upload\n" + "- Spotify\n"
+					+ "- Google Drive\n" + "- HTTP Audio File\n" + "- Discord File Upload\n" + "\n"
 					+ "**Playing a track via searching YouTube:**\n"
 					+ "```${absoluteReferencedRoute} the sound of silence```\n"
 					+ "You'll get a list of search results. Say ``${absoluteReferencedRoute} N`` (where N is the result number) to play it.\n"
-					+ "\n"
-					+ "**Playing track(s) by iTunes playlist upload:**\n"
+					+ "\n" + "**Playing track(s) by iTunes playlist upload:**\n"
 					+ "Send your iTunes playlist export as an attachment with the message ``${absoluteReferencedRoute}``. For best results, make sure your tracks' title and artist metadata fields are correct.\n"
 					+ "To export an iTunes playlist, click on a playlist, then go to File > Library > Export Playlist.\n"
-					+ "\n"
-					+ "**Resuming playback:**\n"
-					+ "```${absoluteReferencedRoute}```\n"
+					+ "\n" + "**Resuming playback:**\n" + "```${absoluteReferencedRoute}```\n"
 					+ "Saying the command without any arguments or attachments will unpause playback.")
 			.build();
 
-	private final List<PlayActivityHandler> handlerChain = ImmutableList.of(
-			this::handlePlayWithoutArgs,
+	private final List<PlayActivityHandler> handlerChain = ImmutableList.of(this::handlePlayWithoutArgs,
 			this::handleSearchResultSelection);
 
-	private final List<PlayActivityHandler> searchHandlerChain = ImmutableList.of(
-			this::handleEnqueueIdentifier,
+	private final List<PlayActivityHandler> searchHandlerChain = ImmutableList.of(this::handleEnqueueIdentifier,
 			this::handleTrackSearch);
 
 	private final GuildMusicManager guildMusicManager;
@@ -81,12 +63,8 @@ class PlayActivity extends AudioSessionActivity {
 	private final TrackSearcher trackSearcher;
 
 	@Inject
-	public PlayActivity(
-			@Prefix String prefix,
-			IDiscordClient discordClient,
-			GuildMusicManager guildMusicManager,
-			TrackSearcher trackSearcher,
-			BotUtils botUtils) {
+	public PlayActivity(@Prefix String prefix, IDiscordClient discordClient, GuildMusicManager guildMusicManager,
+			TrackSearcher trackSearcher, BotUtils botUtils) {
 		super(guildMusicManager);
 		this.guildMusicManager = Preconditions.checkNotNull(guildMusicManager, "guildMusicManager must be non-null.");
 		this.discordClient = Preconditions.checkNotNull(discordClient, "discordClient must be non-null.");
@@ -117,9 +95,7 @@ class PlayActivity extends AudioSessionActivity {
 		MusicPermissions permissions = guildMusicManager.getPermission(event.getGuild().getLongID());
 
 		boolean eventWasHandled = handlerChain.stream()
-				.filter(handler -> handler.handle(audioSession, event, args, permissions))
-				.findFirst()
-				.isPresent();
+				.filter(handler -> handler.handle(audioSession, event, args, permissions)).findFirst().isPresent();
 
 		if (!eventWasHandled) {
 			// The next set of handlers can take more time so we should at least acknowledge
@@ -135,8 +111,7 @@ class PlayActivity extends AudioSessionActivity {
 			});
 
 			try {
-				searchHandlerChain.stream()
-						.filter(handler -> handler.handle(audioSession, event, args, permissions))
+				searchHandlerChain.stream().filter(handler -> handler.handle(audioSession, event, args, permissions))
 						.findFirst();
 			} finally {
 				try {
@@ -152,10 +127,7 @@ class PlayActivity extends AudioSessionActivity {
 		}
 	}
 
-	private boolean handlePlayWithoutArgs(
-			AudioSession audioSession,
-			MessageReceivedEvent event,
-			String args,
+	private boolean handlePlayWithoutArgs(AudioSession audioSession, MessageReceivedEvent event, String args,
 			MusicPermissions permissions) {
 
 		if (StringUtils.isBlank(args) && event.getMessage().getAttachments().isEmpty()) {
@@ -168,10 +140,7 @@ class PlayActivity extends AudioSessionActivity {
 		return false;
 	}
 
-	private boolean handleSearchResultSelection(
-			AudioSession audioSession,
-			MessageReceivedEvent event,
-			String args,
+	private boolean handleSearchResultSelection(AudioSession audioSession, MessageReceivedEvent event, String args,
 			MusicPermissions permissions) {
 
 		IUser user = event.getAuthor();
@@ -191,8 +160,7 @@ class PlayActivity extends AudioSessionActivity {
 					trackSearcher.removePreviousSearchResults(audioSession, user.getLongID());
 
 					if (prevSearchResults.getMessage().isPresent()) {
-						editAsync(
-								prevSearchResults.getMessage().get(),
+						editAsync(prevSearchResults.getMessage().get(),
 								"Result #" + (chosenIndex + 1) + ": **" + chosenTrack.getInfo().title
 										+ "** was queued by **" + user.getDisplayName(event.getGuild()) + "**");
 					}
@@ -214,10 +182,7 @@ class PlayActivity extends AudioSessionActivity {
 		return false;
 	}
 
-	private boolean handleEnqueueIdentifier(
-			AudioSession audioSession,
-			MessageReceivedEvent event,
-			String args,
+	private boolean handleEnqueueIdentifier(AudioSession audioSession, MessageReceivedEvent event, String args,
 			MusicPermissions permissions) {
 		permissions.checkPermission(event.getAuthor(), Action.ADD_TRACKS);
 
@@ -270,10 +235,7 @@ class PlayActivity extends AudioSessionActivity {
 		return false;
 	}
 
-	private boolean handleTrackSearch(
-			AudioSession audioSession,
-			MessageReceivedEvent event,
-			String query,
+	private boolean handleTrackSearch(AudioSession audioSession, MessageReceivedEvent event, String query,
 			MusicPermissions permissions) {
 		permissions.checkPermission(event.getAuthor(), Action.ADD_TRACKS);
 
@@ -295,11 +257,8 @@ class PlayActivity extends AudioSessionActivity {
 
 			for (int i = 0; i < hits.size(); i++) {
 				AudioTrack track = hits.get(i);
-				sb.append("``[").append(i + 1)
-						.append("]`` ").append(track.getInfo().title)
-						.append(" ``(")
-						.append(TimeFormatter.toFriendlyString(track.getInfo().length,
-								TimeUnit.MILLISECONDS))
+				sb.append("``[").append(i + 1).append("]`` ").append(track.getInfo().title).append(" ``(")
+						.append(TimeFormatter.toFriendlyString(track.getInfo().length, TimeUnit.MILLISECONDS))
 						.append(")``\n");
 			}
 
@@ -311,25 +270,17 @@ class PlayActivity extends AudioSessionActivity {
 	}
 
 	private void deleteAsync(IMessage message) {
-		new RequestBuilder(discordClient)
-				.shouldBufferRequests(true)
-				.setAsync(true)
-				.doAction(() -> {
-					message.delete();
-					return true;
-				})
-				.execute();
+		new RequestBuilder(discordClient).shouldBufferRequests(true).setAsync(true).doAction(() -> {
+			message.delete();
+			return true;
+		}).execute();
 	}
 
 	private void editAsync(IMessage message, String newContent) {
-		new RequestBuilder(discordClient)
-				.shouldBufferRequests(true)
-				.setAsync(true)
-				.doAction(() -> {
-					message.edit(newContent);
-					return true;
-				})
-				.execute();
+		new RequestBuilder(discordClient).shouldBufferRequests(true).setAsync(true).doAction(() -> {
+			message.edit(newContent);
+			return true;
+		}).execute();
 	}
 
 	private String formatFriendlyException(FriendlyException friendlyException) {
@@ -344,10 +295,7 @@ class PlayActivity extends AudioSessionActivity {
 	@FunctionalInterface
 	private static interface PlayActivityHandler {
 
-		public abstract boolean handle(
-				AudioSession audioSession,
-				MessageReceivedEvent event,
-				String args,
+		public abstract boolean handle(AudioSession audioSession, MessageReceivedEvent event, String args,
 				MusicPermissions permissions);
 	}
 }

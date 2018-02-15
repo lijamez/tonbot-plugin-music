@@ -100,9 +100,7 @@ class RoundRobinTrackManager implements TrackManager {
 
 		lock.writeLock().lock();
 		try {
-			List<AudioTrack> tracksToRemove = this.getView().stream()
-					.filter(predicate)
-					.collect(Collectors.toList());
+			List<AudioTrack> tracksToRemove = this.getView().stream().filter(predicate).collect(Collectors.toList());
 
 			tracksToRemove.forEach(track -> removeInternal(track));
 
@@ -181,10 +179,7 @@ class RoundRobinTrackManager implements TrackManager {
 		}
 
 		// Sweep over tracks in tracksByUserId, rotating by user.
-		int longestQueueSize = tracksByUserId.values().stream()
-				.mapToInt(list -> list.size())
-				.max()
-				.orElse(0);
+		int longestQueueSize = tracksByUserId.values().stream().mapToInt(list -> list.size()).max().orElse(0);
 
 		for (int i = 0; i < longestQueueSize; i++) {
 

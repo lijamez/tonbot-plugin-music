@@ -91,9 +91,7 @@ class SortingTrackManager implements TrackManager {
 
 		lock.writeLock().lock();
 		try {
-			List<AudioTrack> tracksToRemove = this.getView().stream()
-					.filter(predicate)
-					.collect(Collectors.toList());
+			List<AudioTrack> tracksToRemove = this.getView().stream().filter(predicate).collect(Collectors.toList());
 
 			tracksToRemove.forEach(track -> tracks.remove(track));
 

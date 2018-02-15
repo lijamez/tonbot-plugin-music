@@ -40,10 +40,7 @@ class GuildMusicManager {
 	private final Lock saveDirLock;
 
 	@Inject
-	public GuildMusicManager(
-			IDiscordClient discordClient,
-			AudioSessionFactory audioSessionFactory,
-			File saveDir,
+	public GuildMusicManager(IDiscordClient discordClient, AudioSessionFactory audioSessionFactory, File saveDir,
 			ObjectMapper objectMapper) {
 		this.discordClient = Preconditions.checkNotNull(discordClient, "discordClient must be non-null.");
 		this.audioSessionFactory = Preconditions.checkNotNull(audioSessionFactory,

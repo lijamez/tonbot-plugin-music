@@ -71,15 +71,8 @@ class MusicModule extends AbstractModule {
 	private final String googleDriveApiKey;
 	private final SpotifyCredentials spotifyCredentials;
 
-	public MusicModule(
-			IDiscordClient discordClient,
-			String prefix,
-			BotUtils botUtils,
-			Color color,
-			File saveDir,
-			String youtubeApiKey,
-			String googleDriveApiKey,
-			SpotifyCredentials spotifyCredentials) {
+	public MusicModule(IDiscordClient discordClient, String prefix, BotUtils botUtils, Color color, File saveDir,
+			String youtubeApiKey, String googleDriveApiKey, SpotifyCredentials spotifyCredentials) {
 		this.discordClient = Preconditions.checkNotNull(discordClient, "discordClient must be non-null.");
 		this.prefix = Preconditions.checkNotNull(prefix, "prefix must be non-null.");
 		this.botUtils = Preconditions.checkNotNull(botUtils, "botUtils must be non-null.");
@@ -102,21 +95,11 @@ class MusicModule extends AbstractModule {
 
 	@Provides
 	@Singleton
-	Set<Activity> activities(
-			BeckonActivity beckonActivity,
-			DismissActivity dismissActivity,
-			PlayActivity playActivity,
-			StopActivity stopActivity,
-			PauseActivity pauseActivity,
-			ListActivity listActivity,
-			SkipActivity skipActivity,
-			RepeatActivity repeatActivity,
-			NowPlayingActivity npActivity,
-			ShuffleActivity shuffleActivity,
-			RoundRobinActivity roundRobinActivity,
-			SeekActivity seekActivity,
-			PermissionsListActivity permissionsListActivity,
-			PermissionsAddActivity permissionsAddActivity,
+	Set<Activity> activities(BeckonActivity beckonActivity, DismissActivity dismissActivity, PlayActivity playActivity,
+			StopActivity stopActivity, PauseActivity pauseActivity, ListActivity listActivity,
+			SkipActivity skipActivity, RepeatActivity repeatActivity, NowPlayingActivity npActivity,
+			ShuffleActivity shuffleActivity, RoundRobinActivity roundRobinActivity, SeekActivity seekActivity,
+			PermissionsListActivity permissionsListActivity, PermissionsAddActivity permissionsAddActivity,
 			PermissionsRemoveActivity permissionsRemoveActivity) {
 		return ImmutableSet.of(beckonActivity, dismissActivity, playActivity, stopActivity, pauseActivity, listActivity,
 				skipActivity, repeatActivity, npActivity, shuffleActivity, roundRobinActivity, seekActivity,
@@ -131,8 +114,7 @@ class MusicModule extends AbstractModule {
 
 	@Provides
 	@Singleton
-	AudioPlayerManager audioPlayerManager(
-			YoutubeAudioSourceManager yasm,
+	AudioPlayerManager audioPlayerManager(YoutubeAudioSourceManager yasm,
 			ITunesPlaylistSourceManager itunesPlaylistSourceManager,
 			@Nullable SpotifySourceManager spotifySourceManager,
 			@Nullable GoogleDriveSourceManager googleDriveSourceManager,
@@ -182,9 +164,7 @@ class MusicModule extends AbstractModule {
 
 	@Provides
 	@Singleton
-	GoogleDriveSourceManager googleDriveSourceManager(
-			@Nullable Drive drive,
-			HttpAudioSourceManager httpAsm) {
+	GoogleDriveSourceManager googleDriveSourceManager(@Nullable Drive drive, HttpAudioSourceManager httpAsm) {
 		if (drive == null) {
 			return null;
 		}
@@ -218,10 +198,8 @@ class MusicModule extends AbstractModule {
 	Api spotifyApi() {
 		if (spotifyCredentials != null
 				&& !StringUtils.isAnyBlank(spotifyCredentials.getClientId(), spotifyCredentials.getClientSecret())) {
-			Api api = Api.builder()
-					.clientId(spotifyCredentials.getClientId())
-					.clientSecret(spotifyCredentials.getClientSecret())
-					.build();
+			Api api = Api.builder().clientId(spotifyCredentials.getClientId())
+					.clientSecret(spotifyCredentials.getClientSecret()).build();
 
 			// Use the Client Credentials Flow to get an access token
 			// https://developer.spotify.com/web-api/authorization-guide/#client-credentials-flow
@@ -231,9 +209,8 @@ class MusicModule extends AbstractModule {
 			} catch (IOException e) {
 				throw new UncheckedIOException("Unable to contact Spotify Accounts Service.", e);
 			} catch (BadRequestException e) {
-				LOG.warn(
-						"Unable to get access token from Spotify Accounts Service. Spotify support will "
-								+ "not be available. Please check if the supplied credentials are valid.");
+				LOG.warn("Unable to get access token from Spotify Accounts Service. Spotify support will "
+						+ "not be available. Please check if the supplied credentials are valid.");
 				return null;
 			} catch (WebApiException e) {
 				throw new TonbotTechnicalFault("Spotify Accounts Service returned an unknown error.", e);
@@ -248,9 +225,7 @@ class MusicModule extends AbstractModule {
 
 	@Provides
 	@Singleton
-	SpotifySourceManager spotifySourceManager(
-			@Nullable Api spotifyApi,
-			AudioTrackFactory audioTrackFactory) {
+	SpotifySourceManager spotifySourceManager(@Nullable Api spotifyApi, AudioTrackFactory audioTrackFactory) {
 		if (spotifyApi == null) {
 			return null;
 		}
@@ -269,10 +244,8 @@ class MusicModule extends AbstractModule {
 		HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
 		JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
 
-		return new Drive.Builder(httpTransport, jsonFactory, null)
-				.setApplicationName(APPLICATION_NAME)
-				.setDriveRequestInitializer(new DriveRequestInitializer(googleDriveApiKey))
-				.build();
+		return new Drive.Builder(httpTransport, jsonFactory, null).setApplicationName(APPLICATION_NAME)
+				.setDriveRequestInitializer(new DriveRequestInitializer(googleDriveApiKey)).build();
 	}
 
 	@Provides
@@ -287,10 +260,8 @@ class MusicModule extends AbstractModule {
 			@Override
 			public void initialize(HttpRequest request) throws IOException {
 			}
-		})
-				.setApplicationName(APPLICATION_NAME)
-				.setYouTubeRequestInitializer(new YouTubeRequestInitializer(youtubeApiKey))
-				.build();
+		}).setApplicationName(APPLICATION_NAME)
+				.setYouTubeRequestInitializer(new YouTubeRequestInitializer(youtubeApiKey)).build();
 	}
 
 	@Provides
@@ -301,16 +272,9 @@ class MusicModule extends AbstractModule {
 
 	@Provides
 	@Singleton
-	GuildMusicManager guildMusicManager(
-			IDiscordClient discordClient,
-			AudioSessionFactory audioSessionFactory,
-			File saveDir,
-			ObjectMapper objectMapper) {
-		GuildMusicManager gmm = new GuildMusicManager(
-				discordClient,
-				audioSessionFactory,
-				saveDir,
-				objectMapper);
+	GuildMusicManager guildMusicManager(IDiscordClient discordClient, AudioSessionFactory audioSessionFactory,
+			File saveDir, ObjectMapper objectMapper) {
+		GuildMusicManager gmm = new GuildMusicManager(discordClient, audioSessionFactory, saveDir, objectMapper);
 
 		gmm.load();
 

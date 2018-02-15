@@ -65,10 +65,7 @@ public class ITunesPlaylistSourceManager implements AudioSourceManager {
 
 	@Inject
 	public ITunesPlaylistSourceManager(AudioTrackFactory audioTrackFactory) {
-		this.csvFormat = CSVFormat.newFormat(DELIMITER)
-				.withIgnoreEmptyLines(true)
-				.withFirstRecordAsHeader()
-				.withTrim();
+		this.csvFormat = CSVFormat.newFormat(DELIMITER).withIgnoreEmptyLines(true).withFirstRecordAsHeader().withTrim();
 		this.audioTrackFactory = Preconditions.checkNotNull(audioTrackFactory, "audioTrackFactory must be non-null.");
 	}
 
@@ -129,38 +126,31 @@ public class ITunesPlaylistSourceManager implements AudioSourceManager {
 
 			if (!headerMap.containsKey(TRACK_TITLE_COLUMN) || !headerMap.containsKey(TRACK_ARTIST_COLUMN)
 					|| !headerMap.containsKey(TRACK_DURATION_COLUMN)) {
-				throw new InvalidItunesPlaylistException(
-						"File doesn't appear to be an iTunes playlist.");
+				throw new InvalidItunesPlaylistException("File doesn't appear to be an iTunes playlist.");
 			}
 
-			List<SongMetadata> songMetadata = parser.getRecords().stream()
-					.map(record -> {
+			List<SongMetadata> songMetadata = parser.getRecords().stream().map(record -> {
 
-						String title = record.get(TRACK_TITLE_COLUMN);
-						String artist = record.get(TRACK_ARTIST_COLUMN);
-						String timeInSecs = record.get(TRACK_DURATION_COLUMN);
+				String title = record.get(TRACK_TITLE_COLUMN);
+				String artist = record.get(TRACK_ARTIST_COLUMN);
+				String timeInSecs = record.get(TRACK_DURATION_COLUMN);
 
-						if (StringUtils.isAnyBlank(title, artist, timeInSecs)) {
-							LOG.debug("A track had an empty title, artist, or time. The track will be ignored.");
-							return null;
-						}
+				if (StringUtils.isAnyBlank(title, artist, timeInSecs)) {
+					LOG.debug("A track had an empty title, artist, or time. The track will be ignored.");
+					return null;
+				}
 
-						long timeInMs;
-						try {
-							timeInMs = Long.parseLong(timeInSecs) * 1000;
-							Preconditions.checkArgument(timeInMs >= 0);
-						} catch (IllegalArgumentException e) {
-							LOG.debug("A track had an invalid time. The track will be ignored.");
-							return null;
-						}
+				long timeInMs;
+				try {
+					timeInMs = Long.parseLong(timeInSecs) * 1000;
+					Preconditions.checkArgument(timeInMs >= 0);
+				} catch (IllegalArgumentException e) {
+					LOG.debug("A track had an invalid time. The track will be ignored.");
+					return null;
+				}
 
-						return new SongMetadata(
-								title,
-								artist,
-								timeInMs);
-					})
-					.filter(sm -> sm != null)
-					.collect(Collectors.toList());
+				return new SongMetadata(title, artist, timeInMs);
+			}).filter(sm -> sm != null).collect(Collectors.toList());
 
 			return songMetadata;
 		} catch (IOException e) {
