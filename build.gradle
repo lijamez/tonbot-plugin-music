@@ -35,7 +35,7 @@ dependencies {
 	implementation group: 'com.google.guava', name: 'guava', version: '23.0'
 	implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
 	
-	compileOnly 'org.projectlombok:lombok:1.16.20'
+	compileOnly 'org.projectlombok:lombok:1.16.18'
 	
 	testImplementation group: 'junit', name: 'junit', version: '4.12'
 	testImplementation group: 'org.spockframework', name: 'spock-core', version: '1.1-groovy-2.4'
