@@ -22,7 +22,7 @@ repositories {
 dependencies {
     implementation group: 'com.github.lijamez', name: 'tonbot-common', version: 'master-SNAPSHOT'
 
-	implementation group: 'com.sedmelluq', name: 'lavaplayer', version: '1.2.47'
+	implementation group: 'com.sedmelluq', name: 'lavaplayer', version: '1.2.51'
 	implementation group: 'org.apache.commons', name: 'commons-csv', version: '1.5'
 	implementation group: 'commons-io', name: 'commons-io', version: '2.6'
 	
