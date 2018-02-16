@@ -18,7 +18,7 @@ import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedE
 import sx.blah.discord.handle.obj.IUser;
 import sx.blah.discord.util.EmbedBuilder;
 
-class NowPlayingActivity extends AudioSessionActivity {
+class NowPlayingActivity extends AudioSessionActivity<Void> {
 
 	private static final String STREAM_TIME = "STREAM";
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder().route("music nowplaying")
@@ -45,7 +45,12 @@ class NowPlayingActivity extends AudioSessionActivity {
 	}
 
 	@Override
-	protected void enactWithSession(MessageReceivedEvent event, String args, AudioSession audioSession) {
+	public Class<?> getRequestType() {
+		return Void.class;
+	}
+
+	@Override
+	protected void enactWithSession(MessageReceivedEvent event, Void request, AudioSession audioSession) {
 		AudioSessionStatus status = audioSession.getStatus();
 
 		AudioTrack npTrack = status.getNowPlaying().orElse(null);

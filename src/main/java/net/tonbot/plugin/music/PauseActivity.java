@@ -7,7 +7,7 @@ import net.tonbot.common.ActivityDescriptor;
 import net.tonbot.common.BotUtils;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 
-class PauseActivity extends AudioSessionActivity {
+class PauseActivity extends AudioSessionActivity<Void> {
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder().route("music pause")
 			.description("Pauses the player.").build();
@@ -26,7 +26,12 @@ class PauseActivity extends AudioSessionActivity {
 	}
 
 	@Override
-	protected void enactWithSession(MessageReceivedEvent event, String args, AudioSession audioSession) {
+	public Class<?> getRequestType() {
+		return Void.class;
+	}
+
+	@Override
+	protected void enactWithSession(MessageReceivedEvent event, Void request, AudioSession audioSession) {
 		audioSession.setPaused(true);
 		botUtils.sendMessage(event.getChannel(), "Paused.");
 	}

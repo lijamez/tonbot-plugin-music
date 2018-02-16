@@ -22,7 +22,7 @@ import sx.blah.discord.handle.obj.IGuild;
 import sx.blah.discord.handle.obj.IUser;
 import sx.blah.discord.util.EmbedBuilder;
 
-class ListActivity extends AudioSessionActivity {
+class ListActivity extends AudioSessionActivity<ListRequest> {
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder().route("music list")
 			.parameters(ImmutableList.of("[page number]")).description("Displays the upcoming tracks.")
@@ -50,19 +50,20 @@ class ListActivity extends AudioSessionActivity {
 	}
 
 	@Override
-	protected void enactWithSession(MessageReceivedEvent event, String args, AudioSession audioSession) {
+	public Class<?> getRequestType() {
+		return ListRequest.class;
+	}
+
+	@Override
+	protected void enactWithSession(MessageReceivedEvent event, ListRequest request, AudioSession audioSession) {
 		IDiscordClient client = event.getClient();
 		IGuild guild = event.getGuild();
 		AudioSessionStatus sessionStatus = audioSession.getStatus();
 
 		// Page numbers should always start at 1, but internally, page 1 is page 0.
 		int requestedPage; // The zero-indexed requested page.
-		if (!StringUtils.isBlank(args)) {
-			try {
-				requestedPage = Integer.parseInt(args.trim()) - 1;
-			} catch (IllegalArgumentException e) {
-				throw new TonbotBusinessException("You need to enter a page number.", e);
-			}
+		if (request.getPageNumber() != null) {
+			requestedPage = request.getPageNumber() - 1;
 
 			int numUpcomingTracks = sessionStatus.getUpcomingTracks().size();
 			if (requestedPage < 0

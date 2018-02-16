@@ -11,7 +11,7 @@ import sx.blah.discord.handle.obj.IRole;
 
 @EqualsAndHashCode
 @ToString
-public class PermissionsAddRequest {
+class PermissionsAddRequest {
 
 	@Getter
 	@Param(name = "role", ordinal = 0, description = "A role.")

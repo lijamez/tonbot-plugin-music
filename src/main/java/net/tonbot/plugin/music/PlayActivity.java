@@ -32,7 +32,7 @@ import sx.blah.discord.util.RateLimitException;
 import sx.blah.discord.util.RequestBuffer;
 import sx.blah.discord.util.RequestBuilder;
 
-class PlayActivity extends AudioSessionActivity {
+class PlayActivity extends AudioSessionActivity<PlayRequest> {
 
 	private static final ActivityDescriptor activityDescriptor = ActivityDescriptor.builder().route("music play")
 			.parameters(ImmutableList.of("[query]")).description("Plays a track or unpauses the player.")
@@ -91,11 +91,17 @@ class PlayActivity extends AudioSessionActivity {
 	}
 
 	@Override
-	protected void enactWithSession(MessageReceivedEvent event, String args, AudioSession audioSession) {
+	public Class<?> getRequestType() {
+		return PlayRequest.class;
+	}
+
+	@Override
+	protected void enactWithSession(MessageReceivedEvent event, PlayRequest playRequest, AudioSession audioSession) {
 		MusicPermissions permissions = guildMusicManager.getPermission(event.getGuild().getLongID());
 
 		boolean eventWasHandled = handlerChain.stream()
-				.filter(handler -> handler.handle(audioSession, event, args, permissions)).findFirst().isPresent();
+				.filter(handler -> handler.handle(audioSession, event, playRequest.getQuery(), permissions)).findFirst()
+				.isPresent();
 
 		if (!eventWasHandled) {
 			// The next set of handlers can take more time so we should at least acknowledge
@@ -103,15 +109,16 @@ class PlayActivity extends AudioSessionActivity {
 			Future<IMessage> ackMessageFuture = RequestBuffer.request(() -> {
 				StringBuilder msg = new StringBuilder();
 				msg.append("Finding tracks");
-				if (!StringUtils.isBlank(args)) {
-					msg.append(" for ``").append(args).append("``");
+				if (!StringUtils.isBlank(playRequest.getQuery())) {
+					msg.append(" for ``").append(playRequest.getQuery()).append("``");
 				}
 				msg.append("...");
 				return event.getChannel().sendMessage(msg.toString());
 			});
 
 			try {
-				searchHandlerChain.stream().filter(handler -> handler.handle(audioSession, event, args, permissions))
+				searchHandlerChain.stream()
+						.filter(handler -> handler.handle(audioSession, event, playRequest.getQuery(), permissions))
 						.findFirst();
 			} finally {
 				try {

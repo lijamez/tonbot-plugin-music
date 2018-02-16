@@ -26,7 +26,7 @@ import net.tonbot.plugin.music.permissions.Action;
 import net.tonbot.plugin.music.permissions.MusicPermissions;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 
-class SkipActivity extends AudioSessionActivity {
+class SkipActivity extends AudioSessionActivity<SkipRequest> {
 
 	private static final ActivityDescriptor ACTIVITY_DESCRIPTOR = ActivityDescriptor.builder().route("music skip")
 			.parameters(ImmutableList.of("<track numbers/mine/all>"))
@@ -61,12 +61,19 @@ class SkipActivity extends AudioSessionActivity {
 	}
 
 	@Override
-	protected void enactWithSession(MessageReceivedEvent event, String args, AudioSession audioSession) {
+	public Class<?> getRequestType() {
+		return SkipRequest.class;
+	}
 
+	@Override
+	protected void enactWithSession(MessageReceivedEvent event, SkipRequest request, AudioSession audioSession) {
+
+		String args = request.getInput();
 		MusicPermissions permissions = guildMusicManager.getPermission(event.getGuild().getLongID());
 
 		List<AudioTrack> skippedTracks;
 		if (StringUtils.isBlank(args)) {
+			// The intent is to skip the currently playing track.
 			// Check if the user is allowed to skip another users' tracks
 			AudioTrack currentTrack = audioSession.getStatus().getNowPlaying().orElse(null);
 			if (currentTrack != null && ((ExtraTrackInfo) currentTrack.getUserData()).getAddedByUserId() != event

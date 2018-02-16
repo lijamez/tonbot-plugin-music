@@ -1,7 +1,5 @@
 package net.tonbot.plugin.music;
 
-import org.apache.commons.lang3.StringUtils;
-
 import com.google.common.base.Preconditions;
 
 import net.tonbot.common.BotUtils;
@@ -9,7 +7,7 @@ import net.tonbot.plugin.music.permissions.Action;
 import net.tonbot.plugin.music.permissions.MusicPermissions;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 
-abstract class BinaryModeChangingActivity extends AudioSessionActivity {
+abstract class BinaryModeChangingActivity extends AudioSessionActivity<BinaryModeChangeRequest> {
 
 	private final GuildMusicManager guildMusicManager;
 	private final BotUtils botUtils;
@@ -23,14 +21,22 @@ abstract class BinaryModeChangingActivity extends AudioSessionActivity {
 	abstract PlayMode onMode();
 
 	@Override
-	protected void enactWithSession(MessageReceivedEvent event, String args, AudioSession audioSession) {
+	public Class<?> getRequestType() {
+		return BinaryModeChangeRequest.class;
+	}
+
+	@Override
+	public void enactWithSession(MessageReceivedEvent event, BinaryModeChangeRequest request,
+			AudioSession audioSession) {
+
 		MusicPermissions permissions = guildMusicManager.getPermission(event.getGuild().getLongID());
 		permissions.checkPermission(event.getAuthor(), Action.PLAY_MODE_CHANGE);
 
 		PlayMode currentMode = audioSession.getStatus().getPlayMode();
 		PlayMode onMode = onMode();
 		PlayMode targetPlayMode;
-		if (StringUtils.isBlank(args)) {
+
+		if (request.getStatus() == null) {
 			// Toggle shuffle on and off
 			if (currentMode == onMode) {
 				targetPlayMode = PlayMode.STANDARD;
@@ -38,9 +44,9 @@ abstract class BinaryModeChangingActivity extends AudioSessionActivity {
 				targetPlayMode = onMode;
 			}
 		} else {
-			if (StringUtils.equalsIgnoreCase(args, "on")) {
+			if (request.getStatus() == ToggleStatus.ON) {
 				targetPlayMode = onMode;
-			} else if (StringUtils.equalsIgnoreCase(args, "off") && currentMode == onMode) {
+			} else if (currentMode == onMode) {
 				// By default, turning shuffle off means going to standard mode.
 				targetPlayMode = PlayMode.STANDARD;
 			} else {

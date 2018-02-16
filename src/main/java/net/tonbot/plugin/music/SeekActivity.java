@@ -13,7 +13,7 @@ import net.tonbot.common.ActivityDescriptor;
 import net.tonbot.common.BotUtils;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 
-class SeekActivity extends AudioSessionActivity {
+class SeekActivity extends AudioSessionActivity<SeekRequest> {
 
 	private static final ActivityDescriptor DESCRIPTOR = ActivityDescriptor.builder().route("music seek")
 			.parameters(ImmutableList.of("<time or offset>")).description("Seeks within the current track.")
@@ -38,9 +38,15 @@ class SeekActivity extends AudioSessionActivity {
 	}
 
 	@Override
-	protected void enactWithSession(MessageReceivedEvent event, String args, AudioSession audioSession) {
+	public Class<?> getRequestType() {
+		return SeekRequest.class;
+	}
+
+	@Override
+	protected void enactWithSession(MessageReceivedEvent event, SeekRequest request, AudioSession audioSession) {
 
 		try {
+			String args = request.getInput();
 			Duration duration;
 			SeekType seekType;
 			if (args.startsWith("+")) {
