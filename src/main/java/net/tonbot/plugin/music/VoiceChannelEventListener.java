@@ -87,16 +87,21 @@ class VoiceChannelEventListener {
 		checkIntegrity(event.getGuild());
 
 		IVoiceChannel botVc = event.getGuild().getConnectedVoiceChannel();
+		if (botVc == null) {
+			return;
+		}
+		
 		boolean userLeftBotVc = event.getOldChannel().getLongID() == botVc.getLongID();
 		boolean userJoinedBotVc = event.getNewChannel().getLongID() == botVc.getLongID();
 
-		if (botVc == null || userLeftBotVc || userJoinedBotVc) {
-			// Event is not applicable to us because either we are not in a VC or the event
-			// has nothing to do with our VC.
-			return;
+		if (userLeftBotVc) {
+			autoPauseAndResume(event.getGuild(), false);
+		} else if (userJoinedBotVc){
+			autoPauseAndResume(event.getGuild(), true);
 		}
 
-		autoPauseAndResume(event.getGuild(), userJoinedBotVc);
+		// Event is not applicable to us because either we are not in a VC or the event
+		// has nothing to do with our VC.
 	}
 
 	@EventSubscriber
@@ -125,12 +130,7 @@ class VoiceChannelEventListener {
 		if (botVc == null) {
 			// If a session exists, but the bot isn't in a VC, then this is a bad state.
 			// Destroy the session to fix itself.
-			try {
-				guildMusicManager.destroyAudioSessionFor(guild.getLongID());
-				LOG.warn("Invalid State: An AudioSession exists, but the bot isn't connected to a VC. "
-						+ "The AudioSession was destroyed.");
-			} catch (NoSessionException e) {
-			}
+			guildMusicManager.destroyAudioSessionFor(guild.getLongID());
 		}
 	}
 

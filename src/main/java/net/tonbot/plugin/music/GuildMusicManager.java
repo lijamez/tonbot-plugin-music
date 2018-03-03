@@ -26,7 +26,6 @@ import net.tonbot.common.TonbotTechnicalFault;
 import net.tonbot.plugin.music.permissions.Action;
 import net.tonbot.plugin.music.permissions.MusicPermissions;
 import sx.blah.discord.api.IDiscordClient;
-import sx.blah.discord.handle.obj.IGuild;
 
 class GuildMusicManager {
 
@@ -150,8 +149,8 @@ class GuildMusicManager {
 	}
 
 	/**
-	 * Stops playback and destroys the session for the guild. No-op if this
-	 * {@link IGuild} has not been seen by this {@link GuildMusicManager}.
+	 * Stops playback and destroys the session for the guild. No-op if there is 
+	 * no session for this guild.
 	 * 
 	 * @param guildId
 	 *            Guild ID.
