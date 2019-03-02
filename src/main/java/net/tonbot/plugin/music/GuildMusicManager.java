@@ -3,6 +3,7 @@ package net.tonbot.plugin.music;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Map;
@@ -115,8 +116,14 @@ class GuildMusicManager {
 			saveDirLock.lock();
 			try {
 				FileUtils.deleteDirectory(saveDir);
-				Files.move(tmpDir.toPath(), saveDir.toPath(), StandardCopyOption.REPLACE_EXISTING,
-						StandardCopyOption.ATOMIC_MOVE);
+				try {
+					Files.move(tmpDir.toPath(), saveDir.toPath(), StandardCopyOption.REPLACE_EXISTING,
+							StandardCopyOption.ATOMIC_MOVE);
+				} catch (AtomicMoveNotSupportedException e) {
+					// Atomic move may not be supported on, say, network shares.
+					Files.move(tmpDir.toPath(), saveDir.toPath(), StandardCopyOption.REPLACE_EXISTING);
+				}
+				
 			} finally {
 				saveDirLock.unlock();
 			}

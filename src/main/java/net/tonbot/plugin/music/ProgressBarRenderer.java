@@ -4,7 +4,7 @@ class ProgressBarRenderer {
 
 	// Good enough for mobile devices.
 	private static final int PROGRESS_BAR_LENGTH = 26;
-	private static final char SEGMENT = 'â€¢';
+	private static final char SEGMENT = '•';
 
 	public static String render(long currentValue, long totalValue) {
 
