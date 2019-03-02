@@ -103,7 +103,7 @@ class GuildMusicManager {
 		try {
 			// Write to a temp dir first and then atomically move it to the target
 			File tmpDir = new File(Files.createTempDirectory("gmm").toString());
-			System.out.println("Temp directory created at: " + tmpDir.getAbsolutePath());
+			LOG.info("Temp directory created at: " + tmpDir.getAbsolutePath());
 			for (Entry<Long, MusicState> entry : states.entrySet()) {
 				long guildId = entry.getKey();
 				File guildFile = new File(tmpDir, Long.toString(guildId));
@@ -128,7 +128,7 @@ class GuildMusicManager {
 				saveDirLock.unlock();
 			}
 
-			System.out.println("Permissions saved to: " + saveDir.getAbsolutePath());
+			LOG.info("Permissions saved to: " + saveDir.getAbsolutePath());
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
