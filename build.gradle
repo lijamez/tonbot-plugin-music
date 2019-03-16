@@ -31,8 +31,8 @@ dependencies {
 	implementation group: 'com.google.apis', name: 'google-api-services-youtube', version: 'v3-rev189-1.23.0'
 	implementation group: 'com.google.apis', name: 'google-api-services-drive', version: 'v2-rev280-1.23.0'
 	
-	implementation group: 'com.google.inject', name: 'guice', version: '4.1.0'
-	implementation group: 'com.google.guava', name: 'guava', version: '24.0-jre'
+	implementation group: 'com.google.inject', name: 'guice', version: '4.2.2'
+	implementation group: 'com.google.guava', name: 'guava', version: '27.1-jre'
 	implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
 	
 	compileOnly 'org.projectlombok:lombok:1.16.20'
