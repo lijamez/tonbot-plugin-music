@@ -220,7 +220,10 @@ class AudioSession extends AudioEventAdapter {
 	}
 
 	private void playNext() {
-		trackManager.next().ifPresent(nextTrack -> audioPlayer.playTrack(nextTrack));
+		trackManager.next().ifPresent(nextTrack -> {
+			audioPlayer.playTrack(nextTrack);
+			botUtils.sendMessage(discordClient.getChannelByID(defaultChannelId), "Now playing **" + nextTrack.getInfo().title + "**");
+		});
 	}
 
 	/**
